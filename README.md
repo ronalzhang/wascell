@@ -41,8 +41,9 @@ npm start
 ```
 
 访问地址：
-- 主页：http://localhost:3003
-- 后台管理：http://localhost:3003/admin-pro
+- 主页：https://wascell.com
+- 后台管理：https://wascell.com/admin-pro
+- 开发环境：http://localhost:3003
 
 ### 服务器部署
 
