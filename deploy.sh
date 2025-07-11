@@ -43,4 +43,4 @@ sshpass -p "$SERVER_PASS" ssh "$SERVER_USER@$SERVER_IP" "pm2 logs $APP_NAME --li
 echo "🎉 部署完成！"
 echo "📍 网站地址: http://$SERVER_IP:3003"
 echo "🔧 管理后台: http://$SERVER_IP:3003/admin-pro"
-echo "�� 管理密码: wascell2025" 
+echo "🔑 管理密码: 123abc74531" 

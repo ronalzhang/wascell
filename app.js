@@ -140,7 +140,7 @@ app.use(express.static('.', {
 // 后台管理API - 验证密码
 app.post('/api/admin/login', (req, res) => {
     const { password } = req.body;
-    const ADMIN_PASSWORD = 'wascell2025'; // 管理员密码
+    const ADMIN_PASSWORD = '123abc74531'; // 管理员密码
     
     if (password === ADMIN_PASSWORD) {
         res.json({ success: true, message: '登录成功' });
