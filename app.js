@@ -256,6 +256,11 @@ app.get('/api/admin/realtime', (req, res) => {
     });
 });
 
+// 管理后台路由
+app.get('/admin-pro', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin-pro.html'));
+});
+
 // 默认路由 - 返回首页
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
