@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=1024">
     <title>WASCELL - 后台管理</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
     <style>
@@ -347,9 +347,11 @@
         <div class="controls">
             <span>时间周期：</span>
             <div class="period-buttons">
+                <button class="period-btn" data-period="last3days">最近3日</button>
                 <button class="period-btn active" data-period="day">每日</button>
                 <button class="period-btn" data-period="week">每周</button>
                 <button class="period-btn" data-period="month">每月</button>
+
             </div>
         </div>
         
@@ -587,6 +589,9 @@
                             return item.date;
                         } else if (this.currentPeriod === 'week') {
                             return item.date.split(' ~ ')[0];
+                        } else if (this.currentPeriod === 'last3days') {
+                            const date = new Date(item.date);
+                            return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:00`;
                         } else {
                             const date = new Date(item.date);
                             return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });

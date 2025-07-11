@@ -150,8 +150,21 @@ app.post('/api/admin/login', (req, res) => {
 });
 
 // 获取统计数据API
-app.get('/api/admin/stats', (req, res) => {
+app.get('/api/admin/stats', async (req, res) => { // 标记为 async
     const { period = 'day' } = req.query;
+    
+    // 对于last3days，我们需要从原始日志计算，因为stats.json是按天聚合的
+    if (period === 'last3days') {
+        try {
+            const data = await getHourlyStatsFromLog();
+            return res.json(data);
+        } catch (error) {
+            console.error('获取最近3日统计失败:', error);
+            return res.status(500).json({ message: '服务器内部错误' });
+        }
+    }
+
+    // 对于 day, week, month，继续使用现有的同步逻辑
     const stats = getStats();
     
     // 处理统计数据
@@ -241,6 +254,67 @@ app.get('/api/admin/stats', (req, res) => {
     
     res.json(result);
 });
+
+// 新函数：从日志文件异步获取每小时统计
+async function getHourlyStatsFromLog() {
+    const hourlyStats = {};
+    const seventyTwoHoursAgo = new Date(Date.now() - 72 * 60 * 60 * 1000);
+
+    // 初始化最近72小时的骨架数据
+    for (let i = 0; i < 72; i++) {
+        const hour = new Date(seventyTwoHoursAgo);
+        hour.setHours(hour.getHours() + i, 0, 0, 0); // 将分钟、秒和毫秒归零
+        const hourKey = hour.toISOString();
+        hourlyStats[hourKey] = {
+            date: hourKey,
+            visits: 0,
+            uniqueIPs: new Set(),
+        };
+    }
+
+    if (fs.existsSync(LOG_FILE)) {
+        const readline = require('readline');
+        const logStream = fs.createReadStream(LOG_FILE, { encoding: 'utf8' });
+        const rl = readline.createInterface({
+            input: logStream,
+            crlfDelay: Infinity
+        });
+
+        for await (const line of rl) {
+            try {
+                if (line.trim() === '') continue;
+                const logEntry = JSON.parse(line);
+                const logDate = new Date(logEntry.timestamp);
+
+                if (logDate >= seventyTwoHoursAgo) {
+                    const hourKey = new Date(logDate.getFullYear(), logDate.getMonth(), logDate.getDate(), logDate.getHours()).toISOString();
+                    if (hourlyStats[hourKey]) {
+                        hourlyStats[hourKey].visits++;
+                        hourlyStats[hourKey].uniqueIPs.add(logEntry.ip);
+                    }
+                }
+            } catch (e) {
+                // 忽略无法解析的行
+            }
+        }
+    }
+    
+    const periodData = Object.values(hourlyStats).map(hourData => ({
+        date: hourData.date,
+        visits: hourData.visits,
+        uniqueIPs: hourData.uniqueIPs.size,
+    }));
+    
+    // 由于是独立接口，这里也返回 topIPs
+    const stats = getStats();
+    const topIPs = Object.entries(stats.ipStats)
+        .map(([ip, data]) => ({ ip, ...data }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+
+    return { periodData, topIPs };
+}
+
 
 // 获取实时数据
 app.get('/api/admin/realtime', (req, res) => {
