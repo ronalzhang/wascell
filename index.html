@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>臻享会 · WASCELL</title>
+    <meta name="viewport" content="width=1024">
+    <meta name="description" content="WASCELL生命焕新之旅，融合顶尖干细胞科技与日本五日深度文化体验。专为行业领袖定制，提供细胞采集、高端旅游、及四周后的核心回输服务，开启您的巅峰生命品质之旅。">
+    <style>
+        :root {
+            --gold: #c0a878;
+            --navy: #1a3a5f;
+            --ivory: #f8f4e9;
+        }
+        body {
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Sans GB', sans-serif;
+            color: #333;
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #fafafa;
+        }
+        .luxury-card {
+            background: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 30px auto;
+            transition: transform 0.3s;
+        }
+        .luxury-card:hover {
+            transform: translateY(-5px);
+        }
+        .header {
+            background: linear-gradient(135deg, var(--navy) 0%, #0f2540 100%);
+            padding: 40px 30px;
+            position: relative;
+            color: white;
+        }
+        .badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--gold);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        h1 {
+            font-size: 36px;
+            font-weight: 300;
+            letter-spacing: 2px;
+            margin: 0 0 10px;
+        }
+        .subtitle {
+            font-size: 18px;
+            opacity: 0.9;
+            max-width: 700px;
+            line-height: 1.6;
+        }
+        .gold-divider {
+            height: 2px;
+            background: var(--gold);
+            width: 80px;
+            margin: 25px 0;
+        }
+        .content {
+            padding: 40px;
+        }
+        h2 {
+            color: var(--navy);
+            font-size: 24px;
+            margin-top: 0;
+            position: relative;
+            padding-bottom: 15px;
+        }
+        h2:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 2px;
+            background: var(--gold);
+        }
+        .highlight-box {
+            background: var(--ivory);
+            border-left: 4px solid var(--gold);
+            padding: 25px;
+            margin: 30px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .package {
+            font-size: 32px;
+            color: var(--navy);
+            margin: 5px 0;
+            font-weight: 300;
+        }
+        .original-price {
+            text-decoration: line-through;
+            color: #999;
+            font-size: 18px;
+            margin-right: 15px;
+        }
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin: 40px 0;
+        }
+        .benefit-card {
+            display: flex;
+            align-items: flex-start;
+        }
+        .icon {
+            font-size: 24px;
+            min-width: 50px;
+            color: var(--gold);
+            text-align: center;
+            padding-top: 5px;
+        }
+        .benefit-text h3 {
+            margin: 0 0 8px;
+            color: var(--navy);
+        }
+        .itinerary {
+            display: flex;
+            overflow-x: auto;
+            padding: 20px 0 40px;
+            gap: 25px;
+        }
+        .day-card {
+            min-width: 280px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        .day-header {
+            background: var(--navy);
+            color: white;
+            padding: 15px 20px;
+            font-weight: bold;
+        }
+        .day-content {
+            padding: 20px;
+            background: white;
+        }
+        .experience {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px dashed #eee;
+        }
+        .experience:last-child {
+            margin-bottom: 0;
+            border: none;
+        }
+        .experience h4 {
+            margin: 0 0 8px;
+            color: var(--navy);
+            display: flex;
+            align-items: center;
+        }
+        .experience h4:before {
+            content: '•';
+            color: var(--gold);
+            margin-right: 10px;
+            font-size: 24px;
+        }
+        .cta-container {
+            text-align: center;
+            padding: 30px;
+            background: #f9f9f9;
+            border-top: 1px solid #eee;
+        }
+        .cta-button {
+            background: var(--navy);
+            color: white;
+            border: none;
+            padding: 16px 45px;
+            font-size: 18px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .cta-button:hover {
+            background: #0a1e36;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(26, 58, 95, 0.2);
+        }
+        .footer-note {
+            text-align: center;
+            color: #999;
+            font-size: 14px;
+            padding: 20px;
+            border-top: 1px solid #eee;
+            background: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- 方案一：综合展示型 -->
+    <div class="luxury-card">
+        <div class="header">
+            <div class="badge">20250901期</div>
+            <h1>WASCELL · 日本生命焕新之旅</h1>
+            <div class="subtitle">不仅仅是细胞新生，更是生命境界的巅峰体验 ，一次重新定义生命品质的旅程</div>
+            <div class="gold-divider"></div>东京站
+        </div>
+        
+        <div class="content">
+            <h2>超越治疗的焕活体验</h2>
+            <p>专为如您一般的行业领袖与时代精英，我们深知，真正的健康并非单一维度的生理指标，而是身体活力与精神丰盈的和谐共鸣。为此，我们颠覆传统医疗服务，将顶尖干细胞科技与日本深度文化体验完美融合，为您呈献一次真正意义上的身心合一的焕新之旅。</p>
+            
+            <div class="highlight-box">
+                <div style="font-size: 18px; margin-bottom: 10px;">尊享套餐</div>
+                <div class="package">
+                    <span class="original-price">¥450,000</span> 
+                    ¥388,000
+                </div>
+                <p>含价值35万元干细胞治疗 + 五日高端定制游<br>（立省¥60,000+，尊享价值¥50,000+的定制体验）</p>
+            </div>
+            
+            <div class="benefits-grid">
+                <div class="benefit-card">
+                    <div class="icon">♛</div>
+                    <div class="benefit-text">
+                        <h3>全程尊贵礼遇</h3>
+                        <p>专属健康管家 · 豪华商务座驾 · 顶级酒店套房 · VIP通道服务</p>
+                    </div>
+                </div>
+                <div class="benefit-card">
+                    <div class="icon">☯</div>
+                    <div class="benefit-text">
+                        <h3>身心深度调养</h3>
+                        <p>私密水疗护理 · 禅修文化体验 · 自然疗愈之旅 · 健康膳食计划</p>
+                    </div>
+                </div>
+                <div class="benefit-card">
+                    <div class="icon">✧</div>
+                    <div class="benefit-text">
+                        <h3>独家定制体验</h3>
+                        <p>米其林星厨私宴 · 国宝匠人工坊 · 威士忌酒厂品鉴 · 高端闭门社交</p>
+                    </div>
+                </div>
+            </div>
+            
+            <h2>首次赴日 · 5日焕活之旅 (细胞采集与体验)</h2>
+            <div class="itinerary">
+                <div class="day-card">
+                    <div class="day-header">Day 1｜尊荣抵达</div>
+                    <div class="day-content">
+                        <div class="experience">
+                            <h4>VIP接机礼遇</h4>
+                            <p>专属管家机场迎接致酒店下榻</p>
+                        </div>
+                        <div class="experience">
+                            <h4>SVIP上门体检</h4>
+                            <p>诊所专人上门采集体检样本</p>
+                        </div>
+                        <div class="experience">
+                            <h4>舒缓身心</h4>
+                            <p>定制水疗护理，怀石料理欢迎晚宴</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="day-card">
+                    <div class="day-header">Day 2｜细胞采集</div>
+                    <div class="day-content">
+                        <div class="experience">
+                            <h4>细胞采集</h4>
+                            <p>专车接送诊所，管家全程陪同完成</p>
+                        </div>
+                        <div class="experience">
+                            <h4>文化体验</h4>
+                            <p>浅草的茶与舞，感受制料亭艺伎茶道</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="day-card">
+                    <div class="day-header">Day 3｜自然与匠心</div>
+                    <div class="day-content">
+                        <div class="experience">
+                            <h4>匠心体验</h4>
+                            <p>探访国宝匠人工坊，或体验银座香道</p>
+                        </div>
+                        <div class="experience">
+                            <h4>夜游东京湾</h4>
+                            <p>白木匠造和风屋形船上怀石料理</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="day-card">
+                    <div class="day-header">Day 4｜深度文化</div>
+                    <div class="day-content">
+                        <div class="experience">
+                            <h4>能乐体验</h4>
+                            <p>探寻长山贵三郎的神秘能乐世界</p>
+                        </div>
+                        <div class="experience">
+                            <h4>世界文化遗产</h4>
+                            <p>夜游元兴寺与国宝禅堂坐禅体验</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="day-card">
+                    <div class="day-header">Day 5｜结束旅程</div>
+                    <div class="day-content">
+                        <div class="experience">
+                            <h4>茶道探访</h4>
+                            <p>拜访东京目黑区里千家茶道大师私宅</p>
+                        </div>
+                        <div class="experience">
+                            <h4>尊享返程</h4>
+                            <p>豪华座驾、专属管家护送返程</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <h2 style="margin-top: 50px;">二次赴日 · 核心回输 (约4周后)</h2>
+            <p>在您的细胞经过四周的精心培育与扩增后，我们将邀请您再次莅临日本，进行最核心的干细胞回输步骤。第二次的旅程将更为轻松、高效。</p>
+            <div class="benefits-grid">
+                <div class="benefit-card">
+                    <div class="icon">✈</div>
+                    <div class="benefit-text">
+                        <h3>高效便捷</h3>
+                        <p>单日即可完成核心回输流程，灵活安排您的宝贵时间。</p>
+                    </div>
+                </div>
+                 <div class="benefit-card">
+                    <div class="icon">✓</div>
+                    <div class="benefit-text">
+                        <h3>尊贵延续</h3>
+                        <p>我们同样为您安排VIP接送及全程陪同服务，确保体验的完美如一。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="cta-container">
+            <button class="cta-button">预约私人健康顾问 &rarr;</button>
+            <p style="margin-top: 15px; font-size: 14px;">每期限额5席，本期预约截止2025年7月31日</p>
+        </div>
+    </div>
+</body>
+</html>
