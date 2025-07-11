@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WASCELL - 后台管理</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
     <style>
         * {
             margin: 0;
@@ -204,6 +204,8 @@
             border-radius: 12px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
             margin-bottom: 30px;
+            position: relative;
+            min-height: 400px;
         }
         
         .chart-title {
@@ -211,6 +213,30 @@
             font-weight: 300;
             color: #333;
             margin-bottom: 20px;
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        
+        .chart-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #666;
+            font-size: 16px;
+        }
+        
+        .chart-error {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #e74c3c;
+            text-align: center;
         }
         
         .ip-stats {
@@ -300,19 +326,19 @@
         <!-- 实时统计卡片 -->
         <div class="stats-grid">
             <div class="stat-card">
-                <div id="todayVisits" class="stat-number">0</div>
+                <div id="todayVisits" class="stat-number">-</div>
                 <div class="stat-label">今日访问量</div>
             </div>
             <div class="stat-card">
-                <div id="todayUniqueIPs" class="stat-number">0</div>
+                <div id="todayUniqueIPs" class="stat-number">-</div>
                 <div class="stat-label">今日独立IP</div>
             </div>
             <div class="stat-card">
-                <div id="totalVisits" class="stat-number">0</div>
+                <div id="totalVisits" class="stat-number">-</div>
                 <div class="stat-label">总访问量</div>
             </div>
             <div class="stat-card">
-                <div id="totalIPs" class="stat-number">0</div>
+                <div id="totalIPs" class="stat-number">-</div>
                 <div class="stat-label">总独立IP</div>
             </div>
         </div>
@@ -330,7 +356,14 @@
         <!-- 图表 -->
         <div class="chart-container">
             <div class="chart-title">访问趋势</div>
-            <canvas id="visitChart" width="400" height="200"></canvas>
+            <div class="chart-wrapper">
+                <canvas id="visitChart"></canvas>
+                <div id="chartLoading" class="chart-loading hidden">加载图表中...</div>
+                <div id="chartError" class="chart-error hidden">
+                    <div>图表加载失败</div>
+                    <button onclick="adminPanel.loadChart()">重试</button>
+                </div>
+            </div>
         </div>
         
         <!-- IP统计表 -->
@@ -358,12 +391,59 @@
                 this.isLoggedIn = false;
                 this.currentPeriod = 'day';
                 this.chart = null;
+                this.sessionKey = 'wascell_admin_session';
                 this.init();
             }
             
             init() {
+                this.checkSession();
                 this.bindEvents();
                 this.startRealtimeUpdates();
+            }
+            
+            // 检查登录状态
+            checkSession() {
+                const session = sessionStorage.getItem(this.sessionKey);
+                if (session) {
+                    const sessionData = JSON.parse(session);
+                    const now = Date.now();
+                    
+                    // 检查会话是否过期（4小时）
+                    if (now - sessionData.timestamp < 4 * 60 * 60 * 1000) {
+                        this.isLoggedIn = true;
+                        this.showMainPanel();
+                        return;
+                    } else {
+                        this.clearSession();
+                    }
+                }
+                this.showLoginPanel();
+            }
+            
+            // 保存会话
+            saveSession() {
+                const sessionData = {
+                    timestamp: Date.now(),
+                    loggedIn: true
+                };
+                sessionStorage.setItem(this.sessionKey, JSON.stringify(sessionData));
+            }
+            
+            // 清除会话
+            clearSession() {
+                sessionStorage.removeItem(this.sessionKey);
+                this.isLoggedIn = false;
+            }
+            
+            showLoginPanel() {
+                document.getElementById('loginContainer').classList.remove('hidden');
+                document.getElementById('mainContainer').classList.add('hidden');
+            }
+            
+            showMainPanel() {
+                document.getElementById('loginContainer').classList.add('hidden');
+                document.getElementById('mainContainer').classList.remove('hidden');
+                this.loadDashboard();
             }
             
             bindEvents() {
@@ -403,9 +483,9 @@
                     
                     if (result.success) {
                         this.isLoggedIn = true;
-                        document.getElementById('loginContainer').classList.add('hidden');
-                        document.getElementById('mainContainer').classList.remove('hidden');
-                        this.loadDashboard();
+                        this.saveSession();
+                        this.showMainPanel();
+                        errorElement.classList.add('hidden');
                     } else {
                         errorElement.textContent = result.message;
                         errorElement.classList.remove('hidden');
@@ -418,11 +498,16 @@
             }
             
             logout() {
-                this.isLoggedIn = false;
-                document.getElementById('loginContainer').classList.remove('hidden');
-                document.getElementById('mainContainer').classList.add('hidden');
+                this.clearSession();
+                this.showLoginPanel();
                 document.getElementById('password').value = '';
                 document.getElementById('errorMessage').classList.add('hidden');
+                
+                // 清理图表
+                if (this.chart) {
+                    this.chart.destroy();
+                    this.chart = null;
+                }
             }
             
             switchPeriod(period) {
@@ -456,87 +541,143 @@
                     document.getElementById('totalIPs').textContent = data.totalIPs.toLocaleString();
                 } catch (error) {
                     console.error('加载实时统计失败:', error);
+                    // 设置错误状态显示
+                    document.getElementById('todayVisits').textContent = '-';
+                    document.getElementById('todayUniqueIPs').textContent = '-';
+                    document.getElementById('totalVisits').textContent = '-';
+                    document.getElementById('totalIPs').textContent = '-';
                 }
             }
             
             async loadChart() {
+                const loading = document.getElementById('chartLoading');
+                const error = document.getElementById('chartError');
+                
+                // 显示加载状态
+                loading.classList.remove('hidden');
+                error.classList.add('hidden');
+                
                 try {
                     const response = await fetch(`/api/admin/stats?period=${this.currentPeriod}`);
                     const data = await response.json();
                     
+                    loading.classList.add('hidden');
                     this.updateChart(data);
-                    this.updateIPTable(data.topIPs);
+                    this.updateIPTable(data.topIPs || []);
                 } catch (error) {
                     console.error('加载图表数据失败:', error);
+                    loading.classList.add('hidden');
+                    document.getElementById('chartError').classList.remove('hidden');
                 }
             }
             
             updateChart(data) {
-                const ctx = document.getElementById('visitChart').getContext('2d');
+                const ctx = document.getElementById('visitChart');
+                if (!ctx) return;
                 
-                if (this.chart) {
-                    this.chart.destroy();
-                }
-                
-                const labels = data.periodData.map(item => {
-                    if (this.currentPeriod === 'month') {
-                        return item.date;
-                    } else if (this.currentPeriod === 'week') {
-                        return item.date.split(' ~ ')[0];
-                    } else {
-                        return new Date(item.date).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+                try {
+                    // 销毁旧图表
+                    if (this.chart) {
+                        this.chart.destroy();
+                        this.chart = null;
                     }
-                });
-                
-                this.chart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: '访问量',
-                            data: data.periodData.map(item => item.visits),
-                            borderColor: '#667eea',
-                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                            borderWidth: 2,
-                            fill: true,
-                            tension: 0.4
-                        }, {
-                            label: '独立IP',
-                            data: data.periodData.map(item => item.uniqueIPs),
-                            borderColor: '#f093fb',
-                            backgroundColor: 'rgba(240, 147, 251, 0.1)',
-                            borderWidth: 2,
-                            fill: true,
-                            tension: 0.4
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: 'top'
-                            }
+                    
+                    const labels = data.periodData.map(item => {
+                        if (this.currentPeriod === 'month') {
+                            return item.date;
+                        } else if (this.currentPeriod === 'week') {
+                            return item.date.split(' ~ ')[0];
+                        } else {
+                            const date = new Date(item.date);
+                            return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+                        }
+                    });
+                    
+                    this.chart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: '访问量',
+                                data: data.periodData.map(item => item.visits || 0),
+                                borderColor: '#667eea',
+                                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.4,
+                                pointBackgroundColor: '#667eea',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 2,
+                                pointRadius: 4
+                            }, {
+                                label: '独立IP',
+                                data: data.periodData.map(item => item.uniqueIPs || 0),
+                                borderColor: '#f093fb',
+                                backgroundColor: 'rgba(240, 147, 251, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.4,
+                                pointBackgroundColor: '#f093fb',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 2,
+                                pointRadius: 4
+                            }]
                         },
-                        scales: {
-                            x: {
-                                grid: {
-                                    display: false
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                    labels: {
+                                        padding: 20,
+                                        usePointStyle: true
+                                    }
+                                },
+                                tooltip: {
+                                    mode: 'index',
+                                    intersect: false,
+                                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                    titleColor: '#fff',
+                                    bodyColor: '#fff',
+                                    borderColor: '#667eea',
+                                    borderWidth: 1
                                 }
                             },
-                            y: {
-                                beginAtZero: true,
-                                grid: {
-                                    color: 'rgba(0,0,0,0.05)'
+                            scales: {
+                                x: {
+                                    grid: {
+                                        display: false
+                                    },
+                                    ticks: {
+                                        maxRotation: 45
+                                    }
+                                },
+                                y: {
+                                    beginAtZero: true,
+                                    grid: {
+                                        color: 'rgba(0,0,0,0.05)'
+                                    },
+                                    ticks: {
+                                        precision: 0
+                                    }
+                                }
+                            },
+                            interaction: {
+                                intersect: false,
+                                mode: 'index'
+                            },
+                            elements: {
+                                point: {
+                                    hoverRadius: 8
                                 }
                             }
-                        },
-                        interaction: {
-                            intersect: false,
-                            mode: 'index'
                         }
-                    }
-                });
+                    });
+                } catch (error) {
+                    console.error('创建图表失败:', error);
+                    document.getElementById('chartError').classList.remove('hidden');
+                }
             }
             
             updateIPTable(topIPs) {
@@ -549,10 +690,10 @@
                 
                 tbody.innerHTML = topIPs.map(ip => `
                     <tr>
-                        <td>${ip.ip}</td>
-                        <td>${ip.count}</td>
-                        <td>${new Date(ip.firstVisit).toLocaleString('zh-CN')}</td>
-                        <td>${new Date(ip.lastVisit).toLocaleString('zh-CN')}</td>
+                        <td>${ip.ip || '-'}</td>
+                        <td>${ip.count || 0}</td>
+                        <td>${ip.firstVisit ? new Date(ip.firstVisit).toLocaleString('zh-CN') : '-'}</td>
+                        <td>${ip.lastVisit ? new Date(ip.lastVisit).toLocaleString('zh-CN') : '-'}</td>
                     </tr>
                 `).join('');
             }
@@ -567,8 +708,13 @@
             }
         }
         
+        // 全局变量供错误重试使用
+        let adminPanel;
+        
         // 启动应用
-        new AdminPanel();
+        document.addEventListener('DOMContentLoaded', () => {
+            adminPanel = new AdminPanel();
+        });
     </script>
 </body>
 </html> 
