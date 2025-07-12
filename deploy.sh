@@ -8,7 +8,7 @@ set -e
 echo "🚀 开始部署 WASCELL 网站..."
 
 # 配置信息
-SERVER_IP="156.227.235.254"
+SERVER_IP="156.236.74.200"
 SERVER_USER="root"
 SERVER_PASS="Pr971V3j"
 APP_DIR="/root/wascell"
