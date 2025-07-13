@@ -47,6 +47,26 @@ npm start
 
 ### 服务器部署
 
+#### 📋 配置部署环境
+
+```bash
+# 复制部署配置示例
+cp .env.deploy.example .env.deploy
+
+# 编辑部署配置
+nano .env.deploy
+```
+
+#### 🚀 自动部署
+
+```bash
+# 一键部署到服务器
+chmod +x deploy.sh
+./deploy.sh
+```
+
+#### 🔧 手动部署
+
 ```bash
 # 在服务器上安装依赖
 npm install --production
@@ -65,6 +85,14 @@ npm run pm2:stop
 
 # 重启服务
 npm run pm2:restart
+```
+
+#### 🔍 部署后检查
+
+```bash
+# 检查服务器状态
+chmod +x server-test.sh
+./server-test.sh
 ```
 
 ## 端口配置

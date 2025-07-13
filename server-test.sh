@@ -4,12 +4,18 @@
 
 set -e
 
+# 加载部署配置
+if [ -f ".env.deploy" ]; then
+    echo "📋 加载部署配置..."
+    export $(cat .env.deploy | grep -v '^#' | xargs)
+fi
+
 echo "🔄 服务器重启后状态检查..."
 
-# 配置信息
-SERVER_IP="156.227.235.254"
-SERVER_USER="root"
-SERVER_PASS="Pr971V3j"
+# 配置信息（与deploy.sh保持一致）
+SERVER_IP="${DEPLOY_SERVER_IP:-156.236.74.200}"
+SERVER_USER="${DEPLOY_SERVER_USER:-root}"
+SERVER_PASS="${DEPLOY_SERVER_PASS:-Pr971V3j}"
 
 echo "📡 检查服务器连接..."
 sshpass -p "$SERVER_PASS" ssh "$SERVER_USER@$SERVER_IP" "echo '✅ 服务器连接正常'"
