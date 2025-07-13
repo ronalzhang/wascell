@@ -4,7 +4,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 cursor/
-deploy.sh
 
 # Runtime data
 pids
@@ -51,6 +50,7 @@ jspm_packages/
 
 # dotenv environment variables file
 .env
+.env.deploy
 
 # next.js build output
 .next
