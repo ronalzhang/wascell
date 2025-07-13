@@ -214,7 +214,8 @@ function getToday() {
 async function getStatsAsync() {
     try {
         if (fs.existsSync(STATS_FILE)) {
-            const data = JSON.parse(await readFileAsync(STATS_FILE, 'utf8'));
+            const fileContent = await readFileAsync(STATS_FILE, 'utf8');
+            const data = JSON.parse(fileContent);
             // 恢复Set对象
             if (data.daily) {
                 Object.keys(data.daily).forEach(date => {
@@ -225,6 +226,19 @@ async function getStatsAsync() {
         }
     } catch (error) {
         console.error('读取统计数据失败:', error);
+        // JSON解析失败时，重置统计文件
+        const defaultStats = {
+            totalVisits: 0,
+            daily: {},
+            ipStats: {}
+        };
+        try {
+            await writeFileAsync(STATS_FILE, JSON.stringify(defaultStats, null, 2));
+            console.log('已重置统计数据文件');
+        } catch (writeError) {
+            console.error('重置统计数据文件失败:', writeError);
+        }
+        return defaultStats;
     }
     
     return {
@@ -238,7 +252,8 @@ async function getStatsAsync() {
 function getStats() {
     try {
         if (fs.existsSync(STATS_FILE)) {
-            const data = JSON.parse(fs.readFileSync(STATS_FILE, 'utf8'));
+            const fileContent = fs.readFileSync(STATS_FILE, 'utf8');
+            const data = JSON.parse(fileContent);
             // 恢复Set对象
             if (data.daily) {
                 Object.keys(data.daily).forEach(date => {
@@ -249,6 +264,19 @@ function getStats() {
         }
     } catch (error) {
         console.error('读取统计数据失败:', error);
+        // JSON解析失败时，重置统计文件
+        const defaultStats = {
+            totalVisits: 0,
+            daily: {},
+            ipStats: {}
+        };
+        try {
+            fs.writeFileSync(STATS_FILE, JSON.stringify(defaultStats, null, 2));
+            console.log('已重置统计数据文件');
+        } catch (writeError) {
+            console.error('重置统计数据文件失败:', writeError);
+        }
+        return defaultStats;
     }
     
     return {
