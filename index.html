@@ -275,13 +275,63 @@
         .place-desc {
             padding: 2.5rem;
             background: #ffffff;
-            line-height: 1.8;
-            font-size: 1.1rem;
-            color: #444;
+            line-height: 1.9;
+            font-size: 1.05rem;
+            color: #333;
+            text-align: justify;
         }
         
         .place-desc p {
             margin: 0;
+            text-indent: 2em;
+            margin-bottom: 1.2em;
+        }
+        
+        .place-desc p:last-child {
+            margin-bottom: 0;
+        }
+        
+        .place-highlight {
+            background: #f8f6f0;
+            padding: 1.5rem;
+            border-left: 4px solid var(--gold);
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .place-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        .place-feature {
+            background: #f9f9f9;
+            padding: 1rem;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px solid #e5e5e5;
+        }
+        
+        .place-feature strong {
+            color: var(--navy);
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        
+        .benefit-highlight {
+            background: linear-gradient(135deg, var(--gold), #d4b896);
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 0.8rem;
+            display: inline-block;
+            width: 100%;
+            box-shadow: 0 2px 8px rgba(192, 168, 120, 0.3);
         }
         
     </style>
@@ -311,24 +361,27 @@
             
             <div class="benefits-grid">
                 <div class="benefit-card">
-                    <div class="icon">♛</div>
+                    <div class="icon">🔬</div>
                     <div class="benefit-text">
-                        <h3>全程尊贵礼遇</h3>
-                        <p>专属健康管家 · 豪华商务座驾 · 顶级酒店套房 · VIP通道服务</p>
+                        <h3>国内唯一全维体检</h3>
+                        <p>血液全项+癌症筛查双重保障，超越国内常规体检标准，让您全面洞察身体状态</p>
+                        <div class="benefit-highlight">比国内体检更全面3倍</div>
                     </div>
                 </div>
                 <div class="benefit-card">
-                    <div class="icon">☯</div>
+                    <div class="icon">🧬</div>
                     <div class="benefit-text">
-                        <h3>身心深度调养</h3>
-                        <p>私密水疗护理 · 禅修文化体验 · 自然疗愈之旅 · 健康膳食计划</p>
+                        <h3>会员制干细胞治疗</h3>
+                        <p>预约制专属医疗资源，享受顶级圈层医疗服务，开启精英社交新维度</p>
+                        <div class="benefit-highlight">仅限会员预约资格</div>
                     </div>
                 </div>
                 <div class="benefit-card">
-                    <div class="icon">✧</div>
+                    <div class="icon">🎯</div>
                     <div class="benefit-text">
-                        <h3>独家定制体验</h3>
-                        <p>米其林星厨私宴 · 国宝匠人工坊 · 威士忌酒厂品鉴 · 高端闭门社交</p>
+                        <h3>绝无仅有的体验</h3>
+                        <p>非公开料亭·私人茶道·国宝工坊，一般人无法预约的稀缺文化体验</p>
+                        <div class="benefit-highlight">99%的人体验不到</div>
                     </div>
                 </div>
             </div>
@@ -448,7 +501,28 @@
                 <img src="imgs/kaiseki.jpg" 
                     alt="白木匠造和风屋形船 · 夜游东京湾" class="place-image">
                 <div class="place-desc">
-                    <p>纯白木建造的船内高雅古典,搭配现代风吧台桌椅,仅能乘坐10位宾客。东京唯一一艘高级屋形船,2023年被东京市政府认可的意匠典范。日本料理大厨乘船为宾客精心准备怀石料理,透过窗户可以看到闪耀的夜景和四季变幻的东京风景。请享受这一无二的"日本文化"，从平安时代延续至今备受喜爱的"屋形船"文化中，通过"这无与伦比的特别空间"和"品味美食与传统的用餐体验"，度过奢华的时光。</p>
+                    <p>纯白木建造的船内高雅古典，搭配现代风吧台桌椅，仅能乘坐10位宾客。这是东京唯一一艘高级屋形船，于2023年被东京市政府认可为意匠典范。</p>
+                    
+                    <div class="place-highlight">
+                        <strong>独家体验</strong>：日本料理大厨乘船为宾客精心准备怀石料理，透过窗户可以看到闪耀的夜景和四季变幻的东京风景。
+                    </div>
+                    
+                    <p>从平安时代延续至今备受喜爱的"屋形船"文化，通过这无与伦比的特别空间和品味美食与传统的用餐体验，让您度过奢华的时光。</p>
+                    
+                    <div class="place-features">
+                        <div class="place-feature">
+                            <strong>限定座位</strong>
+                            仅10位宾客
+                        </div>
+                        <div class="place-feature">
+                            <strong>官方认证</strong>
+                            政府认可典范
+                        </div>
+                        <div class="place-feature">
+                            <strong>专属大厨</strong>
+                            船上怀石料理
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -462,7 +536,32 @@
                 <img src="imgs/geisha.jpg" 
                     alt="浅草的茶与舞之间 · 介绍制艺伎茶道" class="place-image">
                 <div class="place-desc">
-                    <p>在浅草的静谧街巷中，隐匿着一家非公开制、预约限定的老字号料亭。自1950年创立以来，这里始终作为体验日本艺妓文化的私密场所，采用介绍制接待，普通客人无法自行入内。此次特别安排，将带领贵宾走入这座历史悠久的料亭，在全包间的私密空间中，沉浸式体验两项极具代表性的日本传统文化。首先，由正统艺妓在和式包厢中亲自演绎日本茶道。不同于一般的茶席观赏，这是一场由艺妓亲自奉茶、细致讲解，并与客人互动的体验，融合了优雅仪态与细腻礼法，让您亲身感受到"一期一会"的茶道精神。茶道结束后，艺妓将带来传统舞蹈表演。您可在温馨愉快的氛围中，进一步了解艺妓的所作所为，感受其所承载的日本待客之道与审美文化。</p>
+                    <p>在浅草的静谧街巷中，隐匿着一家非公开制、预约限定的老字号料亭。自1950年创立以来，这里始终作为体验日本艺妓文化的私密场所。</p>
+                    
+                    <div class="place-highlight">
+                        <strong>绝对稀缺</strong>：采用介绍制接待，普通客人无法自行入内，此次为您特别安排进入。
+                    </div>
+                    
+                    <p>在全包间的私密空间中，您将沉浸式体验两项极具代表性的日本传统文化：</p>
+                    
+                    <p><strong>正统茶道体验</strong> —— 由艺妓在和式包厢中亲自演绎，包含奉茶、讲解、互动，让您感受"一期一会"的茶道精神。</p>
+                    
+                    <p><strong>传统舞蹈表演</strong> —— 艺妓将带来私人表演，在温馨氛围中深入了解日本待客之道与审美文化。</p>
+                    
+                    <div class="place-features">
+                        <div class="place-feature">
+                            <strong>创立时间</strong>
+                            1950年老字号
+                        </div>
+                        <div class="place-feature">
+                            <strong>接待方式</strong>
+                            介绍制专属
+                        </div>
+                        <div class="place-feature">
+                            <strong>文化体验</strong>
+                            茶道+舞蹈
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -476,7 +575,30 @@
                 <img src="imgs/longtemple.jpg" 
                         alt="世界文化遗产 · 龙安寺" class="place-image">
                 <div class="place-desc">
-                    <p>龙安寺是一座由室町时代东军大将细川胜元于宝德二年（公元1450年）创建的禅宗古寺，以其悠久的历史和精致的艺术而闻名于世。寺内的庭园被誉为日本庭园抽象美的代表之一。在方丈前的一片矩形白砂地上，分布着五组青苔覆盖的岩石，这种简约而优雅的布局展现出了极致的平衡与和谐。龙安寺的建立正值日本视觉艺术发生大革新之时，其庭园设计风格树一帜，成为了日本传统庭园艺术的杰出代表。龙安寺庭园被联合国教科文组织指定为世界文化遗产，这证明了其在日本文化史上的要地位。寺内的枯山水庭园展示了对自然的敬畏和对美的追求，同时也体现了禅宗的精神理念。漫步于龙安寺庭园，仿佛能够感受到岁月的静好和心灵的净化，体验到自然与人文的完美融合。</p>
+                    <p>龙安寺是一座由室町时代东军大将细川胜元于宝德二年（公元1450年）创建的禅宗古寺，以其悠久的历史和精致的艺术而闻名于世。</p>
+                    
+                    <div class="place-highlight">
+                        <strong>世界文化遗产</strong>：联合国教科文组织指定，证明其在日本文化史上的重要地位。
+                    </div>
+                    
+                    <p>寺内的庭园被誉为日本庭园抽象美的代表之一。在方丈前的一片矩形白砂地上，分布着五组青苔覆盖的岩石，这种简约而优雅的布局展现出了极致的平衡与和谐。</p>
+                    
+                    <p>龙安寺的建立正值日本视觉艺术发生大革新之时，其庭园设计风格独树一帜。枯山水庭园展示了对自然的敬畏和对美的追求，同时体现了禅宗的精神理念。</p>
+                    
+                    <div class="place-features">
+                        <div class="place-feature">
+                            <strong>建立年代</strong>
+                            公元1450年
+                        </div>
+                        <div class="place-feature">
+                            <strong>庭园特色</strong>
+                            枯山水经典
+                        </div>
+                        <div class="place-feature">
+                            <strong>文化价值</strong>
+                            世界遗产
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -490,7 +612,30 @@
                 <img src="imgs/home.jpg" 
                         alt="拜访日本茶人私宅 · 茶道体验" class="place-image">
                 <div class="place-desc">
-                    <p>来到位于东京市中心的著名豪宅区目黑柿木坂，探访里千家茶道的大师舩越老师的宅邸。舩越老师是里千家家元的关门弟子，他在京都专注于茶道研习已逾三十载。与其夫人一同，他们都是职业的茶人，且怀抱着对中国文化的深厚喜爱。舩越老师的宅邸，虽然位于东京这个繁华都市的中心地带，却环境幽雅安静。建筑风格特，融合了传统与现代的元素，常人很少有机会得以一窥。在这里，我们将有机会亲眼目睹舩越老师展示的茶道礼法，领略其中的优雅与细腻。在轻松愉悦的氛围中，我们将品尝到一杯由老师亲手调制的现打抹茶，以及精心准备的日本点心。在品味美味的同时，我们还将学习到简单而基础的茶室礼仪，感受到茶道文化的深厚底蕴与温暖人心的魅力。</p>
+                    <p>位于东京市中心著名豪宅区目黑柿木坂，探访里千家茶道大师舩越老师的私人宅邸。舩越老师是里千家家元的关门弟子，在京都专注茶道研习已逾三十载。</p>
+                    
+                    <div class="place-highlight">
+                        <strong>私人独享</strong>：常人很少有机会得以一窥的私人茶室，融合传统与现代的独特建筑风格。
+                    </div>
+                    
+                    <p>与其夫人一同，他们都是职业茶人，且怀抱着对中国文化的深厚喜爱。虽位于繁华都市中心，却环境幽雅安静。</p>
+                    
+                    <p><strong>专属体验</strong>：亲眼目睹茶道礼法展示，品尝老师亲手调制的现打抹茶，学习茶室礼仪，感受茶道文化的深厚底蕴。</p>
+                    
+                    <div class="place-features">
+                        <div class="place-feature">
+                            <strong>茶道地位</strong>
+                            家元关门弟子
+                        </div>
+                        <div class="place-feature">
+                            <strong>研习时间</strong>
+                            三十载专精
+                        </div>
+                        <div class="place-feature">
+                            <strong>独特体验</strong>
+                            私宅茶道
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

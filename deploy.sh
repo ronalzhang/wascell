@@ -57,13 +57,19 @@ fi
 
 # 5. 重启应用
 echo "🔄 重启应用..."
-if ! sshpass -p "$SERVER_PASS" ssh "$SERVER_USER@$SERVER_IP" "pm2 restart $APP_NAME 2>/dev/null || pm2 start $APP_DIR/app.js --name $APP_NAME"; then
-    echo "❌ PM2重启失败，尝试直接启动..."
+if ! sshpass -p "$SERVER_PASS" ssh "$SERVER_USER@$SERVER_IP" "cd $APP_DIR && pm2 restart $APP_NAME 2>/dev/null"; then
+    echo "⚠️  重启失败，尝试删除并重新创建应用..."
+    sshpass -p "$SERVER_PASS" ssh "$SERVER_USER@$SERVER_IP" "cd $APP_DIR && pm2 delete $APP_NAME 2>/dev/null || true"
     sshpass -p "$SERVER_PASS" ssh "$SERVER_USER@$SERVER_IP" "cd $APP_DIR && pm2 start app.js --name $APP_NAME" || {
         echo "❌ 应用启动失败，请手动检查"
         exit 1
     }
+    echo "✅ 应用重新创建成功"
 fi
+
+# 保存PM2配置
+echo "💾 保存PM2配置..."
+sshpass -p "$SERVER_PASS" ssh "$SERVER_USER@$SERVER_IP" "pm2 save"
 
 # 6. 检查应用状态
 echo "✅ 检查应用状态..."
