@@ -35,10 +35,18 @@ fi
 
 # 3. 在服务器上拉取最新代码
 echo "📥 在服务器上拉取最新代码..."
+echo "🔧 清理服务器上的未跟踪文件..."
+sshpass -p "$SERVER_PASS" ssh "$SERVER_USER@$SERVER_IP" "cd $APP_DIR && git clean -fd"
+echo "🔄 重置本地更改..."
+sshpass -p "$SERVER_PASS" ssh "$SERVER_USER@$SERVER_IP" "cd $APP_DIR && git reset --hard HEAD"
+echo "📥 拉取最新代码..."
 if ! sshpass -p "$SERVER_PASS" ssh "$SERVER_USER@$SERVER_IP" "cd $APP_DIR && git pull origin main"; then
-    echo "❌ Git拉取失败，请检查服务器上的Git仓库状态"
-    echo "🔧 尝试手动操作: ssh $SERVER_USER@$SERVER_IP 'cd $APP_DIR && git status'"
-    exit 1
+    echo "❌ Git拉取失败，尝试强制更新..."
+    sshpass -p "$SERVER_PASS" ssh "$SERVER_USER@$SERVER_IP" "cd $APP_DIR && git fetch origin && git reset --hard origin/main" || {
+        echo "❌ 强制更新也失败，请手动检查Git仓库状态"
+        echo "🔧 手动操作: ssh $SERVER_USER@$SERVER_IP 'cd $APP_DIR && git status'"
+        exit 1
+    }
 fi
 
 # 4. 安装依赖（如果有更新）
