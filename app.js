@@ -1,12 +1,22 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const { promisify } = require('util');
 const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
 
+// 异步文件操作
+const writeFileAsync = promisify(fs.writeFile);
+const appendFileAsync = promisify(fs.appendFile);
+const readFileAsync = promisify(fs.readFile);
+const existsAsync = promisify(fs.exists);
+const statAsync = promisify(fs.stat);
+const renameAsync = promisify(fs.rename);
+
 const app = express();
 const PORT = process.env.PORT || 3003; // 使用3003端口避免与其他应用冲突
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '123abc74531'; // 从环境变量读取管理员密码
 
 // 访问日志文件路径
 const LOG_FILE = path.join(__dirname, 'access.log');
@@ -14,7 +24,15 @@ const STATS_FILE = path.join(__dirname, 'stats.json');
 
 // 中间件配置
 app.use(helmet({
-    contentSecurityPolicy: false, // 允许内联样式和脚本
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            scriptSrc: ["'self'", "'unsafe-inline'"],
+            imgSrc: ["'self'", "data:"],
+            connectSrc: ["'self'"]
+        }
+    }
 }));
 app.use(compression());
 app.use(cors());
@@ -37,13 +55,16 @@ app.use((req, res, next) => {
         referer
     };
     
-    // 写入访问日志
-    fs.appendFile(LOG_FILE, JSON.stringify(logEntry) + '\n', (err) => {
-        if (err) console.error('写入日志失败:', err);
+    // 异步写入访问日志和更新统计
+    setImmediate(async () => {
+        try {
+            await appendFileAsync(LOG_FILE, JSON.stringify(logEntry) + '\n');
+            await rotateLogIfNeeded();
+            await updateStatsAsync(logEntry);
+        } catch (error) {
+            console.error('写入日志或更新统计失败:', error);
+        }
     });
-    
-    // 更新统计数据
-    updateStats(logEntry);
     
     next();
 });
@@ -51,7 +72,7 @@ app.use((req, res, next) => {
 // 更新统计数据
 function updateStats(logEntry) {
     let stats = getStats();
-    const today = new Date().toISOString().split('T')[0];
+    const today = getToday();
     
     // 初始化今日数据
     if (!stats.daily[today]) {
@@ -104,6 +125,115 @@ function updateStats(logEntry) {
     });
 }
 
+// 日志轮转功能
+async function rotateLogIfNeeded() {
+    try {
+        if (fs.existsSync(LOG_FILE)) {
+            const stats = await statAsync(LOG_FILE);
+            const fileSizeMB = stats.size / (1024 * 1024);
+            
+            // 如果日志文件超过50MB，进行轮转
+            if (fileSizeMB > 50) {
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                const backupFile = path.join(__dirname, `access-${timestamp}.log`);
+                await renameAsync(LOG_FILE, backupFile);
+                console.log(`日志文件已轮转: ${backupFile}`);
+            }
+        }
+    } catch (error) {
+        console.error('日志轮转失败:', error);
+    }
+}
+
+// 异步更新统计数据
+async function updateStatsAsync(logEntry) {
+    try {
+        let stats = await getStatsAsync();
+        const today = getToday();
+        
+        // 初始化今日数据
+        if (!stats.daily[today]) {
+            stats.daily[today] = {
+                totalVisits: 0,
+                uniqueIPs: new Set(),
+                pages: {}
+            };
+        }
+        
+        // 更新统计
+        stats.totalVisits++;
+        stats.daily[today].totalVisits++;
+        stats.daily[today].uniqueIPs.add(logEntry.ip);
+        
+        // 页面访问统计
+        if (!stats.daily[today].pages[logEntry.url]) {
+            stats.daily[today].pages[logEntry.url] = 0;
+        }
+        stats.daily[today].pages[logEntry.url]++;
+        
+        // IP统计
+        if (!stats.ipStats[logEntry.ip]) {
+            stats.ipStats[logEntry.ip] = {
+                count: 0,
+                firstVisit: logEntry.timestamp,
+                lastVisit: logEntry.timestamp
+            };
+        }
+        stats.ipStats[logEntry.ip].count++;
+        stats.ipStats[logEntry.ip].lastVisit = logEntry.timestamp;
+        
+        // 转Set为数组保存
+        const dailyStats = {};
+        Object.keys(stats.daily).forEach(date => {
+            dailyStats[date] = {
+                ...stats.daily[date],
+                uniqueIPs: Array.from(stats.daily[date].uniqueIPs)
+            };
+        });
+        
+        const saveStats = {
+            ...stats,
+            daily: dailyStats
+        };
+        
+        // 异步写入统计文件
+        await writeFileAsync(STATS_FILE, JSON.stringify(saveStats, null, 2));
+    } catch (error) {
+        console.error('更新统计数据失败:', error);
+    }
+}
+
+// 获取当前日期(中国时区)
+function getToday() {
+    const now = new Date();
+    const chinaTime = new Date(now.getTime() + (8 * 60 * 60 * 1000)); // UTC+8
+    return chinaTime.toISOString().split('T')[0];
+}
+
+// 异步获取统计数据
+async function getStatsAsync() {
+    try {
+        if (fs.existsSync(STATS_FILE)) {
+            const data = JSON.parse(await readFileAsync(STATS_FILE, 'utf8'));
+            // 恢复Set对象
+            if (data.daily) {
+                Object.keys(data.daily).forEach(date => {
+                    data.daily[date].uniqueIPs = new Set(data.daily[date].uniqueIPs || []);
+                });
+            }
+            return data;
+        }
+    } catch (error) {
+        console.error('读取统计数据失败:', error);
+    }
+    
+    return {
+        totalVisits: 0,
+        daily: {},
+        ipStats: {}
+    };
+}
+
 // 获取统计数据
 function getStats() {
     try {
@@ -139,19 +269,35 @@ app.use(express.static('.', {
 
 // 后台管理API - 验证密码
 app.post('/api/admin/login', (req, res) => {
-    const { password } = req.body;
-    const ADMIN_PASSWORD = '123abc74531'; // 管理员密码
-    
-    if (password === ADMIN_PASSWORD) {
-        res.json({ success: true, message: '登录成功' });
-    } else {
-        res.status(401).json({ success: false, message: '密码错误' });
+    try {
+        const { password } = req.body;
+        
+        // 输入验证
+        if (!password || typeof password !== 'string') {
+            return res.status(400).json({ success: false, message: '密码格式无效' });
+        }
+        
+        if (password === ADMIN_PASSWORD) {
+            res.json({ success: true, message: '登录成功' });
+        } else {
+            res.status(401).json({ success: false, message: '密码错误' });
+        }
+    } catch (error) {
+        console.error('登录验证失败:', error);
+        res.status(500).json({ success: false, message: '服务器内部错误' });
     }
 });
 
 // 获取统计数据API
 app.get('/api/admin/stats', async (req, res) => { // 标记为 async
-    const { period = 'day' } = req.query;
+    try {
+        const { period = 'day' } = req.query;
+        
+        // 输入验证
+        const validPeriods = ['day', 'week', 'month', 'last3days'];
+        if (!validPeriods.includes(period)) {
+            return res.status(400).json({ message: '无效的时间周期参数' });
+        }
     
     // 对于last3days，我们需要从原始日志计算，因为stats.json是按天聚合的
     if (period === 'last3days') {
@@ -253,6 +399,10 @@ app.get('/api/admin/stats', async (req, res) => { // 标记为 async
         .slice(0, 10);
     
     res.json(result);
+    } catch (error) {
+        console.error('获取统计数据失败:', error);
+        res.status(500).json({ message: '服务器内部错误' });
+    }
 });
 
 // 新函数：从日志文件异步获取每小时统计
@@ -318,16 +468,21 @@ async function getHourlyStatsFromLog() {
 
 // 获取实时数据
 app.get('/api/admin/realtime', (req, res) => {
-    const stats = getStats();
-    const today = new Date().toISOString().split('T')[0];
-    const todayData = stats.daily[today] || { totalVisits: 0, uniqueIPs: [] };
-    
-    res.json({
-        todayVisits: todayData.totalVisits,
-        todayUniqueIPs: Array.isArray(todayData.uniqueIPs) ? todayData.uniqueIPs.length : 0,
-        totalVisits: stats.totalVisits,
-        totalIPs: Object.keys(stats.ipStats).length
-    });
+    try {
+        const stats = getStats();
+        const today = getToday();
+        const todayData = stats.daily[today] || { totalVisits: 0, uniqueIPs: [] };
+        
+        res.json({
+            todayVisits: todayData.totalVisits,
+            todayUniqueIPs: Array.isArray(todayData.uniqueIPs) ? todayData.uniqueIPs.length : 0,
+            totalVisits: stats.totalVisits,
+            totalIPs: Object.keys(stats.ipStats).length
+        });
+    } catch (error) {
+        console.error('获取实时数据失败:', error);
+        res.status(500).json({ message: '服务器内部错误' });
+    }
 });
 
 // 管理后台路由
