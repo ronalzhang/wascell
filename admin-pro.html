@@ -805,9 +805,9 @@
             <span>时间周期：</span>
             <div class="period-buttons">
                 <button class="period-btn active" data-period="last3days">近3日</button>
-                <button class="period-btn" data-period="last7days">近7日</button>
-                <button class="period-btn" data-period="last30days">近30日</button>
-                <button class="period-btn" data-period="last90days">近90日</button>
+                <button class="period-btn" data-period="day">每日</button>
+                <button class="period-btn" data-period="week">每周</button>
+                <button class="period-btn" data-period="month">每月</button>
 
             </div>
         </div>
@@ -1187,6 +1187,41 @@
                 setTimeout(() => {
                     this.showNotification('欢迎回来！数据加载中...', 'info', 2000);
                 }, 500);
+                
+                // 检测可用的API端点
+                this.checkAvailableEndpoints();
+            }
+            
+            // 检测可用的API端点
+            async checkAvailableEndpoints() {
+                const periods = ['last3days', 'day', 'week', 'month'];
+                const availablePeriods = [];
+                
+                for (const period of periods) {
+                    try {
+                        const response = await fetch(`/api/admin/stats?period=${period}`, {
+                            headers: this.sessionId ? { 'X-Session-ID': this.sessionId } : {}
+                        });
+                        if (response.ok) {
+                            availablePeriods.push(period);
+                        }
+                    } catch (error) {
+                        // 静默失败
+                    }
+                }
+                
+                // 禁用不可用的按钮
+                document.querySelectorAll('.period-btn').forEach(btn => {
+                    const period = btn.dataset.period;
+                    if (!availablePeriods.includes(period)) {
+                        btn.disabled = true;
+                        btn.style.opacity = '0.5';
+                        btn.style.cursor = 'not-allowed';
+                        btn.title = `后端API不支持此时间周期: ${period}`;
+                    }
+                });
+                
+                console.log('可用的API端点:', availablePeriods);
             }
             
             bindEvents() {
@@ -1433,14 +1468,21 @@
                 document.querySelectorAll('.period-btn').forEach(btn => {
                     btn.classList.remove('active');
                 });
-                document.querySelector(`[data-period="${period}"]`).classList.add('active');
+                
+                const targetBtn = document.querySelector(`[data-period="${period}"]`);
+                if (targetBtn) {
+                    targetBtn.classList.add('active');
+                } else {
+                    // 如果按钮不存在，默认选中第一个
+                    document.querySelector('.period-btn').classList.add('active');
+                }
                 
                 // 显示数据类型说明
                 const descriptions = {
                     'last3days': '近3日按小时统计',
-                    'last7days': '近7日按天统计', 
-                    'last30days': '近30日按天统计',
-                    'last90days': '近90日按天统计'
+                    'day': '每日按天统计', 
+                    'week': '每周按天统计',
+                    'month': '每月按天统计'
                 };
                 this.showNotification(descriptions[period] || '数据统计', 'info', 2000);
                 
@@ -1575,11 +1617,24 @@
                     loading.classList.add('hidden');
                     const errorElement = document.getElementById('chartError');
                     errorElement.classList.remove('hidden');
+                    
+                    let errorMessage = '图表加载失败';
+                    let suggestion = '';
+                    
+                    if (error.message.includes('400')) {
+                        errorMessage = `不支持的时间周期: ${this.currentPeriod}`;
+                        suggestion = '请尝试切换到“近3日”查看数据。如果您需要其他时间周期，请联系管理员配置后端API支持。';
+                    } else {
+                        errorMessage = `图表加载失败: ${error.message}`;
+                    }
+                    
                     errorElement.innerHTML = `
-                        <div>图表加载失败: ${error.message}</div>
-                        <button onclick="adminPanel.loadChart()" style="margin-top: 10px; padding: 5px 10px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer;">重试</button>
+                        <div style="margin-bottom: 10px;">${errorMessage}</div>
+                        ${suggestion ? `<div style="font-size: 12px; color: #666; margin-bottom: 15px;">${suggestion}</div>` : ''}
+                        <button onclick="adminPanel.loadChart()" style="margin-right: 10px; padding: 5px 10px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer;">重试</button>
+                        <button onclick="adminPanel.switchPeriod('last3days')" style="padding: 5px 10px; background: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer;">切换到近3日</button>
                     `;
-                    this.showNotification('图表数据加载失败', 'error');
+                    this.showNotification(errorMessage, 'error');
                 } finally {
                     this.hideProgress();
                     if (refreshBtn) {
@@ -1606,14 +1661,14 @@
                         if (this.currentPeriod === 'last3days') {
                             // 近3日按小时显示
                             return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:00`;
-                        } else if (this.currentPeriod === 'last7days') {
-                            // 近7日按天显示
+                        } else if (this.currentPeriod === 'day') {
+                            // 每日按天显示
                             return `${date.getMonth() + 1}/${date.getDate()}`;
-                        } else if (this.currentPeriod === 'last30days') {
-                            // 近30日按天显示
+                        } else if (this.currentPeriod === 'week') {
+                            // 每周按天显示
                             return `${date.getMonth() + 1}/${date.getDate()}`;
-                        } else if (this.currentPeriod === 'last90days') {
-                            // 近90日按天显示
+                        } else if (this.currentPeriod === 'month') {
+                            // 每月按天显示
                             return `${date.getMonth() + 1}/${date.getDate()}`;
                         } else {
                             // 默认显示
