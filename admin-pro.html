@@ -805,9 +805,9 @@
             <span>时间周期：</span>
             <div class="period-buttons">
                 <button class="period-btn active" data-period="last3days">近3日</button>
-                <button class="period-btn" data-period="day">每日</button>
-                <button class="period-btn" data-period="week">每周</button>
-                <button class="period-btn" data-period="month">每月</button>
+                <button class="period-btn" data-period="last7days">近7日</button>
+                <button class="period-btn" data-period="last30days">近30日</button>
+                <button class="period-btn" data-period="last90days">近90日</button>
 
             </div>
         </div>
@@ -1435,6 +1435,15 @@
                 });
                 document.querySelector(`[data-period="${period}"]`).classList.add('active');
                 
+                // 显示数据类型说明
+                const descriptions = {
+                    'last3days': '近3日按小时统计',
+                    'last7days': '近7日按天统计', 
+                    'last30days': '近30日按天统计',
+                    'last90days': '近90日按天统计'
+                };
+                this.showNotification(descriptions[period] || '数据统计', 'info', 2000);
+                
                 // 重新加载图表
                 this.loadChart();
             }
@@ -1544,6 +1553,17 @@
                     
                     loading.classList.add('hidden');
                     
+                    // 调试信息：输出API返回的数据结构
+                    console.log(`API返回数据 (${this.currentPeriod}):`, data);
+                    if (data.periodData && data.periodData.length > 0) {
+                        console.log('数据点数量:', data.periodData.length);
+                        console.log('第一个数据点:', data.periodData[0]);
+                        console.log('最后一个数据点:', data.periodData[data.periodData.length - 1]);
+                        const totalVisits = data.periodData.reduce((sum, item) => sum + (item.visits || 0), 0);
+                        const totalIPs = data.periodData.reduce((sum, item) => sum + (item.uniqueIPs || 0), 0);
+                        console.log(`总访问量: ${totalVisits}, 总独立IP: ${totalIPs}`);
+                    }
+                    
                     if (data.periodData && Array.isArray(data.periodData)) {
                         this.updateChart(data);
                         this.updateIPTable(data.topIPs || []);
@@ -1581,15 +1601,22 @@
                     }
                     
                     const labels = data.periodData.map(item => {
-                        if (this.currentPeriod === 'month') {
-                            return item.date;
-                        } else if (this.currentPeriod === 'week') {
-                            return item.date.split(' ~ ')[0];
-                        } else if (this.currentPeriod === 'last3days') {
-                            const date = new Date(item.date);
+                        const date = new Date(item.date);
+                        
+                        if (this.currentPeriod === 'last3days') {
+                            // 近3日按小时显示
                             return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:00`;
+                        } else if (this.currentPeriod === 'last7days') {
+                            // 近7日按天显示
+                            return `${date.getMonth() + 1}/${date.getDate()}`;
+                        } else if (this.currentPeriod === 'last30days') {
+                            // 近30日按天显示
+                            return `${date.getMonth() + 1}/${date.getDate()}`;
+                        } else if (this.currentPeriod === 'last90days') {
+                            // 近90日按天显示
+                            return `${date.getMonth() + 1}/${date.getDate()}`;
                         } else {
-                            const date = new Date(item.date);
+                            // 默认显示
                             return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
                         }
                     });
