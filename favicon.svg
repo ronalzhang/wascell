@@ -2,19 +2,44 @@
 <svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <radialGradient id="centerGradient" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" style="stop-color:#c0a878;stop-opacity:0.9"/>
-      <stop offset="100%" style="stop-color:#1a3a5f;stop-opacity:0.7"/>
+      <stop offset="0%" style="stop-color:#f8f4e9;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#e8e4d9;stop-opacity:1"/>
     </radialGradient>
   </defs>
-  <circle cx="32" cy="32" r="30" fill="none" stroke="#1a3a5f" stroke-width="2"/>
-  <circle cx="32" cy="32" r="22" fill="none" stroke="#c0a878" stroke-width="1"/>
-  <circle cx="32" cy="32" r="14" fill="none" stroke="#c0a878" stroke-width="1"/>
-  <circle cx="32" cy="32" r="10" fill="url(#centerGradient)"/>
-  <line x1="32" y1="4" x2="32" y2="8" stroke="#1a3a5f" stroke-width="2"/>
-  <line x1="60" y1="32" x2="56" y2="32" stroke="#1a3a5f" stroke-width="2"/>
-  <line x1="32" y1="60" x2="32" y2="56" stroke="#1a3a5f" stroke-width="2"/>
-  <line x1="4" y1="32" x2="8" y2="32" stroke="#1a3a5f" stroke-width="2"/>
-  <line x1="32" y1="32" x2="42" y2="22" stroke="#c0a878" stroke-width="3"/>
-  <line x1="32" y1="32" x2="22" y2="42" stroke="#c0a878" stroke-width="2"/>
-  <circle cx="32" cy="32" r="2" fill="#c0a878"/>
-</svg>
+  
+  <!-- 外围不规则树皮边缘 -->
+  <path d="M32 4 C35 4 38 5 40 6 C42 7 44 8 46 10 C48 12 50 14 52 16 C54 18 56 20 58 23 C59 25 60 27 60 30 C60 33 59 36 58 38 C57 40 56 42 54 44 C52 46 50 48 48 50 C46 52 44 54 41 56 C39 57 37 58 34 59 C32 60 30 60 28 59 C25 58 23 57 21 56 C18 54 16 52 14 50 C12 48 10 46 8 44 C6 42 5 40 4 38 C3 36 3 33 3 30 C3 27 4 25 5 23 C6 20 8 18 10 16 C12 14 14 12 16 10 C18 8 20 7 22 6 C24 5 27 4 30 4 Z" fill="#2d5a3d" stroke="none"/>
+  
+  <!-- 年轮层次 - 从外到内 -->
+  <circle cx="32" cy="32" r="24" fill="none" stroke="#2d5a3d" stroke-width="1.5" opacity="0.8"/>
+  <circle cx="32" cy="32" r="22" fill="none" stroke="#2d5a3d" stroke-width="1" opacity="0.6"/>
+  <circle cx="32" cy="32" r="20" fill="none" stroke="#2d5a3d" stroke-width="1.5" opacity="0.7"/>
+  <circle cx="32" cy="32" r="18" fill="none" stroke="#2d5a3d" stroke-width="1" opacity="0.5"/>
+  <circle cx="32" cy="32" r="16" fill="none" stroke="#2d5a3d" stroke-width="1.5" opacity="0.8"/>
+  <circle cx="32" cy="32" r="14" fill="none" stroke="#2d5a3d" stroke-width="1" opacity="0.6"/>
+  <circle cx="32" cy="32" r="12" fill="none" stroke="#2d5a3d" stroke-width="1.5" opacity="0.7"/>
+  <circle cx="32" cy="32" r="10" fill="none" stroke="#2d5a3d" stroke-width="1" opacity="0.5"/>
+  <circle cx="32" cy="32" r="8" fill="none" stroke="#2d5a3d" stroke-width="1.5" opacity="0.8"/>
+  <circle cx="32" cy="32" r="6" fill="none" stroke="#2d5a3d" stroke-width="1" opacity="0.6"/>
+  <circle cx="32" cy="32" r="4" fill="none" stroke="#2d5a3d" stroke-width="1.5" opacity="0.7"/>
+  
+  <!-- 中心螺旋 -->
+  <path d="M32 32 Q34 30 36 32 Q34 34 32 32 Q30 30 32 28 Q34 30 32 32" fill="none" stroke="#2d5a3d" stroke-width="1.5" opacity="0.9"/>
+  
+  <!-- 年轮间隙和裂纹 -->
+  <path d="M15 20 L20 25 M45 18 L50 22 M18 45 L22 48 M42 48 L47 52" stroke="#2d5a3d" stroke-width="2" opacity="0.8" stroke-linecap="round"/>
+  <path d="M32 8 L32 12 M55 32 L52 32 M32 56 L32 52 M9 32 L12 32" stroke="#2d5a3d" stroke-width="1.5" opacity="0.6" stroke-linecap="round"/>
+  
+  <!-- 年轮上的小节点/疤痕 -->
+  <circle cx="25" cy="18" r="1" fill="#2d5a3d" opacity="0.7"/>
+  <circle cx="45" cy="25" r="1.5" fill="#2d5a3d" opacity="0.8"/>
+  <circle cx="38" cy="45" r="1" fill="#2d5a3d" opacity="0.6"/>
+  <circle cx="18" cy="38" r="1.5" fill="#2d5a3d" opacity="0.7"/>
+  <circle cx="42" cy="15" r="1" fill="#2d5a3d" opacity="0.5"/>
+  <circle cx="15" cy="42" r="1" fill="#2d5a3d" opacity="0.6"/>
+  <circle cx="48" cy="38" r="1.5" fill="#2d5a3d" opacity="0.8"/>
+  <circle cx="26" cy="48" r="1" fill="#2d5a3d" opacity="0.7"/>
+  
+  <!-- 内部填充 -->
+  <circle cx="32" cy="32" r="26" fill="url(#centerGradient)" opacity="0.9"/>
+</svg> 
