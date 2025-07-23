@@ -317,7 +317,7 @@ app.post('/api/admin/login', (req, res) => {
 });
 
 // 获取统计数据API
-app.get('/api/admin/stats', async (req, res) => { // 标记为 async
+app.get('/api/admin/stats', async (req, res) => {
     try {
         const { period = 'day' } = req.query;
         
@@ -327,121 +327,125 @@ app.get('/api/admin/stats', async (req, res) => { // 标记为 async
             return res.status(400).json({ message: '无效的时间周期参数' });
         }
     
-    // 对于last3days，我们需要从原始日志计算，因为stats.json是按天聚合的
-    if (period === 'last3days') {
-        try {
-            const data = await getHourlyStatsFromLog();
-            return res.json(data);
-        } catch (error) {
-            console.error('获取最近3日统计失败:', error);
-            return res.status(500).json({ message: '服务器内部错误' });
+        // 对于last3days，我们需要从原始日志计算，因为stats.json是按天聚合的
+        if (period === 'last3days') {
+            try {
+                const data = await getHourlyStatsFromLog();
+                return res.json(data);
+            } catch (error) {
+                console.error('获取最近3日统计失败:', error);
+                return res.status(500).json({ message: '服务器内部错误' });
+            }
         }
-    }
 
-    // 对于 day, week, month，继续使用现有的同步逻辑
-    const stats = getStats();
-    
-    // 处理统计数据
-    const now = new Date();
-    const result = {
-        totalVisits: stats.totalVisits,
-        totalIPs: Object.keys(stats.ipStats).length,
-        periodData: []
-    };
-    
-    // 根据周期生成数据
-    if (period === 'day') {
-        // 最近30天
-        for (let i = 29; i >= 0; i--) {
-            const date = new Date(now);
-            date.setDate(date.getDate() - i);
-            const dateStr = date.toISOString().split('T')[0];
-            
-            const dayData = stats.daily[dateStr] || { totalVisits: 0, uniqueIPs: [] };
-            result.periodData.push({
-                date: dateStr,
-                visits: dayData.totalVisits,
-                uniqueIPs: Array.isArray(dayData.uniqueIPs) ? dayData.uniqueIPs.length : 0
-            });
-        }
-    } else if (period === 'week') {
-        // 最近12周
-        for (let i = 11; i >= 0; i--) {
-            const weekStart = new Date(now);
-            weekStart.setDate(weekStart.getDate() - (weekStart.getDay() + i * 7));
-            const weekEnd = new Date(weekStart);
-            weekEnd.setDate(weekEnd.getDate() + 6);
-            
-            let weekVisits = 0;
-            const weekIPs = new Set();
-            
-            for (let d = new Date(weekStart); d <= weekEnd; d.setDate(d.getDate() + 1)) {
-                const dateStr = d.toISOString().split('T')[0];
-                const dayData = stats.daily[dateStr];
-                if (dayData) {
-                    weekVisits += dayData.totalVisits;
-                    if (Array.isArray(dayData.uniqueIPs)) {
-                        dayData.uniqueIPs.forEach(ip => weekIPs.add(ip));
+        // 对于 day, week, month，继续使用现有的同步逻辑
+        const stats = getStats();
+        
+        // 处理统计数据
+        const now = new Date();
+        const result = {
+            totalVisits: stats.totalVisits,
+            totalIPs: Object.keys(stats.ipStats).length,
+            periodData: []
+        };
+        
+        // 根据周期生成数据
+        if (period === 'day') {
+            // 最近30天
+            for (let i = 29; i >= 0; i--) {
+                const date = new Date(now);
+                date.setDate(date.getDate() - i);
+                const dateStr = date.toISOString().split('T')[0];
+                
+                const dayData = stats.daily[dateStr] || { totalVisits: 0, uniqueIPs: [] };
+                result.periodData.push({
+                    date: dateStr,
+                    visits: dayData.totalVisits,
+                    uniqueIPs: Array.isArray(dayData.uniqueIPs) ? dayData.uniqueIPs.length : 0
+                });
+            }
+        } else if (period === 'week') {
+            // 最近12周，修复横坐标显示问题
+            for (let i = 11; i >= 0; i--) {
+                const weekStart = new Date(now);
+                weekStart.setDate(weekStart.getDate() - (weekStart.getDay() + i * 7));
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekEnd.getDate() + 6);
+                
+                let weekVisits = 0;
+                const weekIPs = new Set();
+                
+                for (let d = new Date(weekStart); d <= weekEnd; d.setDate(d.getDate() + 1)) {
+                    const dateStr = d.toISOString().split('T')[0];
+                    const dayData = stats.daily[dateStr];
+                    if (dayData) {
+                        weekVisits += dayData.totalVisits;
+                        if (Array.isArray(dayData.uniqueIPs)) {
+                            dayData.uniqueIPs.forEach(ip => weekIPs.add(ip));
+                        }
                     }
                 }
+                
+                // 修复：使用周开始日期作为横坐标，格式化为易读格式
+                const weekLabel = `${weekStart.getMonth() + 1}/${weekStart.getDate()}`;
+                
+                result.periodData.push({
+                    date: weekStart.toISOString().split('T')[0], // 保持ISO格式用于图表解析
+                    label: weekLabel, // 添加显示标签
+                    visits: weekVisits,
+                    uniqueIPs: weekIPs.size
+                });
             }
-            
-            result.periodData.push({
-                date: `${weekStart.toISOString().split('T')[0]} ~ ${weekEnd.toISOString().split('T')[0]}`,
-                visits: weekVisits,
-                uniqueIPs: weekIPs.size
-            });
-        }
-    } else if (period === 'month') {
-        // 最近12个月
-        for (let i = 11; i >= 0; i--) {
-            const month = new Date(now.getFullYear(), now.getMonth() - i, 1);
-            const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0);
-            
-            let monthVisits = 0;
-            const monthIPs = new Set();
-            
-            for (let d = new Date(month); d <= monthEnd; d.setDate(d.getDate() + 1)) {
-                const dateStr = d.toISOString().split('T')[0];
-                const dayData = stats.daily[dateStr];
-                if (dayData) {
-                    monthVisits += dayData.totalVisits;
-                    if (Array.isArray(dayData.uniqueIPs)) {
-                        dayData.uniqueIPs.forEach(ip => monthIPs.add(ip));
+        } else if (period === 'month') {
+            // 最近12个月
+            for (let i = 11; i >= 0; i--) {
+                const month = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+                
+                let monthVisits = 0;
+                const monthIPs = new Set();
+                
+                for (let d = new Date(month); d <= monthEnd; d.setDate(d.getDate() + 1)) {
+                    const dateStr = d.toISOString().split('T')[0];
+                    const dayData = stats.daily[dateStr];
+                    if (dayData) {
+                        monthVisits += dayData.totalVisits;
+                        if (Array.isArray(dayData.uniqueIPs)) {
+                            dayData.uniqueIPs.forEach(ip => monthIPs.add(ip));
+                        }
                     }
                 }
+                
+                result.periodData.push({
+                    date: `${month.getFullYear()}-${(month.getMonth() + 1).toString().padStart(2, '0')}`,
+                    visits: monthVisits,
+                    uniqueIPs: monthIPs.size
+                });
             }
-            
-            result.periodData.push({
-                date: `${month.getFullYear()}-${(month.getMonth() + 1).toString().padStart(2, '0')}`,
-                visits: monthVisits,
-                uniqueIPs: monthIPs.size
-            });
         }
-    }
-    
-    // 热门IP统计
-    result.topIPs = Object.entries(stats.ipStats)
-        .map(([ip, data]) => ({ ip, ...data }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 10);
-    
-    res.json(result);
+        
+        // 热门IP统计
+        result.topIPs = Object.entries(stats.ipStats)
+            .map(([ip, data]) => ({ ip, ...data }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 10);
+        
+        res.json(result);
     } catch (error) {
         console.error('获取统计数据失败:', error);
         res.status(500).json({ message: '服务器内部错误' });
     }
 });
 
-// 新函数：从日志文件异步获取每小时统计
+// 新函数：从日志文件异步获取每小时统计（修复数据统计逻辑）
 async function getHourlyStatsFromLog() {
     const hourlyStats = {};
-    const seventyTwoHoursAgo = new Date(Date.now() - 72 * 60 * 60 * 1000);
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000); // 改为24小时
 
-    // 初始化最近72小时的骨架数据
-    for (let i = 0; i < 72; i++) {
-        const hour = new Date(seventyTwoHoursAgo);
-        hour.setHours(hour.getHours() + i, 0, 0, 0); // 将分钟、秒和毫秒归零
+    // 初始化最近24小时的骨架数据
+    for (let i = 0; i < 24; i++) {
+        const hour = new Date(twentyFourHoursAgo);
+        hour.setHours(hour.getHours() + i, 0, 0, 0);
         const hourKey = hour.toISOString();
         hourlyStats[hourKey] = {
             date: hourKey,
@@ -464,7 +468,7 @@ async function getHourlyStatsFromLog() {
                 const logEntry = JSON.parse(line);
                 const logDate = new Date(logEntry.timestamp);
 
-                if (logDate >= seventyTwoHoursAgo) {
+                if (logDate >= twentyFourHoursAgo) {
                     const hourKey = new Date(logDate.getFullYear(), logDate.getMonth(), logDate.getDate(), logDate.getHours()).toISOString();
                     if (hourlyStats[hourKey]) {
                         hourlyStats[hourKey].visits++;
@@ -492,7 +496,6 @@ async function getHourlyStatsFromLog() {
 
     return { periodData, topIPs };
 }
-
 
 // 获取实时数据
 app.get('/api/admin/realtime', (req, res) => {
@@ -525,7 +528,7 @@ app.get('/', (req, res) => {
 
 // 启动服务器
 app.listen(PORT, () => {
-    console.log(`WASCELL网站服务器运行在端口 ${PORT}`);
+    console.log(`方舟计划网站服务器运行在端口 ${PORT}`);
     console.log(`访问地址: http://localhost:${PORT}`);
     console.log(`管理后台: http://localhost:${PORT}/admin-pro`);
 });

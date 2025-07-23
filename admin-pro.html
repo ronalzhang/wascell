@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WASCELL - 后台管理</title>
+    <title>方舟计划 - 后台管理</title>
     <script src="chart.umd.js"></script>
     <style>
         * {
@@ -758,7 +758,7 @@
     <!-- 登录界面 -->
     <div id="loginContainer" class="login-container">
         <div class="login-box">
-            <h2>WASCELL 后台管理</h2>
+            <h2>方舟计划 后台管理</h2>
             <form id="loginForm">
                 <div class="form-group">
                     <label for="password">访问密码</label>
@@ -804,7 +804,7 @@
         <div class="controls">
             <span>时间周期：</span>
             <div class="period-buttons">
-                <button class="period-btn active" data-period="last3days">近3日</button>
+                <button class="period-btn active" data-period="last3days">近24小时</button>
                 <button class="period-btn" data-period="day">每日</button>
                 <button class="period-btn" data-period="week">每周</button>
                 <button class="period-btn" data-period="month">每月</button>
@@ -1479,10 +1479,10 @@
                 
                 // 显示数据类型说明
                 const descriptions = {
-                    'last3days': '近3日按小时统计',
-                    'day': '每日按天统计', 
-                    'week': '每周按天统计',
-                    'month': '每月按天统计'
+                    'last3days': '近24小时按小时统计',
+                    'day': '最近30天按天统计', 
+                    'week': '最近12周按周统计',
+                    'month': '最近12月按月统计'
                 };
                 this.showNotification(descriptions[period] || '数据统计', 'info', 2000);
                 
@@ -1659,17 +1659,17 @@
                         const date = new Date(item.date);
                         
                         if (this.currentPeriod === 'last3days') {
-                            // 近3日按小时显示
+                            // 近24小时按小时显示
                             return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:00`;
                         } else if (this.currentPeriod === 'day') {
                             // 每日按天显示
                             return `${date.getMonth() + 1}/${date.getDate()}`;
                         } else if (this.currentPeriod === 'week') {
-                            // 每周按天显示
-                            return `${date.getMonth() + 1}/${date.getDate()}`;
+                            // 每周显示：优先使用label，fallback到日期解析
+                            return item.label || `第${Math.ceil((date.getDate())/7)}周`;
                         } else if (this.currentPeriod === 'month') {
-                            // 每月按天显示
-                            return `${date.getMonth() + 1}/${date.getDate()}`;
+                            // 每月显示
+                            return `${date.getFullYear().toString().substring(2)}年${date.getMonth() + 1}月`;
                         } else {
                             // 默认显示
                             return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
