@@ -22,6 +22,58 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '123abc74531'; // 从环境
 const LOG_FILE = path.join(__dirname, 'access.log');
 const STATS_FILE = path.join(__dirname, 'stats.json');
 
+// 文件锁机制
+let isWritingStats = false;
+const writeQueue = [];
+
+// 安全写入统计文件
+async function safeWriteStats(stats) {
+    return new Promise((resolve, reject) => {
+        writeQueue.push({ stats, resolve, reject });
+        processWriteQueue();
+    });
+}
+
+async function processWriteQueue() {
+    if (isWritingStats || writeQueue.length === 0) {
+        return;
+    }
+    
+    isWritingStats = true;
+    const { stats, resolve, reject } = writeQueue.shift();
+    
+    try {
+        // 转换Set为数组保存
+        const dailyStats = {};
+        Object.keys(stats.daily).forEach(date => {
+            dailyStats[date] = {
+                ...stats.daily[date],
+                uniqueIPs: Array.from(stats.daily[date].uniqueIPs)
+            };
+        });
+        
+        const saveStats = {
+            ...stats,
+            daily: dailyStats,
+            lastUpdated: new Date().toISOString()
+        };
+        
+        // 写入临时文件，然后原子性重命名
+        const tempFile = STATS_FILE + '.tmp';
+        await writeFileAsync(tempFile, JSON.stringify(saveStats, null, 2));
+        await renameAsync(tempFile, STATS_FILE);
+        
+        resolve();
+    } catch (error) {
+        console.error('安全写入统计文件失败:', error);
+        reject(error);
+    } finally {
+        isWritingStats = false;
+        // 处理队列中的下一个写入操作
+        setImmediate(processWriteQueue);
+    }
+}
+
 // 中间件配置
 app.use(helmet({
     contentSecurityPolicy: {
@@ -68,62 +120,6 @@ app.use((req, res, next) => {
     
     next();
 });
-
-// 更新统计数据
-function updateStats(logEntry) {
-    let stats = getStats();
-    const today = getToday();
-    
-    // 初始化今日数据
-    if (!stats.daily[today]) {
-        stats.daily[today] = {
-            totalVisits: 0,
-            uniqueIPs: new Set(),
-            pages: {}
-        };
-    }
-    
-    // 更新统计
-    stats.totalVisits++;
-    stats.daily[today].totalVisits++;
-    stats.daily[today].uniqueIPs.add(logEntry.ip);
-    
-    // 页面访问统计
-    if (!stats.daily[today].pages[logEntry.url]) {
-        stats.daily[today].pages[logEntry.url] = 0;
-    }
-    stats.daily[today].pages[logEntry.url]++;
-    
-    // IP统计
-    if (!stats.ipStats[logEntry.ip]) {
-        stats.ipStats[logEntry.ip] = {
-            count: 0,
-            firstVisit: logEntry.timestamp,
-            lastVisit: logEntry.timestamp
-        };
-    }
-    stats.ipStats[logEntry.ip].count++;
-    stats.ipStats[logEntry.ip].lastVisit = logEntry.timestamp;
-    
-    // 转换Set为数组保存
-    const dailyStats = {};
-    Object.keys(stats.daily).forEach(date => {
-        dailyStats[date] = {
-            ...stats.daily[date],
-            uniqueIPs: Array.from(stats.daily[date].uniqueIPs)
-        };
-    });
-    
-    const saveStats = {
-        ...stats,
-        daily: dailyStats
-    };
-    
-    // 写入统计文件
-    fs.writeFile(STATS_FILE, JSON.stringify(saveStats, null, 2), (err) => {
-        if (err) console.error('保存统计数据失败:', err);
-    });
-}
 
 // 日志轮转功能
 async function rotateLogIfNeeded() {
@@ -182,22 +178,8 @@ async function updateStatsAsync(logEntry) {
         stats.ipStats[logEntry.ip].count++;
         stats.ipStats[logEntry.ip].lastVisit = logEntry.timestamp;
         
-        // 转Set为数组保存
-        const dailyStats = {};
-        Object.keys(stats.daily).forEach(date => {
-            dailyStats[date] = {
-                ...stats.daily[date],
-                uniqueIPs: Array.from(stats.daily[date].uniqueIPs)
-            };
-        });
-        
-        const saveStats = {
-            ...stats,
-            daily: dailyStats
-        };
-        
-        // 异步写入统计文件
-        await writeFileAsync(STATS_FILE, JSON.stringify(saveStats, null, 2));
+        // 使用安全写入机制
+        await safeWriteStats(stats);
     } catch (error) {
         console.error('更新统计数据失败:', error);
     }
@@ -230,10 +212,11 @@ async function getStatsAsync() {
         const defaultStats = {
             totalVisits: 0,
             daily: {},
-            ipStats: {}
+            ipStats: {},
+            createdAt: new Date().toISOString()
         };
         try {
-            await writeFileAsync(STATS_FILE, JSON.stringify(defaultStats, null, 2));
+            await safeWriteStats(defaultStats);
             console.log('已重置统计数据文件');
         } catch (writeError) {
             console.error('重置统计数据文件失败:', writeError);
@@ -244,11 +227,12 @@ async function getStatsAsync() {
     return {
         totalVisits: 0,
         daily: {},
-        ipStats: {}
+        ipStats: {},
+        createdAt: new Date().toISOString()
     };
 }
 
-// 获取统计数据
+// 获取统计数据（同步版本，为兼容性保留）
 function getStats() {
     try {
         if (fs.existsSync(STATS_FILE)) {
@@ -264,25 +248,20 @@ function getStats() {
         }
     } catch (error) {
         console.error('读取统计数据失败:', error);
-        // JSON解析失败时，重置统计文件
-        const defaultStats = {
+        // JSON解析失败时，返回默认数据
+        return {
             totalVisits: 0,
             daily: {},
-            ipStats: {}
+            ipStats: {},
+            createdAt: new Date().toISOString()
         };
-        try {
-            fs.writeFileSync(STATS_FILE, JSON.stringify(defaultStats, null, 2));
-            console.log('已重置统计数据文件');
-        } catch (writeError) {
-            console.error('重置统计数据文件失败:', writeError);
-        }
-        return defaultStats;
     }
     
     return {
         totalVisits: 0,
         daily: {},
-        ipStats: {}
+        ipStats: {},
+        createdAt: new Date().toISOString()
     };
 }
 
@@ -326,7 +305,7 @@ app.get('/api/admin/stats', async (req, res) => {
         if (!validPeriods.includes(period)) {
             return res.status(400).json({ message: '无效的时间周期参数' });
         }
-    
+        
         // 对于last3days，我们需要从原始日志计算，因为stats.json是按天聚合的
         if (period === 'last3days') {
             try {
