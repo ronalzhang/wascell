@@ -1,0 +1,25 @@
+{
+  "name": "wascell-website",
+  "version": "1.0.0",
+  "description": "WASCELL生命焕新之旅官方网站",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "pm2:start": "pm2 start app.js --name wascell-website",
+    "pm2:stop": "pm2 stop wascell-website",
+    "pm2:restart": "pm2 restart wascell-website"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "compression": "^1.7.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "keywords": ["wascell", "medical", "tourism", "japan"],
+  "author": "WASCELL",
+  "license": "MIT"
+} 

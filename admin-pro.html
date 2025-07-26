@@ -1,0 +1,2048 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>方舟计划 - 后台管理</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <script src="chart.umd.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* 登录页面样式 */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        
+        .login-box {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            max-width: 400px;
+            width: 100%;
+            min-width: 300px;
+        }
+        
+        .login-box h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+            font-weight: 300;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .login-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .login-btn:hover::before {
+            left: 100%;
+        }
+        
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .error-message {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+        }
+        
+        .success-message {
+            color: #27ae60;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+            min-width: 300px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        
+        .notification.success {
+            background: #27ae60;
+        }
+        
+        .notification.error {
+            background: #e74c3c;
+        }
+        
+        .notification.info {
+            background: #3498db;
+        }
+        
+        .btn-loading {
+            position: relative;
+            pointer-events: none;
+        }
+        
+        .btn-loading .loading-spinner {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            margin: 0;
+        }
+        
+        .btn-loading .btn-text {
+            opacity: 0;
+        }
+        
+        /* 主界面样式 */
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+        
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 2px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 1px;
+        }
+        
+        .header h1 {
+            color: #333;
+            font-weight: 300;
+            font-size: 28px;
+        }
+        
+        .logout-btn {
+            padding: 10px 20px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .logout-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .logout-btn:hover::before {
+            left: 100%;
+        }
+        
+        .logout-btn:hover {
+            background: #c0392b;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stats-skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+        
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover::before {
+            transform: scaleX(1);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .stat-number {
+            font-size: 36px;
+            font-weight: 300;
+            color: #667eea;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-number.loading {
+            color: #ccc;
+        }
+        
+        .stat-number.error {
+            color: #e74c3c;
+            font-size: 14px;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .period-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .period-btn {
+            padding: 8px 16px;
+            border: 2px solid #e1e5e9;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .period-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .period-btn:hover::before {
+            left: 100%;
+        }
+        
+        .period-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        .chart-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+            position: relative;
+            min-height: 400px;
+            overflow: hidden;
+            transition: box-shadow 0.3s ease;
+        }
+        
+        .chart-container:hover {
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .chart-title {
+            font-size: 20px;
+            font-weight: 300;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        
+        .chart-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .chart-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .data-point {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .color-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        
+        .refresh-btn {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background 0.3s;
+        }
+        
+        .refresh-btn:hover {
+            background: #5a6fd8;
+        }
+        
+        .refresh-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .chart-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #666;
+            font-size: 16px;
+        }
+        
+        .chart-error {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #e74c3c;
+            text-align: center;
+        }
+        
+        .ip-stats {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: box-shadow 0.3s ease;
+        }
+        
+        .ip-stats:hover {
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .ip-table {
+            width: 100%;
+            border-collapse: collapse;
+            overflow-x: auto;
+        }
+        
+        .ip-table th,
+        .ip-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e1e5e9;
+            transition: background-color 0.2s ease;
+        }
+        
+        .ip-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .ip-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .ip-table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .ip-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+            max-width: 300px;
+            position: relative;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .sort-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .sort-btn {
+            padding: 6px 12px;
+            border: 1px solid #e1e5e9;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+        
+        .sort-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .sort-btn:hover {
+            background: #f8f9fa;
+        }
+        
+        .sort-btn.active:hover {
+            background: #5a6fd8;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+            gap: 10px;
+        }
+        
+        .pagination-btn {
+            padding: 8px 12px;
+            border: 1px solid #e1e5e9;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .pagination-btn:hover {
+            background: #f8f9fa;
+        }
+        
+        .pagination-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .pagination-info {
+            color: #666;
+            font-size: 14px;
+            margin: 0 10px;
+        }
+        
+        .ip-table th {
+            cursor: pointer;
+            position: relative;
+            user-select: none;
+        }
+        
+        .ip-table th:hover {
+            background: #f0f1f3;
+        }
+        
+        .sort-indicator {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .sort-indicator.asc::after {
+            content: '↑';
+            color: #667eea;
+        }
+        
+        .sort-indicator.desc::after {
+            content: '↓';
+            color: #667eea;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .login-box {
+                padding: 30px 20px;
+                min-width: 280px;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 15px;
+            }
+            
+            .period-buttons {
+                justify-content: center;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .stat-card {
+                padding: 20px;
+            }
+            
+            .chart-container {
+                padding: 20px;
+            }
+            
+            .ip-stats {
+                padding: 20px;
+            }
+            
+            .ip-table th,
+            .ip-table td {
+                padding: 8px;
+                font-size: 14px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .login-box {
+                padding: 20px;
+                min-width: 260px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .stat-number {
+                font-size: 28px;
+            }
+            
+            .period-btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 登录界面 -->
+    <div id="loginContainer" class="login-container">
+        <div class="login-box">
+            <h2>方舟计划 后台管理</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="password">访问密码</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="login-btn" id="loginButton">
+                    <span class="btn-text">登录</span>
+                </button>
+                <div id="errorMessage" class="error-message hidden"></div>
+                <div id="successMessage" class="success-message hidden"></div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 主界面 -->
+    <div id="mainContainer" class="container hidden">
+        <div class="header">
+            <h1>访问统计面板</h1>
+            <button id="logoutBtn" class="logout-btn">退出登录</button>
+        </div>
+        
+        <!-- 实时统计卡片 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div id="todayVisits" class="stat-number">-</div>
+                <div class="stat-label">今日访问量</div>
+            </div>
+            <div class="stat-card">
+                <div id="todayUniqueIPs" class="stat-number">-</div>
+                <div class="stat-label">今日独立IP</div>
+            </div>
+            <div class="stat-card">
+                <div id="totalVisits" class="stat-number">-</div>
+                <div class="stat-label">总访问量</div>
+            </div>
+            <div class="stat-card">
+                <div id="totalIPs" class="stat-number">-</div>
+                <div class="stat-label">总独立IP</div>
+            </div>
+        </div>
+        
+        <!-- 控制面板 -->
+        <div class="controls">
+            <span>时间周期：</span>
+            <div class="period-buttons">
+                <button class="period-btn active" data-period="last3days">近24小时</button>
+                <button class="period-btn" data-period="day">每日</button>
+                <button class="period-btn" data-period="week">每周</button>
+                <button class="period-btn" data-period="month">每月</button>
+
+            </div>
+        </div>
+        
+        <!-- 图表 -->
+        <div class="chart-container">
+            <div class="chart-controls">
+                <div class="chart-title">访问趋势</div>
+                <div class="chart-info">
+                    <div class="data-point">
+                        <span class="color-indicator" style="background: #667eea;"></span>
+                        <span>访问量: <span id="chartTotalVisits">-</span></span>
+                    </div>
+                    <div class="data-point">
+                        <span class="color-indicator" style="background: #f093fb;"></span>
+                        <span>独立用户: <span id="chartTotalIPs">-</span></span>
+                    </div>
+                    <button class="refresh-btn" id="refreshChartBtn" onclick="adminPanel.loadChart()">
+                        <span>→</span> 刷新
+                    </button>
+                </div>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="visitChart"></canvas>
+                <div id="chartLoading" class="chart-loading hidden">加载图表中...</div>
+                <div id="chartError" class="chart-error hidden">
+                    <div>图表加载失败</div>
+                    <button onclick="adminPanel.loadChart()">重试</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- IP统计表 -->
+        <div class="ip-stats">
+            <div class="chart-title">热门访问IP</div>
+            <div class="ip-controls">
+                <div class="search-box">
+                    <input type="text" id="ipSearch" placeholder="搜索IP地址...">
+                </div>
+                <div class="sort-controls">
+                    <span style="font-size: 14px; color: #666;">排序:</span>
+                    <button class="sort-btn" data-sort="count" data-order="desc">访问量 ↓</button>
+                    <button class="sort-btn" data-sort="lastVisit" data-order="desc">最后访问 ↓</button>
+                </div>
+            </div>
+            <div class="ip-table-container">
+                <table class="ip-table">
+                    <thead>
+                        <tr>
+                            <th data-sort="ip">IP地址 <span class="sort-indicator"></span></th>
+                            <th data-sort="count">访问次数 <span class="sort-indicator"></span></th>
+                            <th data-sort="firstVisit">首次访问 <span class="sort-indicator"></span></th>
+                            <th data-sort="lastVisit">最后访问 <span class="sort-indicator"></span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="ipTableBody">
+                        <tr><td colspan="4" class="loading">加载中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="pagination" id="ipPagination" style="display: none;">
+                <button class="pagination-btn" id="prevPage">上一页</button>
+                <span class="pagination-info" id="pageInfo">-</span>
+                <button class="pagination-btn" id="nextPage">下一页</button>
+            </div>
+        </div>
+        
+        <!-- 通知系统 -->
+        <div id="notification" class="notification hidden"></div>
+    </div>
+
+    <script>
+        class AdminPanel {
+            constructor() {
+                try {
+                    this.isLoggedIn = false;
+                    this.currentPeriod = 'last3days';
+                    this.chart = null;
+                    this.sessionKey = 'wascell_admin_session';
+                    this.sessionId = null;
+                    this.lastActivity = null;
+                    this.retryCount = 0;
+                    this.maxRetries = 3;
+                    this.ipData = [];
+                    this.filteredIpData = [];
+                    this.currentPage = 1;
+                    this.itemsPerPage = 10;
+                    this.sortField = 'count';
+                    this.sortOrder = 'desc';
+                    this.loginAttempts = 0;
+                    this.maxLoginAttempts = 5;
+                    this.lockoutTime = 15 * 60 * 1000; // 15分钟
+                    this.realtimeInterval = null;
+                    this.keydownHandler = null;
+                    
+                    this.init();
+                } catch (error) {
+                    console.error('初始化失败:', error);
+                    // 显示基本错误信息
+                    document.body.innerHTML = `
+                        <div style="display: flex; justify-content: center; align-items: center; height: 100vh; background: #f5f7fa; font-family: Arial, sans-serif;">
+                            <div style="text-align: center; padding: 40px; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                                <h2 style="color: #e74c3c; margin-bottom: 15px;">初始化失败</h2>
+                                <p style="color: #666; margin-bottom: 20px;">管理面板初始化失败，请刷新页面重试。</p>
+                                <button onclick="location.reload()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">刷新页面</button>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            // 通知系统
+            showNotification(message, type = 'info', duration = 3000) {
+                const notification = document.getElementById('notification');
+                notification.textContent = message;
+                notification.className = `notification ${type} show`;
+                
+                // 添加点击关闭功能
+                notification.onclick = () => {
+                    notification.classList.remove('show');
+                };
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, duration);
+            }
+            
+            // 显示加载状态
+            showButtonLoading(buttonId, loading = true) {
+                const button = document.getElementById(buttonId);
+                if (loading) {
+                    button.classList.add('btn-loading');
+                    button.innerHTML = '<div class="loading-spinner"></div><span class="btn-text">加载中...</span>';
+                } else {
+                    button.classList.remove('btn-loading');
+                    button.innerHTML = '<span class="btn-text">登录</span>';
+                }
+            }
+            
+            // 网络请求重试机制
+            async fetchWithRetry(url, options = {}, retries = this.maxRetries) {
+                // 更新活动时间（除了登录请求）
+                if (this.isLoggedIn && !url.includes('/login')) {
+                    if (!this.updateActivity()) {
+                        return Promise.reject(new Error('会话已过期'));
+                    }
+                    // 添加会话ID到请求头
+                    if (this.sessionId) {
+                        options.headers = options.headers || {};
+                        options.headers['X-Session-ID'] = this.sessionId;
+                        options.headers['X-Request-Source'] = 'admin-panel';
+                    }
+                }
+                
+                try {
+                    const response = await fetch(url, options);
+                    
+                    // 检查会话是否被服务器无效化
+                    if (response.status === 401) {
+                        this.showNotification('会话已失效，请重新登录', 'error');
+                        this.logout();
+                        throw new Error('会话已失效');
+                    }
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response;
+                } catch (error) {
+                    if (retries > 0 && !error.message.includes('会话')) {
+                        console.log(`请求失败，还有${retries}次重试机会:`, error.message);
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        return this.fetchWithRetry(url, options, retries - 1);
+                    }
+                    throw error;
+                }
+            }
+            
+            init() {
+                this.checkSession();
+                this.bindEvents();
+                this.startRealtimeUpdates();
+                this.initKeyboardShortcuts();
+                this.initProgressBar();
+            }
+            
+            // 初始化进度条
+            initProgressBar() {
+                const progressBar = document.createElement('div');
+                progressBar.id = 'loadingProgress';
+                progressBar.innerHTML = '<div class="progress-bar"></div>';
+                progressBar.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 3px;
+                    background: rgba(0,0,0,0.1);
+                    z-index: 9999;
+                    display: none;
+                `;
+                const progressBarInner = progressBar.querySelector('.progress-bar');
+                progressBarInner.style.cssText = `
+                    height: 100%;
+                    background: linear-gradient(90deg, #667eea, #764ba2);
+                    width: 0%;
+                    transition: width 0.3s ease;
+                `;
+                document.body.appendChild(progressBar);
+            }
+            
+            // 显示进度条
+            showProgress() {
+                const progressBar = document.getElementById('loadingProgress');
+                const progressBarInner = progressBar.querySelector('.progress-bar');
+                progressBar.style.display = 'block';
+                progressBarInner.style.width = '30%';
+                
+                setTimeout(() => {
+                    progressBarInner.style.width = '70%';
+                }, 200);
+            }
+            
+            // 隐藏进度条
+            hideProgress() {
+                const progressBar = document.getElementById('loadingProgress');
+                const progressBarInner = progressBar.querySelector('.progress-bar');
+                progressBarInner.style.width = '100%';
+                
+                setTimeout(() => {
+                    progressBar.style.display = 'none';
+                    progressBarInner.style.width = '0%';
+                }, 300);
+            }
+            
+            // 初始化键盘快捷键
+            initKeyboardShortcuts() {
+                this.keydownHandler = (e) => {
+                    try {
+                        // Ctrl/Cmd + R: 刷新数据
+                        if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+                            e.preventDefault();
+                            if (this.isLoggedIn) {
+                                this.loadDashboard();
+                                this.showNotification('数据已刷新', 'success', 1000);
+                            }
+                        }
+                        
+                        // Ctrl/Cmd + L: 注销
+                        if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
+                            e.preventDefault();
+                            if (this.isLoggedIn) {
+                                this.logout();
+                            }
+                        }
+                        
+                        // ESC: 关闭搜索框
+                        if (e.key === 'Escape') {
+                            const searchInput = document.getElementById('ipSearch');
+                            if (searchInput && searchInput.value) {
+                                searchInput.value = '';
+                                this.filterIpData('');
+                            }
+                        }
+                        
+                        // Enter: 登录页面提交
+                        if (e.key === 'Enter' && !this.isLoggedIn) {
+                            const loginForm = document.getElementById('loginForm');
+                            if (loginForm) {
+                                loginForm.dispatchEvent(new Event('submit'));
+                            }
+                        }
+                    } catch (error) {
+                        console.error('键盘快捷键处理错误:', error);
+                    }
+                };
+                
+                document.addEventListener('keydown', this.keydownHandler);
+            }
+            
+            // 检查登录状态
+            checkSession() {
+                const session = sessionStorage.getItem(this.sessionKey);
+                if (session) {
+                    try {
+                        const sessionData = JSON.parse(session);
+                        const now = Date.now();
+                        
+                        // 检查会话是否过期（2小时）
+                        if (now - sessionData.timestamp < 2 * 60 * 60 * 1000) {
+                            // 验证sessionID的有效性
+                            if (sessionData.sessionId && sessionData.sessionId.length === 32) {
+                                this.sessionId = sessionData.sessionId;
+                                this.isLoggedIn = true;
+                                this.lastActivity = now;
+                                this.showMainPanel();
+                                return;
+                            }
+                        }
+                        this.clearSession();
+                    } catch (error) {
+                        console.error('会话数据解析错误:', error);
+                        this.clearSession();
+                    }
+                }
+                this.showLoginPanel();
+            }
+            
+            // 保存会话
+            saveSession(sessionId = null) {
+                const sessionData = {
+                    timestamp: Date.now(),
+                    sessionId: sessionId || this.generateSessionId(),
+                    loggedIn: true,
+                    userAgent: navigator.userAgent.substring(0, 100),
+                    lastActivity: Date.now()
+                };
+                this.sessionId = sessionData.sessionId;
+                this.lastActivity = sessionData.timestamp;
+                sessionStorage.setItem(this.sessionKey, JSON.stringify(sessionData));
+            }
+            
+            // 生成会话ID
+            generateSessionId() {
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                let result = '';
+                for (let i = 0; i < 32; i++) {
+                    result += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                return result;
+            }
+            
+            // 更新活动时间
+            updateActivity() {
+                const now = Date.now();
+                // 检查是否超过2小时未活动
+                if (this.lastActivity && now - this.lastActivity > 2 * 60 * 60 * 1000) {
+                    this.showNotification('会话已过期，请重新登录', 'error');
+                    this.logout();
+                    return false;
+                }
+                this.lastActivity = now;
+                // 更新sessionStorage中的活动时间
+                const session = sessionStorage.getItem(this.sessionKey);
+                if (session) {
+                    try {
+                        const sessionData = JSON.parse(session);
+                        sessionData.lastActivity = now;
+                        sessionStorage.setItem(this.sessionKey, JSON.stringify(sessionData));
+                    } catch (error) {
+                        console.error('更新活动时间失败:', error);
+                    }
+                }
+                return true;
+            }
+            
+            // 清除会话
+            clearSession() {
+                sessionStorage.removeItem(this.sessionKey);
+                this.isLoggedIn = false;
+                this.sessionId = null;
+                this.lastActivity = null;
+            }
+            
+            showLoginPanel() {
+                document.getElementById('loginContainer').classList.remove('hidden');
+                document.getElementById('mainContainer').classList.add('hidden');
+            }
+            
+            showMainPanel() {
+                document.getElementById('loginContainer').classList.add('hidden');
+                document.getElementById('mainContainer').classList.remove('hidden');
+                this.bindIPTableEvents();
+                this.loadDashboard();
+                
+                // 添加欢迎提示
+                setTimeout(() => {
+                    this.showNotification('欢迎回来！数据加载中...', 'info', 2000);
+                }, 500);
+                
+                // 检测可用的API端点
+                this.checkAvailableEndpoints();
+            }
+            
+            // 检测可用的API端点
+            async checkAvailableEndpoints() {
+                const periods = ['last3days', 'day', 'week', 'month'];
+                const availablePeriods = [];
+                
+                for (const period of periods) {
+                    try {
+                        const response = await fetch(`/api/admin/stats?period=${period}`, {
+                            headers: this.sessionId ? { 'X-Session-ID': this.sessionId } : {}
+                        });
+                        if (response.ok) {
+                            availablePeriods.push(period);
+                        }
+                    } catch (error) {
+                        // 静默失败
+                    }
+                }
+                
+                // 禁用不可用的按钮
+                document.querySelectorAll('.period-btn').forEach(btn => {
+                    const period = btn.dataset.period;
+                    if (!availablePeriods.includes(period)) {
+                        btn.disabled = true;
+                        btn.style.opacity = '0.5';
+                        btn.style.cursor = 'not-allowed';
+                        btn.title = `后端API不支持此时间周期: ${period}`;
+                    }
+                });
+                
+                console.log('可用的API端点:', availablePeriods);
+            }
+            
+            bindEvents() {
+                // 登录表单
+                document.getElementById('loginForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.handleLogin();
+                });
+                
+                // 退出登录
+                document.getElementById('logoutBtn').addEventListener('click', () => {
+                    this.logout();
+                });
+                
+                // 周期切换
+                document.querySelectorAll('.period-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.switchPeriod(e.target.dataset.period);
+                    });
+                });
+            }
+            
+            bindIPTableEvents() {
+                // IP搜索
+                const ipSearch = document.getElementById('ipSearch');
+                if (ipSearch) {
+                    ipSearch.addEventListener('input', (e) => {
+                        this.filterIpData(e.target.value);
+                    });
+                }
+                
+                // 表头排序
+                document.querySelectorAll('.ip-table th[data-sort]').forEach(th => {
+                    th.addEventListener('click', (e) => {
+                        this.sortIpData(e.target.dataset.sort);
+                    });
+                });
+                
+                // 快速排序按钮
+                document.querySelectorAll('.sort-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const field = e.target.dataset.sort;
+                        const order = e.target.dataset.order;
+                        this.sortField = field;
+                        this.sortOrder = order;
+                        this.sortIpData(field, order);
+                        this.updateSortButtons();
+                    });
+                });
+                
+                // 分页按钮
+                const prevPage = document.getElementById('prevPage');
+                const nextPage = document.getElementById('nextPage');
+                
+                if (prevPage) {
+                    prevPage.addEventListener('click', () => {
+                        if (this.currentPage > 1) {
+                            this.currentPage--;
+                            this.renderIpTable();
+                        }
+                    });
+                }
+                
+                if (nextPage) {
+                    nextPage.addEventListener('click', () => {
+                        const totalPages = Math.ceil(this.filteredIpData.length / this.itemsPerPage);
+                        if (this.currentPage < totalPages) {
+                            this.currentPage++;
+                            this.renderIpTable();
+                        }
+                    });
+                }
+            }
+            
+            async handleLogin() {
+                const password = document.getElementById('password').value;
+                const errorElement = document.getElementById('errorMessage');
+                const successElement = document.getElementById('successMessage');
+                
+                // 检查是否被锁定
+                if (this.isLockedOut()) {
+                    const remainingTime = this.getRemainingLockoutTime();
+                    errorElement.textContent = `登录尝试过多，请${Math.ceil(remainingTime / 60000)}分钟后重试`;
+                    errorElement.classList.remove('hidden');
+                    return;
+                }
+                
+                if (!password.trim()) {
+                    errorElement.textContent = '请输入密码';
+                    errorElement.classList.remove('hidden');
+                    return;
+                }
+                
+                // 检查密码强度（基本验证）
+                if (password.length < 6) {
+                    errorElement.textContent = '密码长度不能少于6位';
+                    errorElement.classList.remove('hidden');
+                    return;
+                }
+                
+                this.showButtonLoading('loginButton', true);
+                errorElement.classList.add('hidden');
+                successElement.classList.add('hidden');
+                
+                try {
+                    const sessionId = this.generateSessionId();
+                    const response = await this.fetchWithRetry('/api/admin/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Session-ID': sessionId,
+                            'X-Request-Source': 'admin-panel'
+                        },
+                        body: JSON.stringify({ 
+                            password,
+                            sessionId,
+                            timestamp: Date.now(),
+                            userAgent: navigator.userAgent.substring(0, 100)
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.isLoggedIn = true;
+                        this.loginAttempts = 0; // 重置尝试次数
+                        this.clearLockout();
+                        this.saveSession(sessionId);
+                        successElement.textContent = '登录成功，正在加载面板...';
+                        successElement.classList.remove('hidden');
+                        this.showNotification('登录成功', 'success');
+                        
+                        // 清空密码输入框
+                        document.getElementById('password').value = '';
+                        
+                        setTimeout(() => {
+                            this.showMainPanel();
+                        }, 1000);
+                    } else {
+                        this.loginAttempts++;
+                        this.saveLoginAttempt();
+                        
+                        let errorMessage = result.message || '登录失败';
+                        if (this.loginAttempts >= this.maxLoginAttempts) {
+                            this.setLockout();
+                            errorMessage = `登录尝试过多，账户已被锁定${this.lockoutTime / 60000}分钟`;
+                        } else {
+                            errorMessage += `（还可尝试${this.maxLoginAttempts - this.loginAttempts}次）`;
+                        }
+                        
+                        errorElement.textContent = errorMessage;
+                        errorElement.classList.remove('hidden');
+                        this.showNotification('登录失败: ' + errorMessage, 'error');
+                    }
+                } catch (error) {
+                    console.error('登录失败:', error);
+                    let errorMessage = '网络错误，请重试';
+                    if (error.message.includes('NetworkError')) {
+                        errorMessage = '网络连接失败，请检查网络';
+                    } else if (error.message.includes('404')) {
+                        errorMessage = '登录接口不存在';
+                    } else if (error.message.includes('500')) {
+                        errorMessage = '服务器错误，请稍后重试';
+                    }
+                    errorElement.textContent = errorMessage;
+                    errorElement.classList.remove('hidden');
+                    this.showNotification(errorMessage, 'error');
+                } finally {
+                    this.showButtonLoading('loginButton', false);
+                }
+            }
+            
+            // 登录锁定相关方法
+            isLockedOut() {
+                const lockoutData = localStorage.getItem('admin_lockout');
+                if (!lockoutData) return false;
+                
+                try {
+                    const data = JSON.parse(lockoutData);
+                    return Date.now() - data.timestamp < this.lockoutTime;
+                } catch {
+                    return false;
+                }
+            }
+            
+            getRemainingLockoutTime() {
+                const lockoutData = localStorage.getItem('admin_lockout');
+                if (!lockoutData) return 0;
+                
+                try {
+                    const data = JSON.parse(lockoutData);
+                    return this.lockoutTime - (Date.now() - data.timestamp);
+                } catch {
+                    return 0;
+                }
+            }
+            
+            setLockout() {
+                const lockoutData = {
+                    timestamp: Date.now(),
+                    attempts: this.loginAttempts
+                };
+                localStorage.setItem('admin_lockout', JSON.stringify(lockoutData));
+            }
+            
+            clearLockout() {
+                localStorage.removeItem('admin_lockout');
+                localStorage.removeItem('login_attempts');
+            }
+            
+            saveLoginAttempt() {
+                const attemptData = {
+                    count: this.loginAttempts,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem('login_attempts', JSON.stringify(attemptData));
+            }
+            
+            logout() {
+                try {
+                    this.cleanup();
+                    this.showLoginPanel();
+                    
+                    // 清理登录表单
+                    const passwordInput = document.getElementById('password');
+                    const errorMessage = document.getElementById('errorMessage');
+                    const successMessage = document.getElementById('successMessage');
+                    
+                    if (passwordInput) passwordInput.value = '';
+                    if (errorMessage) errorMessage.classList.add('hidden');
+                    if (successMessage) successMessage.classList.add('hidden');
+                    
+                    this.showNotification('已成功退出登录', 'success', 1500);
+                } catch (error) {
+                    console.error('退出登录失败:', error);
+                    this.showNotification('退出登录失败', 'error');
+                }
+            }
+            
+            switchPeriod(period) {
+                this.currentPeriod = period;
+                
+                // 更新按钮状态
+                document.querySelectorAll('.period-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                const targetBtn = document.querySelector(`[data-period="${period}"]`);
+                if (targetBtn) {
+                    targetBtn.classList.add('active');
+                } else {
+                    // 如果按钮不存在，默认选中第一个
+                    document.querySelector('.period-btn').classList.add('active');
+                }
+                
+                // 显示数据类型说明
+                const descriptions = {
+                    'last3days': '近24小时按小时统计',
+                    'day': '最近30天按天统计', 
+                    'week': '最近12周按周统计',
+                    'month': '最近12月按月统计'
+                };
+                this.showNotification(descriptions[period] || '数据统计', 'info', 2000);
+                
+                // 重新加载图表
+                this.loadChart();
+            }
+            
+            async loadDashboard() {
+                try {
+                    await Promise.all([
+                        this.loadRealtimeStats(),
+                        this.loadChart()
+                    ]);
+                } catch (error) {
+                    console.error('加载仪表板失败:', error);
+                    this.showNotification('仪表板数据加载失败', 'error');
+                }
+            }
+            
+            async loadRealtimeStats() {
+                // 显示加载状态
+                const statCards = document.querySelectorAll('.stat-number');
+                statCards.forEach(card => {
+                    card.classList.add('loading');
+                    card.textContent = '...';
+                });
+                
+                try {
+                    const response = await this.fetchWithRetry('/api/admin/realtime');
+                    const data = await response.json();
+                    
+                    // 数据验证
+                    this.validateData(data, ['todayVisits', 'todayUniqueIPs', 'totalVisits', 'totalIPs']);
+                    
+                    // 动画更新数据
+                    this.animateStatUpdate('todayVisits', data.todayVisits || 0);
+                    this.animateStatUpdate('todayUniqueIPs', data.todayUniqueIPs || 0);
+                    this.animateStatUpdate('totalVisits', data.totalVisits || 0);
+                    this.animateStatUpdate('totalIPs', data.totalIPs || 0);
+                    
+                    statCards.forEach(card => card.classList.remove('loading', 'error'));
+                    this.retryCount = 0; // 重置重试次数
+                } catch (error) {
+                    const errorMessage = this.handleError(error, '加载实时统计失败');
+                    
+                    // 设置错误状态显示
+                    statCards.forEach(card => {
+                        card.classList.remove('loading');
+                        card.classList.add('error');
+                        card.textContent = '加载失败';
+                    });
+                    
+                    // 显示重试按钮
+                    if (this.retryCount < this.maxRetries) {
+                        this.retryCount++;
+                        setTimeout(() => {
+                            this.loadRealtimeStats();
+                        }, 5000);
+                    } else {
+                        this.showNotification(`实时统计加载失败: ${errorMessage}`, 'error');
+                    }
+                }
+            }
+            
+            // 数据更新动画
+            animateStatUpdate(elementId, newValue) {
+                const element = document.getElementById(elementId);
+                if (!element) return;
+                
+                const startValue = parseInt(element.textContent.replace(/[^0-9]/g, '')) || 0;
+                const endValue = newValue;
+                const duration = 1000;
+                const startTime = performance.now();
+                
+                const animate = (currentTime) => {
+                    const elapsed = currentTime - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    
+                    // 使用缓动动画函数
+                    const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+                    const currentValue = Math.round(startValue + (endValue - startValue) * easeOutQuart);
+                    
+                    element.textContent = currentValue.toLocaleString();
+                    
+                    if (progress < 1) {
+                        requestAnimationFrame(animate);
+                    }
+                };
+                
+                requestAnimationFrame(animate);
+            }
+            
+            async loadChart() {
+                const loading = document.getElementById('chartLoading');
+                const error = document.getElementById('chartError');
+                const refreshBtn = document.getElementById('refreshChartBtn');
+                
+                // 显示加载状态
+                this.showProgress();
+                loading.classList.remove('hidden');
+                error.classList.add('hidden');
+                if (refreshBtn) {
+                    refreshBtn.disabled = true;
+                    refreshBtn.innerHTML = '<span class="loading-spinner"></span> 加载中...';
+                }
+                
+                try {
+                    const response = await this.fetchWithRetry(`/api/admin/stats?period=${this.currentPeriod}`);
+                    const data = await response.json();
+                    
+                    loading.classList.add('hidden');
+                    
+                    // 调试信息：输出API返回的数据结构
+                    console.log(`API返回数据 (${this.currentPeriod}):`, data);
+                    if (data.periodData && data.periodData.length > 0) {
+                        console.log('数据点数量:', data.periodData.length);
+                        console.log('第一个数据点:', data.periodData[0]);
+                        console.log('最后一个数据点:', data.periodData[data.periodData.length - 1]);
+                        const totalVisits = data.periodData.reduce((sum, item) => sum + (item.visits || 0), 0);
+                        const totalIPs = data.periodData.reduce((sum, item) => sum + (item.uniqueIPs || 0), 0);
+                        console.log(`总访问量: ${totalVisits}, 总独立IP: ${totalIPs}`);
+                    }
+                    
+                    if (data.periodData && Array.isArray(data.periodData)) {
+                        this.updateChart(data);
+                        this.updateIPTable(data.topIPs || []);
+                    } else {
+                        throw new Error('数据格式错误');
+                    }
+                } catch (error) {
+                    console.error('加载图表数据失败:', error);
+                    loading.classList.add('hidden');
+                    const errorElement = document.getElementById('chartError');
+                    errorElement.classList.remove('hidden');
+                    
+                    let errorMessage = '图表加载失败';
+                    let suggestion = '';
+                    
+                    if (error.message.includes('400')) {
+                        errorMessage = `不支持的时间周期: ${this.currentPeriod}`;
+                        suggestion = '请尝试切换到“近3日”查看数据。如果您需要其他时间周期，请联系管理员配置后端API支持。';
+                    } else {
+                        errorMessage = `图表加载失败: ${error.message}`;
+                    }
+                    
+                    errorElement.innerHTML = `
+                        <div style="margin-bottom: 10px;">${errorMessage}</div>
+                        ${suggestion ? `<div style="font-size: 12px; color: #666; margin-bottom: 15px;">${suggestion}</div>` : ''}
+                        <button onclick="adminPanel.loadChart()" style="margin-right: 10px; padding: 5px 10px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer;">重试</button>
+                        <button onclick="adminPanel.switchPeriod('last3days')" style="padding: 5px 10px; background: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer;">切换到近3日</button>
+                    `;
+                    this.showNotification(errorMessage, 'error');
+                } finally {
+                    this.hideProgress();
+                    if (refreshBtn) {
+                        refreshBtn.disabled = false;
+                        refreshBtn.innerHTML = '<span>→</span> 刷新';
+                    }
+                }
+            }
+            
+            updateChart(data) {
+                const ctx = document.getElementById('visitChart');
+                if (!ctx) return;
+                
+                try {
+                    // 销毁旧图表
+                    if (this.chart) {
+                        this.chart.destroy();
+                        this.chart = null;
+                    }
+                    
+                    const labels = data.periodData.map(item => {
+                        const date = new Date(item.date);
+                        
+                        if (this.currentPeriod === 'last3days') {
+                            // 近24小时按小时显示
+                            return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:00`;
+                        } else if (this.currentPeriod === 'day') {
+                            // 每日按天显示
+                            return `${date.getMonth() + 1}/${date.getDate()}`;
+                        } else if (this.currentPeriod === 'week') {
+                            // 每周显示：优先使用label，fallback到日期解析
+                            return item.label || `第${Math.ceil((date.getDate())/7)}周`;
+                        } else if (this.currentPeriod === 'month') {
+                            // 每月显示
+                            return `${date.getFullYear().toString().substring(2)}年${date.getMonth() + 1}月`;
+                        } else {
+                            // 默认显示
+                            return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+                        }
+                    });
+                    
+                    // 计算总量
+                    const totalVisits = data.periodData.reduce((sum, item) => sum + (item.visits || 0), 0);
+                    const totalIPs = data.periodData.reduce((sum, item) => sum + (item.uniqueIPs || 0), 0);
+                    
+                    // 更新统计信息
+                    document.getElementById('chartTotalVisits').textContent = totalVisits.toLocaleString();
+                    document.getElementById('chartTotalIPs').textContent = totalIPs.toLocaleString();
+                    
+                    // 数据验证
+                    if (data.periodData.length === 0) {
+                        document.getElementById('chartError').innerHTML = '<div>暂无数据可显示</div>';
+                        document.getElementById('chartError').classList.remove('hidden');
+                        return;
+                    }
+                    
+                    this.chart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: '访问量',
+                                data: data.periodData.map(item => item.visits || 0),
+                                borderColor: '#667eea',
+                                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.4,
+                                pointBackgroundColor: '#667eea',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 2,
+                                pointRadius: 4,
+                                pointHoverRadius: 8
+                            }, {
+                                label: '独立IP',
+                                data: data.periodData.map(item => item.uniqueIPs || 0),
+                                borderColor: '#f093fb',
+                                backgroundColor: 'rgba(240, 147, 251, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.4,
+                                pointBackgroundColor: '#f093fb',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 2,
+                                pointRadius: 4,
+                                pointHoverRadius: 8
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                    mode: 'index',
+                                    intersect: false,
+                                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                    titleColor: '#fff',
+                                    bodyColor: '#fff',
+                                    borderColor: '#667eea',
+                                    borderWidth: 1,
+                                    callbacks: {
+                                        title: function(tooltipItems) {
+                                            return tooltipItems[0].label;
+                                        },
+                                        label: function(context) {
+                                            return context.dataset.label + ': ' + context.parsed.y.toLocaleString();
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    grid: {
+                                        display: false
+                                    },
+                                    ticks: {
+                                        maxRotation: 45,
+                                        color: '#666'
+                                    }
+                                },
+                                y: {
+                                    beginAtZero: true,
+                                    grid: {
+                                        color: 'rgba(0,0,0,0.05)'
+                                    },
+                                    ticks: {
+                                        precision: 0,
+                                        color: '#666',
+                                        callback: function(value) {
+                                            return value.toLocaleString();
+                                        }
+                                    }
+                                }
+                            },
+                            interaction: {
+                                intersect: false,
+                                mode: 'index'
+                            },
+                            elements: {
+                                point: {
+                                    hoverRadius: 8
+                                }
+                            },
+                            animation: {
+                                duration: 800,
+                                easing: 'easeInOutQuart'
+                            }
+                        }
+                    });
+                } catch (error) {
+                    console.error('创建图表失败:', error);
+                    document.getElementById('chartError').classList.remove('hidden');
+                }
+            }
+            
+            updateIPTable(topIPs) {
+                this.ipData = topIPs || [];
+                this.filteredIpData = [...this.ipData];
+                this.currentPage = 1;
+                this.sortIpData(this.sortField, this.sortOrder);
+                this.updateSortButtons();
+            }
+            
+            filterIpData(searchTerm) {
+                if (!searchTerm.trim()) {
+                    this.filteredIpData = [...this.ipData];
+                } else {
+                    this.filteredIpData = this.ipData.filter(ip => 
+                        ip.ip && ip.ip.toLowerCase().includes(searchTerm.toLowerCase())
+                    );
+                }
+                this.currentPage = 1;
+                this.renderIpTable();
+            }
+            
+            sortIpData(field, order = null) {
+                if (order === null) {
+                    // 切换排序方向
+                    if (this.sortField === field) {
+                        this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        this.sortField = field;
+                        this.sortOrder = field === 'count' ? 'desc' : 'asc';
+                    }
+                } else {
+                    this.sortField = field;
+                    this.sortOrder = order;
+                }
+                
+                this.filteredIpData.sort((a, b) => {
+                    let aVal, bVal;
+                    
+                    switch (field) {
+                        case 'ip':
+                            aVal = a.ip || '';
+                            bVal = b.ip || '';
+                            break;
+                        case 'count':
+                            aVal = a.count || 0;
+                            bVal = b.count || 0;
+                            break;
+                        case 'firstVisit':
+                        case 'lastVisit':
+                            aVal = a[field] ? new Date(a[field]).getTime() : 0;
+                            bVal = b[field] ? new Date(b[field]).getTime() : 0;
+                            break;
+                        default:
+                            return 0;
+                    }
+                    
+                    if (this.sortOrder === 'asc') {
+                        return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+                    } else {
+                        return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+                    }
+                });
+                
+                this.currentPage = 1;
+                this.renderIpTable();
+                this.updateSortIndicators();
+            }
+            
+            updateSortIndicators() {
+                // 清除所有指示器
+                document.querySelectorAll('.sort-indicator').forEach(indicator => {
+                    indicator.className = 'sort-indicator';
+                });
+                
+                // 设置当前排序指示器
+                const currentHeader = document.querySelector(`th[data-sort="${this.sortField}"] .sort-indicator`);
+                if (currentHeader) {
+                    currentHeader.className = `sort-indicator ${this.sortOrder}`;
+                }
+            }
+            
+            updateSortButtons() {
+                document.querySelectorAll('.sort-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                    const field = btn.dataset.sort;
+                    const order = btn.dataset.order;
+                    if (field === this.sortField && order === this.sortOrder) {
+                        btn.classList.add('active');
+                    }
+                });
+            }
+            
+            renderIpTable() {
+                const tbody = document.getElementById('ipTableBody');
+                const pagination = document.getElementById('ipPagination');
+                
+                if (!this.filteredIpData || this.filteredIpData.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="no-data">暂无数据</td></tr>';
+                    if (pagination) pagination.style.display = 'none';
+                    return;
+                }
+                
+                // 分页计算
+                const totalPages = Math.ceil(this.filteredIpData.length / this.itemsPerPage);
+                const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+                const endIndex = startIndex + this.itemsPerPage;
+                const pageData = this.filteredIpData.slice(startIndex, endIndex);
+                
+                // 渲染表格
+                tbody.innerHTML = pageData.map(ip => `
+                    <tr>
+                        <td>${ip.ip || '-'}</td>
+                        <td>${(ip.count || 0).toLocaleString()}</td>
+                        <td>${ip.firstVisit ? new Date(ip.firstVisit).toLocaleString('zh-CN') : '-'}</td>
+                        <td>${ip.lastVisit ? new Date(ip.lastVisit).toLocaleString('zh-CN') : '-'}</td>
+                    </tr>
+                `).join('');
+                
+                // 更新分页
+                if (totalPages > 1 && pagination) {
+                    pagination.style.display = 'flex';
+                    const prevBtn = document.getElementById('prevPage');
+                    const nextBtn = document.getElementById('nextPage');
+                    const pageInfo = document.getElementById('pageInfo');
+                    
+                    if (prevBtn) prevBtn.disabled = this.currentPage === 1;
+                    if (nextBtn) nextBtn.disabled = this.currentPage === totalPages;
+                    if (pageInfo) pageInfo.textContent = `${this.currentPage} / ${totalPages} 页（共 ${this.filteredIpData.length} 条）`;
+                } else if (pagination) {
+                    pagination.style.display = 'none';
+                }
+            }
+            
+            startRealtimeUpdates() {
+                // 每30秒更新一次实时数据
+                this.realtimeInterval = setInterval(() => {
+                    if (this.isLoggedIn) {
+                        this.loadRealtimeStats();
+                    }
+                }, 30000);
+            }
+            
+            // 停止实时更新
+            stopRealtimeUpdates() {
+                if (this.realtimeInterval) {
+                    clearInterval(this.realtimeInterval);
+                    this.realtimeInterval = null;
+                }
+            }
+            
+            // 错误处理中心
+            handleError(error, context = '') {
+                console.error(`${context}:`, error);
+                
+                let errorMessage = '未知错误';
+                
+                if (error.message) {
+                    if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+                        errorMessage = '网络连接失败';
+                    } else if (error.message.includes('401')) {
+                        errorMessage = '身份验证失败';
+                    } else if (error.message.includes('403')) {
+                        errorMessage = '没有访问权限';
+                    } else if (error.message.includes('404')) {
+                        errorMessage = '请求的资源不存在';
+                    } else if (error.message.includes('500')) {
+                        errorMessage = '服务器内部错误';
+                    } else if (error.message.includes('timeout')) {
+                        errorMessage = '请求超时';
+                    } else {
+                        errorMessage = error.message;
+                    }
+                }
+                
+                return errorMessage;
+            }
+            
+            // 数据验证
+            validateData(data, requiredFields = []) {
+                if (!data || typeof data !== 'object') {
+                    throw new Error('数据格式错误');
+                }
+                
+                for (const field of requiredFields) {
+                    if (!(field in data)) {
+                        throw new Error(`缺少必要字段: ${field}`);
+                    }
+                }
+                
+                return true;
+            }
+            
+            // 清理资源
+            cleanup() {
+                this.stopRealtimeUpdates();
+                
+                if (this.chart) {
+                    this.chart.destroy();
+                    this.chart = null;
+                }
+                
+                // 移除事件监听器
+                document.removeEventListener('keydown', this.keydownHandler);
+                
+                this.clearSession();
+            }
+        }
+        
+        // 全局变量供错误重试使用
+        let adminPanel;
+        
+        // 全局错误处理
+        window.addEventListener('error', (event) => {
+            console.error('全局错误:', event.error);
+            if (adminPanel) {
+                adminPanel.showNotification('系统错误，请刷新页面', 'error');
+            }
+        });
+        
+        window.addEventListener('unhandledrejection', (event) => {
+            console.error('未处理的Promise拒绝:', event.reason);
+            if (adminPanel) {
+                adminPanel.showNotification('系统错误，请刷新页面', 'error');
+            }
+        });
+        
+        // 启动应用
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                adminPanel = new AdminPanel();
+            } catch (error) {
+                console.error('应用启动失败:', error);
+                document.body.innerHTML = `
+                    <div style="display: flex; justify-content: center; align-items: center; height: 100vh; background: #f5f7fa; font-family: Arial, sans-serif;">
+                        <div style="text-align: center; padding: 40px; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                            <h2 style="color: #e74c3c; margin-bottom: 15px;">应用启动失败</h2>
+                            <p style="color: #666; margin-bottom: 20px;">管理面板无法正常启动，请刷新页面重试。</p>
+                            <button onclick="location.reload()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">刷新页面</button>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+        
+        // 页面卸载时清理资源
+        window.addEventListener('beforeunload', () => {
+            if (adminPanel) {
+                adminPanel.cleanup();
+            }
+        });
+    </script>
+</body>
+</html> 
