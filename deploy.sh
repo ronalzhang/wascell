@@ -29,6 +29,16 @@ APP_NAME="${DEPLOY_APP_NAME:-wascell-website}"
 # 网络超时设置
 TIMEOUT=30
 
+# 检查timeout命令（macOS兼容性）
+if command -v gtimeout > /dev/null; then
+    TIMEOUT_CMD="gtimeout $TIMEOUT"
+elif command -v timeout > /dev/null; then
+    TIMEOUT_CMD="timeout $TIMEOUT"
+else
+    TIMEOUT_CMD=""
+    echo "⚠️  timeout命令不可用，将不使用超时限制"
+fi
+
 # Git推送函数（带重试机制）
 push_to_github() {
     echo "📤 推送代码到 GitHub..."
@@ -46,7 +56,12 @@ push_to_github() {
     # 尝试推送，最多重试3次
     for i in {1..3}; do
         echo "🔄 尝试推送 (第 $i 次)..."
-        if timeout $TIMEOUT git push origin main; then
+        if [ -n "$TIMEOUT_CMD" ]; then
+            $TIMEOUT_CMD git push origin main
+        else
+            git push origin main
+        fi
+        if [ $? -eq 0 ]; then
             echo -e "${GREEN}✅ GitHub推送成功${NC}"
             return 0
         else
@@ -65,7 +80,13 @@ push_to_github || echo "⚠️  跳过GitHub推送，直接部署到服务器"
 
 # 2. 检查服务器连接
 echo "🔍 检查服务器连接..."
-if ! timeout $TIMEOUT sshpass -p "$SERVER_PASS" ssh -o ConnectTimeout=10 "$SERVER_USER@$SERVER_IP" "echo '✅ 服务器连接成功'"; then
+if [ -n "$TIMEOUT_CMD" ]; then
+    SSH_CMD="$TIMEOUT_CMD sshpass -p \"$SERVER_PASS\" ssh -o ConnectTimeout=10 \"$SERVER_USER@$SERVER_IP\" \"echo '✅ 服务器连接成功'\""
+else
+    SSH_CMD="sshpass -p \"$SERVER_PASS\" ssh -o ConnectTimeout=10 \"$SERVER_USER@$SERVER_IP\" \"echo '✅ 服务器连接成功'\""
+fi
+
+if ! eval $SSH_CMD; then
     echo -e "${RED}❌ 服务器连接失败，请检查IP、用户名和密码${NC}"
     exit 1
 fi
@@ -83,7 +104,13 @@ if [ "$SERVER_REPO_STATUS" != "ERROR" ]; then
     sshpass -p "$SERVER_PASS" ssh "$SERVER_USER@$SERVER_IP" "cd $APP_DIR && git reset --hard HEAD"
     
     echo "📥 尝试从GitHub拉取最新代码..."
-    if timeout $TIMEOUT sshpass -p "$SERVER_PASS" ssh "$SERVER_USER@$SERVER_IP" "cd $APP_DIR && git pull origin main"; then
+    if [ -n "$TIMEOUT_CMD" ]; then
+        PULL_CMD="$TIMEOUT_CMD sshpass -p \"$SERVER_PASS\" ssh \"$SERVER_USER@$SERVER_IP\" \"cd $APP_DIR && git pull origin main\""
+    else
+        PULL_CMD="sshpass -p \"$SERVER_PASS\" ssh \"$SERVER_USER@$SERVER_IP\" \"cd $APP_DIR && git pull origin main\""
+    fi
+    
+    if eval $PULL_CMD; then
         echo -e "${GREEN}✅ 代码同步成功${NC}"
     else
         echo -e "${YELLOW}⚠️  GitHub拉取失败，尝试其他方式同步代码...${NC}"
@@ -112,7 +139,13 @@ fi
 
 # 4. 安装依赖（如果有更新）
 echo "📦 更新依赖包..."
-if ! timeout $TIMEOUT sshpass -p "$SERVER_PASS" ssh "$SERVER_USER@$SERVER_IP" "cd $APP_DIR && npm install --production"; then
+if [ -n "$TIMEOUT_CMD" ]; then
+    NPM_CMD="$TIMEOUT_CMD sshpass -p \"$SERVER_PASS\" ssh \"$SERVER_USER@$SERVER_IP\" \"cd $APP_DIR && npm install --production\""
+else
+    NPM_CMD="sshpass -p \"$SERVER_PASS\" ssh \"$SERVER_USER@$SERVER_IP\" \"cd $APP_DIR && npm install --production\""
+fi
+
+if ! eval $NPM_CMD; then
     echo -e "${YELLOW}⚠️  依赖安装失败，但继续部署...${NC}"
 fi
 
