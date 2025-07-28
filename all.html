@@ -331,14 +331,7 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
 
-        .like-button.liked {
-            background: var(--gold);
-            color: white;
-        }
 
-        .like-button.liked:hover {
-            background: #b59968;
-        }
 
         .like-icon {
             margin-right: 4px;
@@ -782,17 +775,14 @@
         let currentFilter = 'all';
         let currentSearchTerm = '';
 
-        // 点赞数据管理
+        // 简单点赞计数管理
         function initializeLikes() {
             const savedLikes = localStorage.getItem('wascell_likes');
             if (!savedLikes) {
                 // 为每个项目生成随机初始点赞数
                 const initialLikes = {};
                 experiences.forEach(exp => {
-                    initialLikes[exp.id] = {
-                        count: Math.floor(Math.random() * 200) + 50, // 50-249之间的随机数
-                        liked: false
-                    };
+                    initialLikes[exp.id] = Math.floor(Math.random() * 200) + 50; // 50-249之间的随机数
                 });
                 localStorage.setItem('wascell_likes', JSON.stringify(initialLikes));
                 return initialLikes;
@@ -800,20 +790,10 @@
             return JSON.parse(savedLikes);
         }
 
-        function saveLikes(likesData) {
-            localStorage.setItem('wascell_likes', JSON.stringify(likesData));
-        }
-
-        function toggleLike(experienceId) {
+        function addLike(experienceId) {
             const likesData = initializeLikes();
-            if (likesData[experienceId].liked) {
-                likesData[experienceId].count--;
-                likesData[experienceId].liked = false;
-            } else {
-                likesData[experienceId].count++;
-                likesData[experienceId].liked = true;
-            }
-            saveLikes(likesData);
+            likesData[experienceId]++; // 简单的+1
+            localStorage.setItem('wascell_likes', JSON.stringify(likesData));
             return likesData[experienceId];
         }
 
@@ -871,7 +851,7 @@
             card.dataset.description = experience.description.toLowerCase();
 
             const likesData = initializeLikes();
-            const likeInfo = likesData[experience.id];
+            const likeCount = likesData[experience.id];
 
             card.innerHTML = `
                 <div class="category-tag">${getCategoryName(experience.category)}</div>
@@ -881,9 +861,9 @@
                 </div>
                 <div class="card-image-container">
                     <img src="${experience.image}" alt="${experience.title}" class="card-image">
-                    <button class="like-button ${likeInfo.liked ? 'liked' : ''}" onclick="handleLike(event, ${experience.id})">
-                        <span class="like-icon">${likeInfo.liked ? '❤️' : '🤍'}</span>
-                        <span class="like-count">${likeInfo.count}</span>
+                    <button class="like-button" onclick="handleLike(event, ${experience.id})">
+                        <span class="like-icon">❤️</span>
+                        <span class="like-count">${likeCount}</span>
                     </button>
                 </div>
                 <div class="card-content">
@@ -1005,22 +985,13 @@
         function handleLike(event, experienceId) {
             event.stopPropagation(); // 阻止事件冒泡，避免触发卡片点击
             
-            const updatedLike = toggleLike(experienceId);
+            // 简单的+1计数
+            const newCount = addLike(experienceId);
             const button = event.currentTarget;
-            const icon = button.querySelector('.like-icon');
             const countElement = button.querySelector('.like-count');
             
-            // 更新按钮状态
-            if (updatedLike.liked) {
-                button.classList.add('liked');
-                icon.textContent = '❤️';
-            } else {
-                button.classList.remove('liked');
-                icon.textContent = '🤍';
-            }
-            
-            // 更新点赞数
-            countElement.textContent = updatedLike.count;
+            // 更新显示的数字
+            countElement.textContent = newCount;
             
             // 添加点击动画效果
             button.style.transform = 'scale(0.95)';
