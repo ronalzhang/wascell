@@ -536,7 +536,7 @@
     <!-- 详情模态框 -->
     <div class="modal" id="experienceModal">
         <div class="modal-content">
-            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <button class="modal-close" id="modalCloseBtn">&times;</button>
             <div id="modalContent">
                 <!-- 详细内容将动态加载 -->
             </div>
@@ -544,7 +544,7 @@
     </div>
 
     <!-- 回到顶部按钮 -->
-    <button class="back-to-top" id="backToTop" onclick="scrollToTop()">↑</button>
+    <button class="back-to-top" id="backToTop">↑</button>
 
     <script>
         // 体验项目数据 - 使用反引号字符串避免引号冲突
@@ -827,6 +827,12 @@
                     closeModal();
                 }
             });
+
+            // 模态框关闭按钮
+            document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
+
+            // 回到顶部按钮
+            document.getElementById('backToTop').addEventListener('click', scrollToTop);
         }
 
         function renderExperiences() {
@@ -861,7 +867,7 @@
                 </div>
                 <div class="card-image-container">
                     <img src="${experience.image}" alt="${experience.title}" class="card-image">
-                    <button class="like-button" onclick="handleLike(event, ${experience.id})">
+                    <button class="like-button" data-experience-id="${experience.id}">
                         <span class="like-icon">❤️</span>
                         <span class="like-count">${likeCount}</span>
                     </button>
@@ -887,6 +893,12 @@
                 if (!e.target.closest('.like-button')) {
                     openModal(experience);
                 }
+            });
+
+            // 为点赞按钮添加事件监听器
+            const likeButton = card.querySelector('.like-button');
+            likeButton.addEventListener('click', (event) => {
+                handleLike(event, experience.id);
             });
             
             return card;
