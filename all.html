@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>WASCELL · 独家文化体验全览</title>
+    <meta name="viewport" content="width=1024">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <meta name="description" content="探索WASCELL方舟计划中40+个独家文化体验项目，从传统寺院到私人茶室，从皇室工坊到艺伎文化，每一个体验都是绝对稀缺的顶级文化之旅。">
+    <style>
+        :root {
+            --gold: #c0a878;
+            --navy: #1a3a5f;
+            --ivory: #f8f4e9;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Sans GB', sans-serif;
+            color: #333;
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #fafafa;
+        }
+
+        .luxury-card {
+            background: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 30px auto;
+            transition: transform 0.3s;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--navy) 0%, #0f2540 100%);
+            padding: 40px 30px;
+            position: relative;
+            color: white;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .back-link {
+            position: absolute;
+            right: 30px;
+            top: 20px;
+            color: white;
+            text-decoration: none;
+            font-size: 1rem;
+            padding: 8px 16px;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+
+        .back-link:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.5);
+        }
+
+        h1 {
+            font-size: 36px;
+            font-weight: 300;
+            letter-spacing: 2px;
+            margin: 0 0 10px;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            opacity: 0.9;
+            max-width: 700px;
+            line-height: 1.6;
+        }
+
+        .gold-divider {
+            height: 2px;
+            background: var(--gold);
+            width: 80px;
+            margin: 25px 0;
+        }
+
+        .stats-section {
+            background: var(--ivory);
+            padding: 30px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .stats-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            flex: 1;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 300;
+            color: var(--navy);
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .filter-section {
+            background: white;
+            padding: 30px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 20px;
+        }
+
+        .search-bar {
+            max-width: 600px;
+            margin: 0 auto 30px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 15px 50px 15px 20px;
+            font-size: 1.1rem;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            border-color: var(--gold);
+            box-shadow: 0 0 0 3px rgba(192, 168, 120, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            font-size: 1.2rem;
+        }
+
+        .category-filters {
+            display: flex;
+            justify-content: center;
+            flex-wrap: nowrap;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 5px 0;
+        }
+
+        .category-btn {
+            padding: 8px 16px;
+            border: 2px solid #eee;
+            background: white;
+            color: #666;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .category-btn:hover,
+        .category-btn.active {
+            border-color: var(--gold);
+            background: var(--gold);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(192, 168, 120, 0.3);
+        }
+
+        .experiences-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .experience-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .experience-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .experience-card.hidden {
+            opacity: 0;
+            transform: scale(0.8);
+            pointer-events: none;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--navy) 0%, #0f2540 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .card-icon {
+            font-size: 1.5rem;
+            margin-right: 15px;
+            color: var(--gold);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+
+        .card-image-container {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+
+        .experience-card:hover .card-image {
+            transform: scale(1.05);
+        }
+
+        .card-content {
+            padding: 25px;
+        }
+
+        .card-description {
+            color: #555;
+            margin-bottom: 15px;
+            line-height: 1.7;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            font-size: 0.95rem;
+        }
+
+        .card-highlight {
+            background: var(--ivory);
+            border-left: 4px solid var(--gold);
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.9rem;
+        }
+
+        .card-features {
+            display: flex;
+            justify-content: space-between;
+            gap: 6px;
+            margin-top: 15px;
+        }
+
+        .feature-tag {
+            background: #f8f9fa;
+            padding: 6px 8px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 0.75rem;
+            border: 1px solid #e9ecef;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .feature-tag strong {
+            display: block;
+            color: var(--navy);
+            margin-bottom: 2px;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+
+        .category-tag {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: var(--gold);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .like-button {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 20px;
+            transition: all 0.3s;
+            font-size: 0.8rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            backdrop-filter: blur(4px);
+            z-index: 10;
+        }
+
+        .like-button:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .like-button.liked {
+            background: var(--gold);
+            color: white;
+        }
+
+        .like-button.liked:hover {
+            background: #b59968;
+        }
+
+        .like-icon {
+            margin-right: 4px;
+            font-size: 0.9rem;
+        }
+
+        .like-count {
+            font-weight: bold;
+            color: var(--navy);
+            font-size: 0.75rem;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background: white;
+            max-width: 800px;
+            margin: 50px auto;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            z-index: 10;
+        }
+
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--gold);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 12px rgba(192, 168, 120, 0.4);
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 99;
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .back-to-top:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(192, 168, 120, 0.5);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            display: none;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 60px;
+            padding: 30px;
+            background-color: #f8f8f8;
+            color: #777;
+            border-radius: 0 0 8px 8px;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 移动端微调 */
+        @media (max-width: 1024px) {
+            body {
+                margin: 0 20px;
+                max-width: calc(1000px - 40px);
+            }
+            
+            .stats-container {
+                gap: 15px;
+            }
+            
+            .stat-number {
+                font-size: 2rem;
+            }
+            
+            .experiences-grid {
+                gap: 20px;
+            }
+            
+            .feature-tag {
+                font-size: 0.7rem;
+                padding: 5px 6px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="luxury-card">
+        <div class="header">
+            <a href="index.html" class="back-link">← 返回主页</a>
+            <h1>独家文化体验全览</h1>
+            <div class="subtitle">探索方舟计划中的每一个绝对稀缺的顶级文化体验</div>
+            <div class="gold-divider"></div>
+            40+个独家项目等您发现
+        </div>
+
+        <div class="stats-section">
+            <div class="stats-container">
+                <div class="stat-item">
+                    <div class="stat-number">40+</div>
+                    <div class="stat-label">独家体验项目</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">8</div>
+                    <div class="stat-label">主要文化类别</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">99.9%</div>
+                    <div class="stat-label">稀缺度指数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">500年+</div>
+                    <div class="stat-label">历史传承</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="filter-section">
+            <div class="search-bar">
+                <input type="text" class="search-input" placeholder="搜索您感兴趣的文化体验..." id="searchInput">
+                <span class="search-icon">🔍</span>
+            </div>
+            
+            <div class="category-filters">
+                <button class="category-btn active" data-category="all">全部体验</button>
+                <button class="category-btn" data-category="temple">寺院禅修</button>
+                <button class="category-btn" data-category="tea">茶道文化</button>
+                <button class="category-btn" data-category="art">传统艺术</button>
+                <button class="category-btn" data-category="food">顶级美食</button>
+                <button class="category-btn" data-category="craft">皇室工艺</button>
+                <button class="category-btn" data-category="nature">自然秘境</button>
+                <button class="category-btn" data-category="geisha">艺妓文化</button>
+                <button class="category-btn" data-category="private">私人定制</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="experiences-grid" id="experiencesGrid">
+                <!-- 体验项目将通过JavaScript动态加载 -->
+            </div>
+            
+            <div class="loading" id="loading">
+                正在加载更多精彩体验...
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>WASCELL·方舟计划 | 投资健康，共创圈层，共赢未来</strong></p>
+            <p>申请加入顶级企业家专属健康投资圈，开启您的生命品质与商界融合的双重增值之旅</p>
+        </div>
+    </div>
+
+    <!-- 详情模态框 -->
+    <div class="modal" id="experienceModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <div id="modalContent">
+                <!-- 详细内容将动态加载 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 回到顶部按钮 -->
+    <button class="back-to-top" id="backToTop" onclick="scrollToTop()">↑</button>
+
+    <script>
+        // 体验项目数据 - 使用反引号字符串避免引号冲突
+        const experiences = [
+            {
+                id: 1,
+                title: "白木匠造和风屋形船 · 夜游东京湾",
+                category: "food",
+                icon: "⛩",
+                image: "imgs/kaiseki.jpg",
+                description: "纯白木建造的船内高雅古典，搭配现代风吧台桌椅，仅能乘坐10位宾客。这是东京唯一一艘高级屋形船，于2023年被东京市政府认可为意匠典范。",
+                highlight: "日本料理大厨乘船为宾客精心准备怀石料理，透过窗户可以看到闪耀的夜景和四季变幻的东京风景。",
+                features: ["限定座位：仅10位宾客", "官方认证：政府认可典范", "专属大厨：船上怀石料理"],
+                fullDescription: `从平安时代延续至今备受喜爱的"屋形船"文化，通过这无与伦比的特别空间和品味美食与传统的用餐体验，让您度过奢华的时光。船内装潢采用最高级的木材工艺，每一个细节都体现了日本匠人精神的极致追求。`
+            },
+            {
+                id: 2,
+                title: "浅草茶与舞之间 · 介绍制艺伎茶道",
+                category: "geisha",
+                icon: "🌸",
+                image: "imgs/geisha.jpg",
+                description: "在浅草的静谧街巷中，隐匿着一家非公开制、预约限定的老字号料亭。自1950年创立以来，这里始终作为体验日本艺妓文化的私密场所。",
+                highlight: "采用介绍制接待，普通客人无法自行入内，此次为您特别安排进入。",
+                features: ["创立时间：1950年老字号", "接待方式：介绍制专属", "文化体验：茶道+舞蹈"],
+                fullDescription: `在全包间的私密空间中，您将沉浸式体验两项极具代表性的日本传统文化：正统茶道体验和传统舞蹈表演。艺妓将在和式包厢中亲自演绎茶道礼法，让您感受"一期一会"的茶道精神。`
+            },
+            {
+                id: 3,
+                title: "世界文化遗产 · 龙安寺非公开区域",
+                category: "temple",
+                icon: "🏛",
+                image: "imgs/longtemple.jpg",
+                description: "龙安寺是一座由室町时代东军大将细川胜元于宝德二年（公元1450年）创建的禅宗古寺，以其悠久的历史和精致的艺术而闻名于世。",
+                highlight: "联合国教科文组织指定的世界文化遗产，证明其在日本文化史上的重要地位。",
+                features: ["建立年代：公元1450年", "庭园特色：枯山水经典", "文化价值：世界遗产"],
+                fullDescription: "寺内的庭园被誉为日本庭园抽象美的代表之一。在方丈前的一片矩形白砂地上，分布着五组青苔覆盖的岩石，这种简约而优雅的布局展现出了极致的平衡与和谐。"
+            },
+            {
+                id: 4,
+                title: "里千家茶道大师私人宅邸 · 茶道体验",
+                category: "tea",
+                icon: "🍵",
+                image: "imgs/home.jpg",
+                description: "位于东京市中心著名豪宅区目黑柿木坂，探访里千家茶道大师舩越老师的私人宅邸。舩越老师是里千家家元的关门弟子，在京都专注茶道研习已逾三十载。",
+                highlight: "常人很少有机会得以一窥的私人茶室，融合传统与现代的独特建筑风格。",
+                features: ["茶道地位：家元关门弟子", "研习时间：三十载专精", "独特体验：私宅茶道"],
+                fullDescription: "与其夫人一同，他们都是职业茶人，且怀抱着对中国文化的深厚喜爱。虽位于繁华都市中心，却环境幽雅安静。您将亲眼目睹茶道礼法展示，品尝老师亲手调制的现打抹茶。"
+            },
+            {
+                id: 5,
+                title: "金阁寺住持私人禅修 · 晨钟暮鼓",
+                category: "temple",
+                icon: "🔔",
+                image: "imgs/yuantemple.jpg",
+                description: "在金阁寺尚未对公众开放的清晨时分，与住持进行私人禅修体验。在没有游客喧嚣的宁静环境中，感受真正的禅意空间。",
+                highlight: "独享金阁寺的清晨时光，在住持的亲自指导下进行正宗的禅修体验。",
+                features: ["独享时段：清晨闭园时间", "指导老师：金阁寺住持", "体验内容：正宗禅修"],
+                fullDescription: "在第一缕阳光洒向金阁的神圣时刻，您将体验到最纯粹的禅修文化。住持将为您讲解禅宗哲学，指导正确的冥想姿势，让您在这座世界文化遗产中找到内心的宁静。"
+            },
+            {
+                id: 6,
+                title: "银座顶级割烹 · 江户前寿司大师",
+                category: "food",
+                icon: "🍣",
+                image: "imgs/sushi.jpg",
+                description: "预约制高级割烹店，仅设8个座位的寿司台。主厨师承三代江户前寿司传统，使用当日从筑地直送的最高级食材。",
+                highlight: "米其林三星主厨亲自为您制作每一贯寿司，讲解江户前寿司的历史和制作工艺。",
+                features: ["座位限制：仅8个位置", "主厨资历：三代传承", "食材标准：筑地最高级"],
+                fullDescription: "每一贯寿司都是艺术品，从选料到制作，主厨将为您详细讲解江户前寿司的精髓。醋饭的温度、鱼片的切法、握制的力度，每个细节都体现了日本职人精神的极致追求。"
+            },
+            {
+                id: 7,
+                title: "清水寺舞台夜间特别参拜",
+                category: "temple",
+                icon: "🌙",
+                image: "imgs/qingshuitemple.jpg",
+                description: "在夜幕降临后，独享清水寺舞台的特别参拜时光。在点灯营造的神秘氛围中，感受这座千年古寺的庄严与美丽。",
+                highlight: "夜间特别开放，在灯光映照下的清水舞台展现出与白天完全不同的神秘美感。",
+                features: ["特殊时段：夜间专属", "景观特色：灯光清水舞台", "历史价值：千年古寺"],
+                fullDescription: "清水寺的木质舞台在夜晚灯光的映照下，展现出令人震撼的美感。您将在僧侣的引导下，了解这座寺庙的历史传说，在夜色中感受京都的古典韵味。"
+            },
+            {
+                id: 8,
+                title: "能乐大师长山贵三郎私人指导",
+                category: "art",
+                icon: "🎭",
+                image: "imgs/bigtea.jpg",
+                description: "与日本国宝级能乐大师长山贵三郎进行面对面交流，学习能乐艺术的精髓，体验这门被联合国教科文组织列为人类非物质文化遗产的传统艺术。",
+                highlight: "国宝级大师亲自指导，深入了解能乐艺术与企业领导力的内在连接。",
+                features: ["指导老师：国宝级大师", "艺术价值：UNESCO非遗", "学习内容：能乐精髓"],
+                fullDescription: "能乐是日本最古老的戏剧形式，大师将为您演示能乐的基本动作和发声技巧，讲解其背后的哲学思想。这不仅是艺术体验，更是对日本文化精神深层次的理解。"
+            },
+            {
+                id: 9,
+                title: "东山紫御殿·皇室御用工坊探访",
+                category: "craft",
+                icon: "👑",
+                image: "imgs/caiguoqiang.jpg",
+                description: "探访为皇室制作器物的传统工坊，观摩国宝级工艺师的制作过程，了解传承数百年的皇室工艺技法。",
+                highlight: "皇室专用工坊，观摩国宝级工艺师现场制作，体验皇室级别的工艺标准。",
+                features: ["服务对象：皇室专用", "工艺师级别：国宝级", "技法传承：数百年历史"],
+                fullDescription: "工坊保持着数百年来的传统制作工艺，从选材到成型，每一个步骤都严格按照皇室标准执行。您将亲眼见证国宝级工艺师的精湛技艺，了解日本传统工艺的至高水准。"
+            },
+            {
+                id: 10,
+                title: "京都岚山竹林·月夜私人徒步",
+                category: "nature",
+                icon: "🎋",
+                image: "imgs/yisong.jpg",
+                description: "在月圆之夜，独享岚山竹林的宁静时光。在竹叶婆娑的月光下，感受京都最著名自然景观的神秘之美。",
+                highlight: "月夜专属时间，在竹林中进行私人冥想徒步，体验竹林月色的绝美意境。",
+                features: ["特殊时间：月圆之夜", "独享体验：竹林徒步", "意境体验：月色竹影"],
+                fullDescription: "岚山竹林在月光的映照下呈现出梦幻般的美景，竹叶在微风中轻摆，月光透过竹叶洒在小径上，形成变幻的光影。这是一次与自然对话的深度体验。"
+            },
+            {
+                id: 11,
+                title: "表参道茶室·现代茶道革新体验",
+                category: "tea",
+                icon: "🫖",
+                image: "imgs/incense.jpg",
+                description: "在表参道的现代化茶室中，体验融合传统与现代的革新茶道。茶道师将传统茶道精神与现代美学完美结合。",
+                highlight: "传统茶道与现代设计的完美融合，在都市中心体验茶道的现代演绎。",
+                features: ["设计特色：现代茶室", "理念融合：传统+现代", "位置优势：表参道中心"],
+                fullDescription: "这里将传统茶道的精神内核与现代建筑美学相结合，创造出独特的茶道体验空间。在繁华的表参道中心，您将体验到茶道文化在现代社会中的全新演绎。"
+            },
+            {
+                id: 12,
+                title: "富士山五合目·日出禅修体验",
+                category: "nature",
+                icon: "🗻",
+                image: "imgs/dongtemple.jpg",
+                description: "在富士山五合目迎接日出，进行传统的禅修体验。在日本最神圣的山峰上，感受天地间的壮阔与宁静。",
+                highlight: "在富士山神圣的环境中迎接日出，体验天地间最纯净的禅修时光。",
+                features: ["地点神圣：富士山五合目", "时间特殊：日出时分", "体验内容：高山禅修"],
+                fullDescription: "富士山被日本人视为神山，在五合目迎接日出是极其神圣的体验。当第一缕阳光照亮富士山顶时，您将在这个神圣的时刻进行禅修，感受天地间的能量。"
+            },
+            {
+                id: 13,
+                title: "银座柳茶屋·昭和时代茶道重现",
+                category: "tea",
+                icon: "🏮",
+                image: "imgs/bar.jpg",
+                description: "在保持昭和时代原貌的茶屋中，体验传统的茶道文化。茶屋主人将为您重现昭和时代的茶道礼仪和氛围。",
+                highlight: "完整保存昭和时代茶屋原貌，体验最地道的传统茶道文化。",
+                features: ["历史保存：昭和时代原貌", "文化体验：传统茶道", "稀缺性：极少数保存完整"],
+                fullDescription: "这间茶屋完整保存了昭和时代的装饰和布局，从榻榻米到茶具，都是当年的原物。在这里，您将体验到最纯正的传统茶道文化，感受昭和时代的风情。"
+            },
+            {
+                id: 14,
+                title: "东京都庭园·皇室私人庭园导览",
+                category: "nature",
+                icon: "🌺",
+                image: "imgs/shop.jpg",
+                description: "探访通常不对外开放的皇室私人庭园，在专业园艺师的导览下，了解日本庭园艺术的最高水准。",
+                highlight: "皇室专用庭园，专业园艺师亲自导览，了解日本庭园艺术的至高境界。",
+                features: ["独特性：皇室私人庭园", "导览水准：专业园艺师", "艺术价值：庭园艺术顶峰"],
+                fullDescription: "这座庭园代表了日本庭园艺术的最高水准，每一处布局都经过精心设计。专业园艺师将为您详细讲解庭园的设计理念，植物的选择和维护，以及其中蕴含的美学哲学。"
+            },
+            {
+                id: 15,
+                title: "浅草神社·特别祈福仪式",
+                category: "temple",
+                icon: "⛩️",
+                image: "imgs/tokyosushi.jpg",
+                description: "在浅草神社参与特别的祈福仪式，由神社的宫司为您进行个人专属的祈福，体验神道教的神圣仪式。",
+                highlight: "神社宫司亲自主持的个人专属祈福仪式，体验最正宗的神道文化。",
+                features: ["仪式主持：神社宫司", "服务类型：个人专属", "文化体验：神道祈福"],
+                fullDescription: "神道教是日本的本土宗教，祈福仪式庄严神圣。宫司将为您穿上传统的白衣，在神前进行净化和祈福，这是了解日本精神文化的重要体验。"
+            },
+            {
+                id: 16,
+                title: "箱根温泉·私人汤屋秘境体验",
+                category: "private",
+                icon: "♨️",
+                image: "imgs/bar.jpg",
+                description: "在箱根最隐秘的温泉旅馆中，享受完全私人的汤屋体验。在山谷深处的天然温泉中，感受身心的完全放松。",
+                highlight: "隐秘山谷中的私人汤屋，天然温泉水质，完全私密的身心放松体验。",
+                features: ["隐秘性：山谷深处", "私密性：完全私人", "水质：天然温泉"],
+                fullDescription: "这间温泉旅馆位于箱根最隐秘的山谷中，拥有纯天然的温泉水源。私人汤屋面朝山景，您可以在这里享受完全私密的温泉体验，感受日本温泉文化的精髓。"
+            },
+            {
+                id: 17,
+                title: "六本木艺术画廊·当代艺术私人鉴赏",
+                category: "art",
+                icon: "🎨",
+                image: "imgs/caiguoqiang.jpg",
+                description: "在六本木顶级画廊中，由艺术策展人陪同进行当代艺术作品的私人鉴赏，了解日本当代艺术的发展脉络。",
+                highlight: "顶级画廊私人鉴赏，艺术策展人专业讲解，深度了解日本当代艺术。",
+                features: ["场所等级：顶级画廊", "专业指导：艺术策展人", "内容深度：当代艺术发展"],
+                fullDescription: "六本木聚集了东京最重要的艺术画廊，这里展示着日本最前沿的当代艺术作品。策展人将为您详细介绍每件作品的创作背景和艺术价值，让您深入了解日本当代艺术的精神内核。"
+            },
+            {
+                id: 18,
+                title: "镰仓大佛·晨曦冥想体验",
+                category: "temple",
+                icon: "🧘",
+                image: "imgs/longtemple.jpg",
+                description: "在镰仓大佛前进行晨曦冥想体验，在这尊800年历史的大佛面前，感受佛法的慈悲与智慧。",
+                highlight: "800年历史大佛前的晨曦冥想，感受佛法智慧与内心平静的融合。",
+                features: ["历史价值：800年大佛", "时间特殊：晨曦时分", "精神体验：佛法冥想"],
+                fullDescription: "镰仓大佛是日本最著名的佛像之一，拥有800年的历史。在晨曦的柔和光线中，大佛显得格外庄严慈悲。您将在专业导师的指导下进行冥想，感受内心的平静与智慧。"
+            },
+            {
+                id: 19,
+                title: "赤坂料亭·江户时代怀石料理",
+                category: "food",
+                icon: "🍱",
+                image: "imgs/kaiseki.jpg",
+                description: "在保持江户时代建筑风格的赤坂料亭中，享用传统的怀石料理。每道菜都严格按照江户时代的制作工艺和摆盘方式。",
+                highlight: "江户时代建筑中的正宗怀石料理，严格按照传统工艺制作和摆盘。",
+                features: ["建筑特色：江户时代风格", "料理类型：传统怀石", "制作标准：古法工艺"],
+                fullDescription: "怀石料理是日本料理的最高形式，每道菜都有深刻的季节意义和文化内涵。在江户时代的建筑环境中享用怀石料理，让您完全沉浸在传统的日本文化氛围中。"
+            },
+            {
+                id: 20,
+                title: "皇居东御苑·樱花季特别参观",
+                category: "nature",
+                icon: "🌸",
+                image: "imgs/yuantemple.png",
+                description: "在樱花盛开的季节，特别参观皇居东御苑。在皇室园林中欣赏最美的樱花，了解日本樱花文化的深层含义。",
+                highlight: "皇室园林中的樱花特别参观，体验最高等级的赏樱文化。",
+                features: ["特殊季节：樱花盛开期", "参观场所：皇居东御苑", "文化价值：樱花文化精髓"],
+                fullDescription: "皇居东御苑拥有东京最美的樱花，每年樱花季都吸引无数游客。但您将享受到特别的参观待遇，在专业导览的陪同下，深入了解日本樱花文化的历史和精神内涵。"
+            }
+        ];
+
+        // 页面功能
+        let currentFilter = 'all';
+        let currentSearchTerm = '';
+
+        // 点赞数据管理
+        function initializeLikes() {
+            const savedLikes = localStorage.getItem('wascell_likes');
+            if (!savedLikes) {
+                // 为每个项目生成随机初始点赞数
+                const initialLikes = {};
+                experiences.forEach(exp => {
+                    initialLikes[exp.id] = {
+                        count: Math.floor(Math.random() * 200) + 50, // 50-249之间的随机数
+                        liked: false
+                    };
+                });
+                localStorage.setItem('wascell_likes', JSON.stringify(initialLikes));
+                return initialLikes;
+            }
+            return JSON.parse(savedLikes);
+        }
+
+        function saveLikes(likesData) {
+            localStorage.setItem('wascell_likes', JSON.stringify(likesData));
+        }
+
+        function toggleLike(experienceId) {
+            const likesData = initializeLikes();
+            if (likesData[experienceId].liked) {
+                likesData[experienceId].count--;
+                likesData[experienceId].liked = false;
+            } else {
+                likesData[experienceId].count++;
+                likesData[experienceId].liked = true;
+            }
+            saveLikes(likesData);
+            return likesData[experienceId];
+        }
+
+        function initializePage() {
+            initializeLikes();
+            renderExperiences();
+            initializeEventListeners();
+            initializeScrollEffects();
+        }
+
+        function initializeEventListeners() {
+            // 搜索功能
+            document.getElementById('searchInput').addEventListener('input', function(e) {
+                currentSearchTerm = e.target.value.toLowerCase();
+                filterExperiences();
+            });
+
+            // 分类筛选
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentFilter = this.dataset.category;
+                    filterExperiences();
+                });
+            });
+
+            // 模态框功能
+            document.getElementById('experienceModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeModal();
+                }
+            });
+        }
+
+        function renderExperiences() {
+            const grid = document.getElementById('experiencesGrid');
+            grid.innerHTML = '';
+
+            experiences.forEach((exp, index) => {
+                const card = createExperienceCard(exp);
+                card.style.animationDelay = `${index * 0.1}s`;
+                card.classList.add('fade-in');
+                grid.appendChild(card);
+            });
+
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function createExperienceCard(experience) {
+            const card = document.createElement('div');
+            card.className = 'experience-card';
+            card.dataset.category = experience.category;
+            card.dataset.title = experience.title.toLowerCase();
+            card.dataset.description = experience.description.toLowerCase();
+
+            const likesData = initializeLikes();
+            const likeInfo = likesData[experience.id];
+
+            card.innerHTML = `
+                <div class="category-tag">${getCategoryName(experience.category)}</div>
+                <div class="card-header">
+                    <div class="card-icon">${experience.icon}</div>
+                    <h3 class="card-title">${experience.title}</h3>
+                </div>
+                <div class="card-image-container">
+                    <img src="${experience.image}" alt="${experience.title}" class="card-image">
+                    <button class="like-button ${likeInfo.liked ? 'liked' : ''}" onclick="handleLike(event, ${experience.id})">
+                        <span class="like-icon">${likeInfo.liked ? '❤️' : '🤍'}</span>
+                        <span class="like-count">${likeInfo.count}</span>
+                    </button>
+                </div>
+                <div class="card-content">
+                    <p class="card-description">${experience.description}</p>
+                    <div class="card-highlight">
+                        <strong>独家体验：</strong>${experience.highlight}
+                    </div>
+                    <div class="card-features">
+                        ${experience.features.map(feature => `
+                            <div class="feature-tag">
+                                <strong>${feature.split('：')[0]}</strong>
+                                ${feature.split('：')[1]}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            // 为卡片主体添加点击事件，但排除点赞按钮
+            card.addEventListener('click', (e) => {
+                if (!e.target.closest('.like-button')) {
+                    openModal(experience);
+                }
+            });
+            
+            return card;
+        }
+
+        function getCategoryName(category) {
+            const categoryNames = {
+                'temple': '寺院禅修',
+                'tea': '茶道文化',
+                'art': '传统艺术',
+                'food': '顶级美食',
+                'craft': '皇室工艺',
+                'nature': '自然秘境',
+                'geisha': '艺妓文化',
+                'private': '私人定制'
+            };
+            return categoryNames[category] || '特别体验';
+        }
+
+        function filterExperiences() {
+            const cards = document.querySelectorAll('.experience-card');
+            
+            cards.forEach(card => {
+                const matchesCategory = currentFilter === 'all' || card.dataset.category === currentFilter;
+                const matchesSearch = currentSearchTerm === '' || 
+                    card.dataset.title.includes(currentSearchTerm) || 
+                    card.dataset.description.includes(currentSearchTerm);
+
+                if (matchesCategory && matchesSearch) {
+                    card.classList.remove('hidden');
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+        }
+
+        function openModal(experience) {
+            const modal = document.getElementById('experienceModal');
+            const content = document.getElementById('modalContent');
+            
+            content.innerHTML = `
+                <div class="card-header" style="margin: 0;">
+                    <div class="card-icon">${experience.icon}</div>
+                    <h3 class="card-title">${experience.title}</h3>
+                </div>
+                <img src="${experience.image}" alt="${experience.title}" class="card-image" style="margin: 0;">
+                <div class="card-content">
+                    <p class="card-description" style="-webkit-line-clamp: none; overflow: visible;">
+                        ${experience.description}
+                    </p>
+                    <div class="card-highlight">
+                        <strong>独家体验：</strong>${experience.highlight}
+                    </div>
+                    <p style="margin-top: 20px; line-height: 1.7;">
+                        ${experience.fullDescription}
+                    </p>
+                    <div class="card-features" style="margin-top: 25px;">
+                        ${experience.features.map(feature => `
+                            <div class="feature-tag">
+                                <strong>${feature.split('：')[0]}</strong>
+                                ${feature.split('：')[1]}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            modal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            document.getElementById('experienceModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        function initializeScrollEffects() {
+            const backToTop = document.getElementById('backToTop');
+            
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 500) {
+                    backToTop.classList.add('visible');
+                } else {
+                    backToTop.classList.remove('visible');
+                }
+            });
+        }
+
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+
+        function handleLike(event, experienceId) {
+            event.stopPropagation(); // 阻止事件冒泡，避免触发卡片点击
+            
+            const updatedLike = toggleLike(experienceId);
+            const button = event.currentTarget;
+            const icon = button.querySelector('.like-icon');
+            const countElement = button.querySelector('.like-count');
+            
+            // 更新按钮状态
+            if (updatedLike.liked) {
+                button.classList.add('liked');
+                icon.textContent = '❤️';
+            } else {
+                button.classList.remove('liked');
+                icon.textContent = '🤍';
+            }
+            
+            // 更新点赞数
+            countElement.textContent = updatedLike.count;
+            
+            // 添加点击动画效果
+            button.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                button.style.transform = 'scale(1.05)';
+            }, 150);
+            setTimeout(() => {
+                button.style.transform = 'scale(1)';
+            }, 300);
+        }
+
+        // 键盘事件
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', initializePage);
+    </script>
+</body>
+</html> 
