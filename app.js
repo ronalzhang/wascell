@@ -485,7 +485,7 @@ app.get('/api/admin/realtime', (req, res) => {
         
         res.json({
             todayVisits: todayData.totalVisits,
-            todayUniqueIPs: Array.isArray(todayData.uniqueIPs) ? todayData.uniqueIPs.length : 0,
+            todayUniqueIPs: todayData.uniqueIPs instanceof Set ? todayData.uniqueIPs.size : (Array.isArray(todayData.uniqueIPs) ? todayData.uniqueIPs.length : 0),
             totalVisits: stats.totalVisits,
             totalIPs: Object.keys(stats.ipStats).length
         });
