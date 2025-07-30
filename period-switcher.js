@@ -12,7 +12,7 @@ function initializePeriodSwitcher() {
     
     // 获取当前期数并设置触发器文本
     const currentPeriod = getCurrentPeriod();
-    updateTriggerText(currentPeriod);
+    //updateTriggerText(currentPeriod);
     
     // 更新下拉菜单状态
     updateDropdownStatus(currentPeriod);
@@ -76,7 +76,7 @@ function updateTriggerText(period) {
     if (trigger) {
         const textNode = trigger.childNodes[0];
         if (textNode.nodeType === Node.TEXT_NODE) {
-            textNode.textContent = period + statusText;
+            textNode.textContent = period;
         }
     }
 }
