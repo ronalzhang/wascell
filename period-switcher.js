@@ -11,8 +11,8 @@ function initializePeriodSwitcher() {
     if (!trigger || !dropdown) return;
     
     // 获取当前期数并设置触发器文本
-    //const currentPeriod = getCurrentPeriod();
-    //updateTriggerText(currentPeriod);
+    const currentPeriod = getCurrentPeriod();
+    updateTriggerText(currentPeriod);
     
     // 更新下拉菜单状态
     updateDropdownStatus(currentPeriod);
