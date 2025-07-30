@@ -85,7 +85,8 @@ function updateDropdownStatus(currentPeriod) {
     const options = document.querySelectorAll('.period-option');
     
     options.forEach(option => {
-        const periodText = option.textContent.trim();
+        const periodNameElement = option.querySelector('.period-name');
+        const periodText = periodNameElement ? periodNameElement.textContent.trim() : option.textContent.trim();
         
         // 移除所有active类
         option.classList.remove('active');
