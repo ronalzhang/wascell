@@ -75,9 +75,9 @@ function updateTriggerText(period) {
     const trigger = document.getElementById('periodTrigger');
     if (trigger) {
         const textNode = trigger.childNodes[0];
-        if (textNode.nodeType === Node.TEXT_NODE) {
-            textNode.textContent = period;
-        }
+        const statusMatch = currentText.match(/·(.+)$/);
+        const statusText = statusMatch ? statusMatch[0] : '';
+        trigger.childNodes[0].textContent = period + statusText;
     }
 }
 
