@@ -39,64 +39,97 @@
         
         /* 期数切换器样式 */
         .period-switcher {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            padding: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .period-switcher-label {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.8);
-            margin-bottom: 8px;
-            text-align: center;
-            font-weight: 500;
-        }
-        
-        .period-options {
-            display: flex;
-            gap: 6px;
-        }
-        
-        .period-option {
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
             position: relative;
-            border: 1px solid transparent;
-            text-decoration: none;
-            color: white;
-            display: flex;
-            align-items: center;
-            gap: 4px;
+            display: inline-block;
         }
         
-        .period-option.active {
+        .period-trigger {
             background: var(--gold);
             color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
             box-shadow: 0 2px 8px rgba(192, 168, 120, 0.3);
         }
         
-        .period-option:not(.active) {
-            background: rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.8);
+        .period-trigger:hover {
+            background: #d4b896;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(192, 168, 120, 0.4);
         }
         
-        .period-option:not(.active):hover {
-            background: rgba(255, 255, 255, 0.2);
+        .period-trigger .dropdown-icon {
+            font-size: 12px;
+            transition: transform 0.3s ease;
+        }
+        
+        .period-trigger.active .dropdown-icon {
+            transform: rotate(180deg);
+        }
+        
+        .period-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            padding: 8px;
+            margin-top: 8px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            min-width: 200px;
+        }
+        
+        .period-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .period-option {
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+        
+        .period-option:last-child {
+            margin-bottom: 0;
+        }
+        
+        .period-option:hover {
+            background: #f8f4e9;
+            color: var(--navy);
+        }
+        
+        .period-option.active {
+            background: var(--navy);
             color: white;
         }
         
         .period-option .status-indicator {
-            width: 6px;
-            height: 6px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
             flex-shrink: 0;
         }
@@ -114,6 +147,22 @@
         .period-option.coming-soon .status-indicator {
             background: #fbbf24;
             box-shadow: 0 0 6px rgba(251, 191, 36, 0.5);
+        }
+        
+        /* 添加遮罩层 */
+        .period-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: transparent;
+            z-index: 999;
+            display: none;
+        }
+        
+        .period-overlay.show {
+            display: block;
         }
         .badge {
             position: absolute;
@@ -422,8 +471,11 @@
         <div class="header">
             <!-- 期数切换器 -->
             <div class="period-switcher">
-                <div class="period-switcher-label">选择期数</div>
-                <div class="period-options">
+                <button class="period-trigger" id="periodTrigger">
+                    20250901期
+                    <span class="dropdown-icon">▼</span>
+                </button>
+                <div class="period-dropdown" id="periodDropdown">
                     <a href="index.html" class="period-option active available">
                         <span class="status-indicator"></span>
                         20250901期
@@ -438,7 +490,8 @@
                     </a>
                 </div>
             </div>
-            <div class="badge">20250901期</div>
+            <!-- 遮罩层 -->
+            <div class="period-overlay" id="periodOverlay"></div>
             <h1>方舟计划 · 日本生命焕新之旅</h1>
             <div class="subtitle">顶级干细胞治疗 × 精英社交 — 为企业家私人定制的投资健康与商界融合的双重增值方案</div>
             <div class="gold-divider"></div>日本 · 东京站

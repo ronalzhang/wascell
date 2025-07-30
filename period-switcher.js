@@ -1,23 +1,66 @@
 // 期数切换器交互增强
 document.addEventListener('DOMContentLoaded', function() {
-    // 获取当前页面的期数
-    const currentPeriod = getCurrentPeriod();
-    
-    // 更新切换器状态
-    updateSwitcherStatus(currentPeriod);
-    
-    // 添加切换器悬停效果
-    addSwitcherHoverEffects();
+    initializePeriodSwitcher();
 });
 
-function getCurrentPeriod() {
-    // 从页面标题或badge中获取当前期数
-    const badge = document.querySelector('.badge');
-    if (badge) {
-        return badge.textContent.trim();
-    }
+function initializePeriodSwitcher() {
+    const trigger = document.getElementById('periodTrigger');
+    const dropdown = document.getElementById('periodDropdown');
+    const overlay = document.getElementById('periodOverlay');
     
-    // 从URL中获取
+    if (!trigger || !dropdown) return;
+    
+    // 获取当前期数并设置触发器文本
+    const currentPeriod = getCurrentPeriod();
+    updateTriggerText(currentPeriod);
+    
+    // 更新下拉菜单状态
+    updateDropdownStatus(currentPeriod);
+    
+    // 触发器点击事件
+    trigger.addEventListener('click', function(e) {
+        e.stopPropagation();
+        toggleDropdown();
+    });
+    
+    // 遮罩层点击事件
+    overlay.addEventListener('click', function() {
+        closeDropdown();
+    });
+    
+    // 下拉菜单选项点击事件
+    const options = dropdown.querySelectorAll('.period-option');
+    options.forEach(option => {
+        option.addEventListener('click', function(e) {
+            const href = this.getAttribute('href');
+            if (href === '#') {
+                e.preventDefault();
+                showComingSoonMessage();
+                closeDropdown();
+            } else {
+                // 正常跳转
+                closeDropdown();
+            }
+        });
+    });
+    
+    // ESC键关闭下拉菜单
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeDropdown();
+        }
+    });
+    
+    // 点击页面其他地方关闭下拉菜单
+    document.addEventListener('click', function(e) {
+        if (!trigger.contains(e.target) && !dropdown.contains(e.target)) {
+            closeDropdown();
+        }
+    });
+}
+
+function getCurrentPeriod() {
+    // 从URL中获取当前期数
     const path = window.location.pathname;
     if (path.includes('20250902')) {
         return '20250902期';
@@ -28,7 +71,17 @@ function getCurrentPeriod() {
     return '20250901期'; // 默认
 }
 
-function updateSwitcherStatus(currentPeriod) {
+function updateTriggerText(period) {
+    const trigger = document.getElementById('periodTrigger');
+    if (trigger) {
+        const textNode = trigger.childNodes[0];
+        if (textNode.nodeType === Node.TEXT_NODE) {
+            textNode.textContent = period;
+        }
+    }
+}
+
+function updateDropdownStatus(currentPeriod) {
     const options = document.querySelectorAll('.period-option');
     
     options.forEach(option => {
@@ -44,31 +97,36 @@ function updateSwitcherStatus(currentPeriod) {
     });
 }
 
-function addSwitcherHoverEffects() {
-    const switcher = document.querySelector('.period-switcher');
-    if (!switcher) return;
+function toggleDropdown() {
+    const trigger = document.getElementById('periodTrigger');
+    const dropdown = document.getElementById('periodDropdown');
+    const overlay = document.getElementById('periodOverlay');
     
-    // 添加鼠标悬停时的轻微放大效果
-    switcher.addEventListener('mouseenter', function() {
-        this.style.transform = 'scale(1.02)';
-        this.style.transition = 'transform 0.2s ease';
-    });
+    if (dropdown.classList.contains('show')) {
+        closeDropdown();
+    } else {
+        openDropdown();
+    }
+}
+
+function openDropdown() {
+    const trigger = document.getElementById('periodTrigger');
+    const dropdown = document.getElementById('periodDropdown');
+    const overlay = document.getElementById('periodOverlay');
     
-    switcher.addEventListener('mouseleave', function() {
-        this.style.transform = 'scale(1)';
-    });
+    trigger.classList.add('active');
+    dropdown.classList.add('show');
+    overlay.classList.add('show');
+}
+
+function closeDropdown() {
+    const trigger = document.getElementById('periodTrigger');
+    const dropdown = document.getElementById('periodDropdown');
+    const overlay = document.getElementById('periodOverlay');
     
-    // 为每个选项添加点击反馈
-    const options = document.querySelectorAll('.period-option');
-    options.forEach(option => {
-        option.addEventListener('click', function(e) {
-            // 如果链接是#，阻止默认行为
-            if (this.getAttribute('href') === '#') {
-                e.preventDefault();
-                showComingSoonMessage();
-            }
-        });
-    });
+    trigger.classList.remove('active');
+    dropdown.classList.remove('show');
+    overlay.classList.remove('show');
 }
 
 function showComingSoonMessage() {
@@ -85,7 +143,7 @@ function showComingSoonMessage() {
         padding: 12px 24px;
         border-radius: 8px;
         font-size: 14px;
-        z-index: 1000;
+        z-index: 1001;
         animation: fadeInOut 2s ease-in-out;
     `;
     
@@ -105,15 +163,8 @@ function showComingSoonMessage() {
     
     // 2秒后移除消息
     setTimeout(() => {
-        document.body.removeChild(message);
+        if (document.body.contains(message)) {
+            document.body.removeChild(message);
+        }
     }, 2000);
-}
-
-// 添加键盘导航支持
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        // ESC键关闭任何打开的提示
-        const messages = document.querySelectorAll('[style*="position: fixed"]');
-        messages.forEach(msg => msg.remove());
-    }
-}); 
+} 
