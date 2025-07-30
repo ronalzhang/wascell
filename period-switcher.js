@@ -12,7 +12,7 @@ function initializePeriodSwitcher() {
     
     // 获取当前期数并设置触发器文本
     const currentPeriod = getCurrentPeriod();
-    //updateTriggerText(currentPeriod);
+    // updateTriggerText(currentPeriod); // 注释掉这行，避免覆盖手动设置的状态文字
     
     // 更新下拉菜单状态
     updateDropdownStatus(currentPeriod);
@@ -64,6 +64,8 @@ function getCurrentPeriod() {
     const path = window.location.pathname;
     if (path.includes('20250902')) {
         return '20250902期';
+    } else if (path.includes('20250903')) {
+        return '20250903期';
     } else if (path.includes('index.html') || path === '/' || path === '') {
         return '20250901期';
     }
@@ -76,7 +78,11 @@ function updateTriggerText(period) {
     if (trigger) {
         const textNode = trigger.childNodes[0];
         if (textNode.nodeType === Node.TEXT_NODE) {
-            textNode.textContent = period;
+            // 保持原有的状态文字，只更新期数部分
+            const currentText = trigger.textContent;
+            const statusMatch = currentText.match(/·(.+)$/);
+            const statusText = statusMatch ? statusMatch[0] : '';
+            textNode.textContent = period + statusText;
         }
     }
 }

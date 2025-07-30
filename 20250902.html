@@ -36,156 +36,6 @@
             position: relative;
             color: white;
         }
-        
-        /* 期数切换器样式 */
-        .period-switcher {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            display: inline-block;
-        }
-        
-        .period-trigger {
-            background: var(--gold);
-            color: white;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border: none;
-            box-shadow: 0 2px 8px rgba(192, 168, 120, 0.3);
-        }
-        
-        .period-trigger:hover {
-            background: #d4b896;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(192, 168, 120, 0.4);
-        }
-        
-        .period-trigger .dropdown-icon {
-            font-size: 12px;
-            transition: transform 0.3s ease;
-        }
-        
-        .period-trigger.active .dropdown-icon {
-            transform: rotate(180deg);
-        }
-        
-        .period-dropdown {
-            position: absolute;
-            top: 100%;
-            right: 0;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-            padding: 8px;
-            margin-top: 8px;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-10px);
-            transition: all 0.3s ease;
-            z-index: 1000;
-            width: auto;
-            min-width: 180px;
-        }
-        
-        .period-dropdown.show {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-        }
-        
-        .period-option {
-            padding: 10px 12px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-decoration: none;
-            color: #333;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 4px;
-        }
-        
-        .period-option:last-child {
-            margin-bottom: 0;
-        }
-        
-        .period-option:hover {
-            background: #f8f4e9;
-            color: var(--navy);
-        }
-        
-        .period-option.active {
-            background: var(--navy);
-            color: white;
-        }
-        
-        .period-option .status-indicator {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            flex-shrink: 0;
-            margin-right: 8px;
-        }
-        
-        .period-option.available .status-indicator {
-            background: #22c55e;
-            box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
-        }
-        
-        .period-option.full .status-indicator {
-            background: #ef4444;
-            box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
-        }
-        
-        .period-option.coming-soon .status-indicator {
-            background: #f59e0b;
-            box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
-        }
-        
-        .period-option .status-text {
-            font-size: 12px;
-            color: #666;
-            margin-left: auto;
-            font-weight: 500;
-        }
-        
-        .period-option.available .status-text {
-            color: #22c55e;
-        }
-        
-        .period-option.full .status-text {
-            color: #ef4444;
-        }
-        
-        .period-option.coming-soon .status-text {
-            color: #f59e0b;
-        }
-        
-        /* 添加遮罩层 */
-        .period-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: transparent;
-            z-index: 999;
-            display: none;
-        }
-        
-        .period-overlay.show {
-            display: block;
-        }
         .badge {
             position: absolute;
             top: 20px;
@@ -485,6 +335,156 @@
             box-shadow: 0 2px 8px rgba(192, 168, 120, 0.3);
         }
         
+        /* 期数切换器样式 */
+        .period-switcher {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: inline-block;
+        }
+        
+        .period-trigger {
+            background: var(--gold);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            box-shadow: 0 2px 8px rgba(192, 168, 120, 0.3);
+        }
+        
+        .period-trigger:hover {
+            background: #d4b896;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(192, 168, 120, 0.4);
+        }
+        
+        .period-trigger .dropdown-icon {
+            font-size: 12px;
+            transition: transform 0.3s ease;
+        }
+        
+        .period-trigger.active .dropdown-icon {
+            transform: rotate(180deg);
+        }
+        
+        .period-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            padding: 8px;
+            margin-top: 8px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            width: auto;
+            min-width: 180px;
+        }
+        
+        .period-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .period-option {
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+        
+        .period-option:last-child {
+            margin-bottom: 0;
+        }
+        
+        .period-option:hover {
+            background: #f8f4e9;
+            color: var(--navy);
+        }
+        
+        .period-option.active {
+            background: var(--navy);
+            color: white;
+        }
+        
+        .period-option .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-right: 8px;
+        }
+        
+        .period-option.available .status-indicator {
+            background: #22c55e;
+            box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+        }
+        
+        .period-option.full .status-indicator {
+            background: #ef4444;
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+        }
+        
+        .period-option.coming-soon .status-indicator {
+            background: #f59e0b;
+            box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
+        }
+        
+        .period-option .status-text {
+            font-size: 12px;
+            color: #666;
+            margin-left: auto;
+            font-weight: 500;
+        }
+        
+        .period-option.available .status-text {
+            color: #22c55e;
+        }
+        
+        .period-option.full .status-text {
+            color: #ef4444;
+        }
+        
+        .period-option.coming-soon .status-text {
+            color: #f59e0b;
+        }
+        
+        /* 添加遮罩层 */
+        .period-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: transparent;
+            z-index: 999;
+            display: none;
+        }
+        
+        .period-overlay.show {
+            display: block;
+        }
+        
     </style>
 </head>
 <body>
@@ -498,7 +498,7 @@
                     <span class="dropdown-icon">▼</span>
                 </button>
                 <div class="period-dropdown" id="periodDropdown">
-                    <a href="index.html" class="period-option available">
+                    <a href="index.html" class="period-option full">
                         <span class="status-indicator"></span>
                         <span class="period-name">20250901期</span>
                         <span class="status-text">已满员</span>
@@ -594,8 +594,8 @@
                             <p>日本厚生劳动省认证医院，全球0.01%人群享有的MSC自体脂肪间充质干细胞技术，体检报告解读</p>
                         </div>
                         <div class="experience">
-                            <h4>艺伎文化沙龙</h4>
-                            <p>非公开料亭私密聚会，企业家们在传统茶道中深度交流商业智慧</p>
+                            <h4>传统工艺大师私密会面</h4>
+                            <p>拜访京都百年老店传承人，探讨匠心精神与企业经营哲学</p>
                         </div>
                         <div class="experience">
                             <h4>健康投资分享</h4>
@@ -608,12 +608,12 @@
                     <div class="day-header">Day 3｜商道传承·圈层融合</div>
                     <div class="day-content">
                         <div class="experience">
-                            <h4>国宝匠人私密会面</h4>
-                            <p>拜访皇室御用工坊传承人，探讨匠心精神与企业经营哲学</p>
-                        </div>
-                        <div class="experience">
                             <h4>屋形船私董会</h4>
                             <p>东京唯一政府认证屋形船，仅限几位企业家的深度商业对话的空间</p>
+                        </div>
+                        <div class="experience">
+                            <h4>京都古寺禅修体验</h4>
+                            <p>世界文化遗产清水寺非公开区域，企业家团体禅修与商业思维升华</p>
                         </div>
                         <div class="experience">
                             <h4>健康投资策略</h4>
@@ -626,12 +626,12 @@
                     <div class="day-header">Day 4｜精神修养·智慧共鸣</div>
                     <div class="day-content">
                         <div class="experience">
-                            <h4>能乐大师私人指导</h4>
-                            <p>与长山贵三郎探讨能乐精神与企业领导力的内在连接</p>
+                            <h4>企业管理新思维分享</h4>
+                            <p>与日本知名企业家探讨现代企业管理理念与东方智慧的结合</p>
                         </div>
                         <div class="experience">
-                            <h4>龙安寺禅修体验</h4>
-                            <p>世界遗产非公开区域，企业家团体禅修与商业思维升华</p>
+                            <h4>金阁寺文化体验</h4>
+                            <p>世界遗产金阁寺非公开区域，企业家团体体验日本传统文化精髓</p>
                         </div>
                         <div class="experience">
                             <h4>商界智慧分享</h4>
@@ -733,70 +733,31 @@
                 
         <div class="place-card">
             <div class="place-header">
-                <div class="place-icon">🌸</div>
-                <h3>浅草的茶与舞之间 · 介绍制艺伎茶道</h3>
-            </div>
-            <div class="place-body">
-                <img src="imgs/geisha.jpg" 
-                    alt="浅草的茶与舞之间 · 介绍制艺伎茶道" class="place-image">
-                <div class="place-desc">
-                    <p>在浅草的静谧街巷中，隐匿着一家非公开制、预约限定的老字号料亭。自1950年创立以来，这里始终作为体验日本艺妓文化的私密场所。</p>
-                    
-                    <div class="place-highlight">
-                        <strong>绝对稀缺</strong>：采用介绍制接待，普通客人无法自行入内，此次为您特别安排进入。
-                    </div>
-                    
-                    <p>在全包间的私密空间中，您将沉浸式体验两项极具代表性的日本传统文化：</p>
-                    
-                    <p><strong>正统茶道体验</strong> —— 由艺妓在和式包厢中亲自演绎，包含奉茶、讲解、互动，让您感受"一期一会"的茶道精神。</p>
-                    
-                    <p><strong>传统舞蹈表演</strong> —— 艺妓将带来私人表演，在温馨氛围中深入了解日本待客之道与审美文化。</p>
-                    
-                    <div class="place-features">
-                        <div class="place-feature">
-                            <strong>创立时间</strong>
-                            1950年老字号
-                        </div>
-                        <div class="place-feature">
-                            <strong>接待方式</strong>
-                            介绍制专属
-                        </div>
-                        <div class="place-feature">
-                            <strong>文化体验</strong>
-                            茶道+舞蹈
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="place-card">
-            <div class="place-header">
                 <div class="place-icon">🏛</div>
-                <h3>世界文化遗产 · 龙安寺（非公开区域）</h3>
+                <h3>世界文化遗产 · 清水寺（非公开区域）</h3>
             </div>
             <div class="place-body">
                 <img src="imgs/longtemple.jpg" 
-                        alt="世界文化遗产 · 龙安寺" class="place-image">
+                        alt="世界文化遗产 · 清水寺" class="place-image">
                 <div class="place-desc">
-                    <p>龙安寺是一座由室町时代东军大将细川胜元于宝德二年（公元1450年）创建的禅宗古寺，以其悠久的历史和精致的艺术而闻名于世。</p>
+                    <p>清水寺是京都最古老的寺院之一，始建于778年，以其独特的"清水舞台"而闻名于世。寺院依山而建，建筑风格独特，是日本佛教艺术的杰出代表。</p>
                     
                     <div class="place-highlight">
                         <strong>世界文化遗产</strong>：联合国教科文组织指定，证明其在日本文化史上的重要地位。
                     </div>
                     
-                    <p>寺内的庭园被誉为日本庭园抽象美的代表之一。在方丈前的一片矩形白砂地上，分布着五组青苔覆盖的岩石，这种简约而优雅的布局展现出了极致的平衡与和谐。</p>
+                    <p>寺内的清水舞台采用悬空式建筑，完全由139根木柱支撑，没有使用一根钉子。这种建筑技术展现了古代日本工匠的卓越技艺和对自然的敬畏。</p>
                     
-                    <p>龙安寺的建立正值日本视觉艺术发生大革新之时，其庭园设计风格独树一帜。枯山水庭园展示了对自然的敬畏和对美的追求，同时体现了禅宗的精神理念。</p>
+                    <p>清水寺的建立正值日本平安时代，其建筑风格体现了当时贵族文化的优雅与精致。寺院周围的自然环境优美，四季景色各异，是体验日本传统文化的最佳场所。</p>
                     
                     <div class="place-features">
                         <div class="place-feature">
                             <strong>建立年代</strong>
-                            公元1450年
+                            公元778年
                         </div>
                         <div class="place-feature">
-                            <strong>庭园特色</strong>
-                            枯山水经典
+                            <strong>建筑特色</strong>
+                            悬空舞台
                         </div>
                         <div class="place-feature">
                             <strong>文化价值</strong>
