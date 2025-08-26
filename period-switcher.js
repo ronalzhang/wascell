@@ -66,6 +66,8 @@ function getCurrentPeriod() {
         return '20250902期';
     } else if (path.includes('20250903')) {
         return '20250903期';
+    } else if (path.includes('20251001')) {
+        return '20251001期';
     } else if (path.includes('index.html') || path === '/' || path === '') {
         return '20250901期';
     }
