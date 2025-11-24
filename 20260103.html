@@ -2,10 +2,10 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>WASCELL · 方舟计划</title>
+    <title>WASCELL · 方舟计划 20260103期</title>
     <meta name="viewport" content="width=1024">
     <link rel="icon" type="image/png" href="favicon.png">
-    <meta name="description" content="WASCELL生命焕新之旅，融合顶尖干细胞科技与日本五日深度文化体验。专为行业领袖定制，提供细胞采集、高端旅游、及四周后的核心回输服务，开启您的巅峰生命品质之旅。">
+    <meta name="description" content="WASCELL生命焕新之旅，融合顶尖干细胞科技与日本五日深度文化体验。专为家庭定制，为长辈提供细胞采集、高端旅游、及四周后的核心回输服务，开启您的家庭健康投资之旅。">
     <style>
         :root {
             --gold: #c0a878;
@@ -35,156 +35,6 @@
             padding: 40px 30px;
             position: relative;
             color: white;
-        }
-        
-        /* 期数切换器样式 */
-        .period-switcher {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            display: inline-block;
-        }
-        
-        .period-trigger {
-            background: var(--gold);
-            color: white;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border: none;
-            box-shadow: 0 2px 8px rgba(192, 168, 120, 0.3);
-        }
-        
-        .period-trigger:hover {
-            background: #d4b896;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(192, 168, 120, 0.4);
-        }
-        
-        .period-trigger .dropdown-icon {
-            font-size: 12px;
-            transition: transform 0.3s ease;
-        }
-        
-        .period-trigger.active .dropdown-icon {
-            transform: rotate(180deg);
-        }
-        
-        .period-dropdown {
-            position: absolute;
-            top: 100%;
-            right: 0;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-            padding: 8px;
-            margin-top: 8px;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-10px);
-            transition: all 0.3s ease;
-            z-index: 1000;
-            width: auto;
-            min-width: 180px;
-        }
-        
-        .period-dropdown.show {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-        }
-        
-        .period-option {
-            padding: 10px 12px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-decoration: none;
-            color: #333;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 4px;
-        }
-        
-        .period-option:last-child {
-            margin-bottom: 0;
-        }
-        
-        .period-option:hover {
-            background: #f8f4e9;
-            color: var(--navy);
-        }
-        
-        .period-option.active {
-            background: var(--navy);
-            color: white;
-        }
-        
-        .period-option .status-indicator {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            flex-shrink: 0;
-            margin-right: 8px;
-        }
-        
-        .period-option.available .status-indicator {
-            background: #22c55e;
-            box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
-        }
-        
-        .period-option.full .status-indicator {
-            background: #ef4444;
-            box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
-        }
-        
-        .period-option.coming-soon .status-indicator {
-            background: #f59e0b;
-            box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
-        }
-        
-        .period-option .status-text {
-            font-size: 12px;
-            color: #666;
-            margin-left: auto;
-            font-weight: 500;
-        }
-        
-        .period-option.available .status-text {
-            color: #22c55e;
-        }
-        
-        .period-option.full .status-text {
-            color: #ef4444;
-        }
-        
-        .period-option.coming-soon .status-text {
-            color: #9c6a13;
-        }
-        
-        /* 添加遮罩层 */
-        .period-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: transparent;
-            z-index: 999;
-            display: none;
-        }
-        
-        .period-overlay.show {
-            display: block;
         }
         .badge {
             position: absolute;
@@ -486,6 +336,156 @@
             box-shadow: 0 2px 8px rgba(192, 168, 120, 0.3);
         }
         
+        /* 期数切换器样式 */
+        .period-switcher {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: inline-block;
+        }
+        
+        .period-trigger {
+            background: var(--gold);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            box-shadow: 0 2px 8px rgba(192, 168, 120, 0.3);
+        }
+        
+        .period-trigger:hover {
+            background: #d4b896;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(192, 168, 120, 0.4);
+        }
+        
+        .period-trigger .dropdown-icon {
+            font-size: 12px;
+            transition: transform 0.3s ease;
+        }
+        
+        .period-trigger.active .dropdown-icon {
+            transform: rotate(180deg);
+        }
+        
+        .period-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            padding: 8px;
+            margin-top: 8px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            width: auto;
+            min-width: 180px;
+        }
+        
+        .period-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .period-option {
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+        
+        .period-option:last-child {
+            margin-bottom: 0;
+        }
+        
+        .period-option:hover {
+            background: #f8f4e9;
+            color: var(--navy);
+        }
+        
+        .period-option.active {
+            background: var(--navy);
+            color: white;
+        }
+        
+        .period-option .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-right: 8px;
+        }
+        
+        .period-option.available .status-indicator {
+            background: #22c55e;
+            box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+        }
+        
+        .period-option.full .status-indicator {
+            background: #ef4444;
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+        }
+        
+        .period-option.coming-soon .status-indicator {
+            background: #f59e0b;
+            box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
+        }
+        
+        .period-option .status-text {
+            font-size: 12px;
+            color: #666;
+            margin-left: auto;
+            font-weight: 500;
+        }
+        
+        .period-option.available .status-text {
+            color: #22c55e;
+        }
+        
+        .period-option.full .status-text {
+            color: #ef4444;
+        }
+        
+        .period-option.coming-soon .status-text {
+            color: #f59e0b;
+        }
+        
+        /* 添加遮罩层 */
+        .period-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: transparent;
+            z-index: 999;
+            display: none;
+        }
+        
+        .period-overlay.show {
+            display: block;
+        }
+        
     </style>
 </head>
 <body>
@@ -495,26 +495,26 @@
             <!-- 期数切换器 -->
             <div class="period-switcher">
                 <button class="period-trigger" id="periodTrigger">
-                    20260101期·已满员
+                    20260103期·可预约
                     <span class="dropdown-icon">▼</span>
                 </button>
                 <div class="period-dropdown" id="periodDropdown">
-                    <a href="/" class="period-option active full">
+                    <a href="/" class="period-option full">
                         <span class="status-indicator"></span>
                         <span class="period-name">20260101期</span>
                         <span class="status-text">已满员</span>
                     </a>
-                    <a href="20260102.html" class="period-option available">
+                    <a href="20251002.html" class="period-option available">
                         <span class="status-indicator"></span>
                         <span class="period-name">20260102期</span>
                         <span class="status-text">可预约</span>
                     </a>
-                    <a href="20260103.html" class="period-option available">
+                    <a href="20251003.html" class="period-option active available">
                         <span class="status-indicator"></span>
                         <span class="period-name">20260103期</span>
                         <span class="status-text">可预约</span>
                     </a>
-                    <a href="20250201.html" class="period-option available">
+                    <a href="20251101.html" class="period-option available">
                         <span class="status-indicator"></span>
                         <span class="period-name">20260201期</span>
                         <span class="status-text">可预约</span>
@@ -524,21 +524,21 @@
             <!-- 遮罩层 -->
             <div class="period-overlay" id="periodOverlay"></div>
             <h1>方舟计划 · 生命焕新之旅</h1>
-            <div class="subtitle">顶级干细胞治疗 × 精英社交 — 为企业家私人定制的投资健康与商界融合的双重增值方案</div>
+            <div class="subtitle">顶级干细胞治疗 × 孝敬父母 — 为企业家家庭定制的父母健康投资方案</div>
             <div class="gold-divider"></div>日本 · 东京站
         </div>
         
         <div class="content">
-            <h2>精英圈的健康投资</h2>
-            <p>真正的财富，是时间与健康的复利。专为顶级企业家精心打造的健康投资方案，不仅让您获得世界最前沿的干细胞治疗，更重要的是，您将与几位同等级企业领袖共同开启这段健康之旅，在专业医疗与深度文化体验中，构建最具价值的社交圈。</p>
+            <h2>家庭健康投资新选择</h2>
+            <p>真正的孝顺，是让父母拥有更健康的身体和更美好的生活。专为企业家家庭精心打造的健康投资方案，不仅让您的长辈获得世界最前沿的干细胞治疗，更重要的是，父母可以一起享受这段温馨的日本文化之旅，在专业医疗与深度文化体验中，创造珍贵的家庭回忆。</p>
             
             <div class="highlight-box">
-                <div style="font-size: 18px; margin-bottom: 10px;">精英健康投资方案 · 本期限额5席</div>
+                <div style="font-size: 18px; margin-bottom: 10px;">家庭健康投资方案 · 本期限额6席</div>
                 <div class="package">
-                    <span class="original-price">单人独享价¥500,000</span> 
-                    双人成团价 ¥388,000（每人）
+                    <span class="original-price">单人独享价¥490,000</span> 
+                    父母亲情价 ¥368,000（每人）
                 </div>
-                <p><strong>专属礼遇</strong>：附赠价值15万元的商业与在地文化交流体验<br><span style="color: var(--gold); font-weight: bold;">（立省11.2万元，且包含在日吃住行全部费用，不包含往返机票，限时特惠）</span></p>
+                <p><strong>专属礼遇</strong>：附赠价值15万元的在地文化体验<br><span style="color: var(--gold); font-weight: bold;">（立省13.2万元，且包含在日吃住行全部费用，不包含往返机票，限时特惠）</span></p>
             </div>
             
             <div class="benefits-grid">
@@ -547,182 +547,182 @@
                     <div class="benefit-text">
                         <h3>顶级干细胞治疗</h3>
                         <p>日本厚生劳动省认证，全球仅0.01%人群可享，采用最先进MSC自体脂肪间充质干细胞技术</p>
-                        <div class="benefit-highlight">全球最顶级医疗资源</div>
+                        <div class="benefit-highlight">为长辈健康保驾护航</div>
                     </div>
                 </div>
                 <div class="benefit-card">
-                    <div class="icon">🤝</div>
+                    <div class="icon">👨‍👩‍👧‍👦</div>
                     <div class="benefit-text">
-                        <h3>精英圈层社交</h3>
-                        <p>与几位同等级企业领袖深度同行交流，在健康升级的同时拥有高质量社交</p>
-                        <div class="benefit-highlight">仅限企业精英圈层</div>
+                        <h3>家庭温馨时光</h3>
+                        <p>全家人一起享受日本深度文化体验，在专业医疗的同时创造珍贵的家庭回忆</p>
+                        <div class="benefit-highlight">适合家庭出行</div>
                     </div>
                 </div>
                 <div class="benefit-card">
                     <div class="icon">🏆</div>
                     <div class="benefit-text">
-                        <h3>绝对稀缺体验</h3>
-                        <p>非公开寺院·皇室御用工坊·政商名流专属茶道，99.9%的人无法接触的顶级文化体验</p>
-                        <div class="benefit-highlight">超越财富的身份象征</div>
+                        <h3>精选文化体验</h3>
+                        <p>传统茶道·温泉体验·和服体验·美食探索，适合全家人共同参与的日本文化体验</p>
+                        <div class="benefit-highlight">温馨家庭时光</div>
                     </div>
                 </div>
             </div>
             
-            <h2>精英健康计划 · 两次赴日专业行程【可定制】</h2>
+            <h2>家庭健康计划 · 两次赴日专业行程【可定制】</h2>
             <div style="background: #f8f6f0; padding: 20px; border-radius: 8px; margin-bottom: 30px; border-left: 4px solid var(--gold);">
-                <p style="margin: 0; font-size: 1.1rem; line-height: 1.6;"><strong>第一阶段</strong>：脂肪细胞采集 + 健康旅程（5日）<br><strong>第二阶段</strong>：干细胞回输 + 成果分享（4周后，半日）</p>
+                <p style="margin: 0; font-size: 1.1rem; line-height: 1.6;"><strong>第一阶段</strong>：脂肪细胞采集 + 家庭文化之旅（5日）<br><strong>第二阶段</strong>：干细胞回输 + 健康理念分享（4周后，半日）</p>
             </div>
-            <h3>第一阶段：细胞采集与圈层构建（5日深度体验）</h3>
+            <h3>第一阶段：细胞采集与家庭文化之旅（5日温馨体验）</h3>
             <div class="itinerary">
                 <div class="day-card">
-                    <div class="day-header">Day 1｜精英汇聚·专业启动</div>
+                    <div class="day-header">Day 1｜家庭汇聚·温馨启动</div>
                     <div class="day-content">
                         <div class="experience">
-                            <h4>私人接机·圈层初识</h4>
-                            <p>专属礼宾接机，与同行企业家初次会面，入住东京顶级酒店</p>
+                            <h4>私人接机·家庭团聚</h4>
+                            <p>专属礼宾接机，全家人温馨团聚，入住东京顶级酒店</p>
                         </div>
                         <div class="experience">
                             <h4>全维健康评估</h4>
-                            <p>日本顶级医疗团队上门，进行超越国内服务的上门体检采样</p>
+                            <p>日本顶级医疗团队上门，为长辈进行超越国内服务的上门体检采样</p>
                         </div>
                         <div class="experience">
-                            <h4>精英欢迎晚宴</h4>
-                            <p>企业领袖私密聚餐，分享健康投资理念，建立深度连接</p>
+                            <h4>家庭欢迎晚宴</h4>
+                            <p>全家人温馨聚餐，分享健康投资理念，享受天伦之乐</p>
                         </div>
                     </div>
                 </div>
                 
                 <div class="day-card">
-                    <div class="day-header">Day 2｜核心医疗·圈层深化</div>
+                    <div class="day-header">Day 2｜核心医疗·家庭关爱</div>
                     <div class="day-content">
                         <div class="experience">
                             <h4>腹部脂肪干细胞采集</h4>
                             <p>日本厚生劳动省认证医院，全球0.01%人群享有的MSC自体脂肪间充质干细胞技术，体检报告解读</p>
                         </div>
                         <div class="experience">
-                            <h4>艺伎文化沙龙</h4>
-                            <p>非公开料亭私密聚会，企业家们在传统茶道中深度交流商业智慧</p>
+                            <h4>浅草寺文化体验</h4>
+                            <p>全家人在浅草寺体验日本传统文化，感受历史与现代的完美融合</p>
                         </div>
                         <div class="experience">
                             <h4>健康投资分享</h4>
-                            <p>医疗专家详解干细胞技术，企业家分享企业管理心得</p>
+                            <p>医疗专家详解干细胞技术，家人分享健康管理心得</p>
                         </div>
                     </div>
                 </div>
                 
                 <div class="day-card">
-                    <div class="day-header">Day 3｜商道传承·圈层融合</div>
+                    <div class="day-header">Day 3｜文化传承·家庭融合</div>
                     <div class="day-content">
                         <div class="experience">
-                            <h4>国宝匠人私密会面</h4>
-                            <p>拜访皇室御用工坊传承人，探讨匠心精神与企业经营哲学</p>
+                            <h4>屋形船家庭聚会</h4>
+                            <p>东京唯一政府认证屋形船，全家人享受独特的东京湾夜景与美食</p>
                         </div>
                         <div class="experience">
-                            <h4>屋形船私董会</h4>
-                            <p>东京唯一政府认证屋形船，仅限几位企业家的深度商业对话的空间</p>
+                            <h4>浅草寺祈福体验</h4>
+                            <p>在浅草寺参与特别祈福仪式，为全家人祈求健康平安</p>
                         </div>
                         <div class="experience">
-                            <h4>健康投资策略</h4>
-                            <p>分享各自的健康投资布局与商业机会分享</p>
+                            <h4>家庭健康策略</h4>
+                            <p>分享家庭健康管理经验，制定全家人的健康投资计划</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="day-card">
-                    <div class="day-header">Day 4｜精神修养·智慧共鸣</div>
+                    <div class="day-header">Day 4｜温馨时光·家庭智慧</div>
                     <div class="day-content">
                         <div class="experience">
-                            <h4>能乐大师私人指导</h4>
-                            <p>与长山贵三郎探讨能乐精神与企业领导力的内在连接</p>
+                            <h4>企业管理新思维分享</h4>
+                            <p>与日本知名企业家探讨现代企业管理理念，为家庭事业传承提供智慧</p>
                         </div>
                         <div class="experience">
-                            <h4>龙安寺禅修体验</h4>
-                            <p>世界遗产非公开区域，企业家团体禅修与商业思维升华</p>
+                            <h4>箱根温泉体验</h4>
+                            <p>全家人享受日本顶级温泉，在自然环境中放松身心，增进家庭感情</p>
                         </div>
                         <div class="experience">
-                            <h4>商界智慧分享</h4>
-                            <p>在禅意空间中，分享各自的企业管理心得与人生感悟</p>
+                            <h4>家庭智慧分享</h4>
+                            <p>在温馨氛围中，分享各自的人生感悟与家庭经营智慧</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="day-card">
-                    <div class="day-header">Day 5｜圈层深化·未来共赢</div>
+                    <div class="day-header">Day 5｜家庭深化·未来共赢</div>
                     <div class="day-content">
                         <div class="experience">
-                            <h4>茶道大师私人茶室</h4>
-                            <p>里千家家元关门弟子私宅，企业家们在茶道仪式中建立长期合作关系</p>
+                            <h4>茶道大师家庭茶室</h4>
+                            <p>里千家家元关门弟子私宅，全家人体验茶道文化，感受日本待客之道</p>
                         </div>
                         <div class="experience">
-                            <h4>共同签署旅行回忆录</h4>
-                            <p>建立企业家健康圈层连接，创建合作共赢的长期关系</p>
+                            <h4>共同签署家庭回忆录</h4>
+                            <p>建立家庭健康管理连接，创建温馨和谐的家庭关系</p>
                         </div>
                         <div class="experience">
-                            <h4>优雅告别</h4>
-                            <p>专属礼宾送机，携带珍贵的健康理念与共同美好的回忆返程</p>
+                            <h4>温馨告别</h4>
+                            <p>专属礼宾送机，携带珍贵的健康理念与美好家庭回忆返程</p>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <h3 style="margin-top: 50px;">第二阶段：细胞回输与圈层成果分享（约4周后）</h3>
-            <p style="background: #f8f6f0; padding: 20px; border-radius: 8px; border-left: 4px solid var(--gold);">您的干细胞经过4周专业培育扩增后，将进行人生中最重要的健康回输。此时，您与同期企业家们已建立深厚联系，这次回输不仅是本次医疗过程的结束，更是圈层成果的见证与合作共赢的开始！</p>
+            <h3 style="margin-top: 50px;">第二阶段：细胞回输与家庭健康理念分享（约4周后）</h3>
+            <p style="background: #f8f6f0; padding: 20px; border-radius: 8px; border-left: 4px solid var(--gold);">长辈的干细胞经过4周专业培育扩增后，将进行人生中最重要的健康回输。此时，全家人已建立更深厚的感情，这次回输不仅是本次医疗过程的结束，更是家庭健康投资成果的见证与温馨家庭生活的开始！</p>
             <div class="benefits-grid">
                 <div class="benefit-card">
                     <div class="icon">🧬</div>
                     <div class="benefit-text">
                         <h3>顶级医疗团队</h3>
-                        <p>日本最高规格医疗团队，完成您的生命质量跃迁关键时刻</p>
+                        <p>日本最高规格医疗团队，完成长辈生命质量跃迁关键时刻</p>
                     </div>
                 </div>
                  <div class="benefit-card">
-                    <div class="icon">🤝</div>
+                    <div class="icon">👨‍👩‍👧‍👦</div>
                     <div class="benefit-text">
-                        <h3>圈层成果庆祝</h3>
-                        <p>与同期企业家共同见证健康投资成果，分享圈层建立的丰硕收获</p>
+                        <h3>家庭健康庆祝</h3>
+                        <p>全家人共同见证健康投资成果，分享家庭建立的温馨收获</p>
                     </div>
                 </div>
                 <div class="benefit-card">
                     <div class="icon">🔮</div>
                     <div class="benefit-text">
-                        <h3>未来健康规划</h3>
-                        <p>制定长期健康投资策略，建立企业家健康管理标杆体系</p>
+                        <h3>家庭健康规划</h3>
+                        <p>制定长期家庭健康投资策略，建立温馨和谐的家庭健康管理体系</p>
                     </div>
                 </div>
             </div>
         </div>
         
         <div class="cta-container">
-            <a href="mailto:wascell_cs@163.com?subject=XXX申请参加WASCELL(方舟计划)日本生命焕新之旅20260101期" class="cta-button" style="display: inline-block; text-decoration: none;">申请参加本次行程 &rarr;</a>
-            <p style="margin-top: 15px; font-size: 14px; color: var(--gold); font-weight: bold;">本期严格限额5席内 · 仅限企业家申请 · 本期截止2025年12月5日</p>
+            <a href="mailto:wascell_cs@163.com?subject=XXX申请参加WASCELL(方舟计划)日本生命焕新之旅20251201期" class="cta-button" style="display: inline-block; text-decoration: none;">申请参加本次行程 &rarr;</a>
+            <p style="margin-top: 15px; font-size: 14px; color: var(--gold); font-weight: bold;">本期严格限额5席内 · 仅限企业家申请 · 本期截止2025年12月20日</p>
             <p style="margin-top: 10px; font-size: 13px; color: #666;">*申请需提供企业证明及半年内体检报告（附在邮件内），我们将进行资格审核、归档及免费身体评估</p>
         </div>
     </div>
     <!-- 场所探幽 -->
     <div class="places-section">
-        <h2 class="section-title">独家文化体验预览</h2>
+        <h2 class="section-title">精选文化体验预览</h2>
         
         <div class="place-card">
             <div class="place-header">
                 <div class="place-icon">⛩</div>
-                <h3>白木匠造和风屋形船 · 夜游东京湾</h3>
+                <h3>白木匠造和风屋形船 · 家庭夜游东京湾</h3>
             </div>
             <div class="place-body">
                 <img src="imgs/kaiseki.jpg" 
-                    alt="白木匠造和风屋形船 · 夜游东京湾" class="place-image">
+                    alt="白木匠造和风屋形船 · 家庭夜游东京湾" class="place-image">
                 <div class="place-desc">
                     <p>纯白木建造的船内高雅古典，搭配现代风吧台桌椅，仅能乘坐10位宾客。这是东京唯一一艘高级屋形船，于2023年被东京市政府认可为意匠典范。</p>
                     
                     <div class="place-highlight">
-                        <strong>独家体验</strong>：日本料理大厨乘船为宾客精心准备怀石料理，透过窗户可以看到闪耀的夜景和四季变幻的东京风景。
+                        <strong>家庭专属体验</strong>：日本料理大厨乘船为全家人精心准备怀石料理，透过窗户可以看到闪耀的夜景和四季变幻的东京风景。
                     </div>
                     
-                    <p>从平安时代延续至今备受喜爱的"屋形船"文化，通过这无与伦比的特别空间和品味美食与传统的用餐体验，让您度过奢华的时光。</p>
+                    <p>从平安时代延续至今备受喜爱的"屋形船"文化，通过这无与伦比的特别空间和品味美食与传统的用餐体验，让全家人度过温馨的时光。</p>
                     
                     <div class="place-features">
                         <div class="place-feature">
-                            <strong>限定座位</strong>
-                            仅10位宾客
+                            <strong>家庭聚会</strong>
+                            适合全家出行
                         </div>
                         <div class="place-feature">
                             <strong>官方认证</strong>
@@ -739,37 +739,35 @@
                 
         <div class="place-card">
             <div class="place-header">
-                <div class="place-icon">🌸</div>
-                <h3>浅草的茶与舞之间 · 介绍制艺伎茶道</h3>
+                <div class="place-icon">⛩️</div>
+                <h3>浅草神社 · 特别祈福仪式</h3>
             </div>
             <div class="place-body">
-                <img src="imgs/geisha.jpg" 
-                    alt="浅草的茶与舞之间 · 介绍制艺伎茶道" class="place-image">
+                <img src="imgs/tokyosushi.jpg" 
+                        alt="浅草神社 · 特别祈福仪式" class="place-image">
                 <div class="place-desc">
-                    <p>在浅草的静谧街巷中，隐匿着一家非公开制、预约限定的老字号料亭。自1950年创立以来，这里始终作为体验日本艺妓文化的私密场所。</p>
+                    <p>在浅草神社参与特别的祈福仪式，由神社的宫司为您进行个人专属的祈福，体验神道教的神圣仪式。</p>
                     
                     <div class="place-highlight">
-                        <strong>绝对稀缺</strong>：采用介绍制接待，普通客人无法自行入内，此次为您特别安排进入。
+                        <strong>家庭祈福体验</strong>：神社宫司亲自主持的家庭专属祈福仪式，为全家人祈求健康平安。
                     </div>
                     
-                    <p>在全包间的私密空间中，您将沉浸式体验两项极具代表性的日本传统文化：</p>
+                    <p>神道教是日本的本土宗教，祈福仪式庄严神圣。宫司将为您穿上传统的白衣，在神前进行净化和祈福，这是了解日本精神文化的重要体验。</p>
                     
-                    <p><strong>正统茶道体验</strong> —— 由艺妓在和式包厢中亲自演绎，包含奉茶、讲解、互动，让您感受"一期一会"的茶道精神。</p>
-                    
-                    <p><strong>传统舞蹈表演</strong> —— 艺妓将带来私人表演，在温馨氛围中深入了解日本待客之道与审美文化。</p>
+                    <p>在浅草神社的古老氛围中，全家人可以共同参与祈福仪式，感受日本传统文化的深厚底蕴，为长辈的健康和家庭的幸福祈福。</p>
                     
                     <div class="place-features">
                         <div class="place-feature">
-                            <strong>创立时间</strong>
-                            1950年老字号
+                            <strong>仪式主持</strong>
+                            神社宫司
                         </div>
                         <div class="place-feature">
-                            <strong>接待方式</strong>
-                            介绍制专属
+                            <strong>服务类型</strong>
+                            家庭专属
                         </div>
                         <div class="place-feature">
                             <strong>文化体验</strong>
-                            茶道+舞蹈
+                            神道祈福
                         </div>
                     </div>
                 </div>
@@ -778,35 +776,35 @@
 
         <div class="place-card">
             <div class="place-header">
-                <div class="place-icon">🏛</div>
-                <h3>世界文化遗产 · 龙安寺（非公开区域）</h3>
+                <div class="place-icon">♨️</div>
+                <h3>箱根温泉 · 私人汤屋秘境体验</h3>
             </div>
             <div class="place-body">
-                <img src="imgs/longtemple.jpg" 
-                        alt="世界文化遗产 · 龙安寺" class="place-image">
+                <img src="imgs/bar.jpg" 
+                        alt="箱根温泉 · 私人汤屋秘境体验" class="place-image">
                 <div class="place-desc">
-                    <p>龙安寺是一座由室町时代东军大将细川胜元于宝德二年（公元1450年）创建的禅宗古寺，以其悠久的历史和精致的艺术而闻名于世。</p>
+                    <p>在箱根最隐秘的温泉旅馆中，享受完全私人的汤屋体验。在山谷深处的天然温泉中，感受身心的完全放松。</p>
                     
                     <div class="place-highlight">
-                        <strong>世界文化遗产</strong>：联合国教科文组织指定，证明其在日本文化史上的重要地位。
+                        <strong>家庭温泉体验</strong>：隐秘山谷中的私人汤屋，天然温泉水质，适合全家人放松身心。
                     </div>
                     
-                    <p>寺内的庭园被誉为日本庭园抽象美的代表之一。在方丈前的一片矩形白砂地上，分布着五组青苔覆盖的岩石，这种简约而优雅的布局展现出了极致的平衡与和谐。</p>
+                    <p>这间温泉旅馆位于箱根最隐秘的山谷中，拥有纯天然的温泉水源。私人汤屋面朝山景，全家人可以在这里享受完全私密的温泉体验，感受日本温泉文化的精髓。</p>
                     
-                    <p>龙安寺的建立正值日本视觉艺术发生大革新之时，其庭园设计风格独树一帜。枯山水庭园展示了对自然的敬畏和对美的追求，同时体现了禅宗的精神理念。</p>
+                    <p>温泉水质温和，富含多种矿物质，对长辈的身体健康特别有益。在宁静的山谷环境中，全家人可以放松身心，增进感情。</p>
                     
                     <div class="place-features">
                         <div class="place-feature">
-                            <strong>建立年代</strong>
-                            公元1450年
+                            <strong>隐秘性</strong>
+                            山谷深处
                         </div>
                         <div class="place-feature">
-                            <strong>庭园特色</strong>
-                            枯山水经典
+                            <strong>私密性</strong>
+                            完全私人
                         </div>
                         <div class="place-feature">
-                            <strong>文化价值</strong>
-                            世界遗产
+                            <strong>水质</strong>
+                            天然温泉
                         </div>
                     </div>
                 </div>
@@ -816,21 +814,21 @@
         <div class="place-card">
             <div class="place-header">
                 <div class="place-icon">🍵</div>
-                <h3>拜访日本茶人私宅 · 茶道体验</h3>
+                <h3>拜访日本茶人私宅 · 家庭茶道体验</h3>
             </div>
             <div class="place-body">
                 <img src="imgs/home.jpg" 
-                        alt="拜访日本茶人私宅 · 茶道体验" class="place-image">
+                        alt="拜访日本茶人私宅 · 家庭茶道体验" class="place-image">
                 <div class="place-desc">
                     <p>位于东京市中心著名豪宅区目黑柿木坂，探访里千家茶道大师舩越老师的私人宅邸。舩越老师是里千家家元的关门弟子，在京都专注茶道研习已逾三十载。</p>
                     
                     <div class="place-highlight">
-                        <strong>私人独享</strong>：常人很少有机会得以一窥的私人茶室，融合传统与现代的独特建筑风格。
+                        <strong>家庭专属体验</strong>：全家人可以在这里体验传统茶道文化，感受日本待客之道的精髓。
                     </div>
                     
-                    <p>与其夫人一同，他们都是职业茶人，且怀抱着对中国文化的深厚喜爱。虽位于繁华都市中心，却环境幽雅安静。</p>
+                    <p>与其夫人一同，他们都是职业茶人，且怀抱着对中国文化的深厚喜爱。虽位于繁华都市中心，却环境幽雅安静，非常适合家庭聚会。</p>
                     
-                    <p><strong>专属体验</strong>：亲眼目睹茶道礼法展示，品尝老师亲手调制的现打抹茶，学习茶室礼仪，感受茶道文化的深厚底蕴。</p>
+                    <p><strong>家庭体验</strong>：全家人可以亲眼目睹茶道礼法展示，品尝老师亲手调制的现打抹茶，学习茶室礼仪，感受茶道文化的深厚底蕴。</p>
                     
                     <div class="place-features">
                         <div class="place-feature">
@@ -838,8 +836,8 @@
                             家元关门弟子
                         </div>
                         <div class="place-feature">
-                            <strong>研习时间</strong>
-                            三十载专精
+                            <strong>适合人群</strong>
+                            家庭聚会
                         </div>
                         <div class="place-feature">
                             <strong>独特体验</strong>
@@ -849,13 +847,50 @@
                 </div>
             </div>
         </div>
+
+        <div class="place-card">
+            <div class="place-header">
+                <div class="place-icon">🏛</div>
+                <h3>世界文化遗产 · 清水寺（非公开区域）</h3>
+            </div>
+            <div class="place-body">
+                <img src="imgs/longtemple.jpg" 
+                        alt="世界文化遗产 · 清水寺" class="place-image">
+                <div class="place-desc">
+                    <p>清水寺是京都最古老的寺院之一，始建于778年，以其独特的"清水舞台"而闻名于世。寺院依山而建，建筑风格独特，是日本佛教艺术的杰出代表。</p>
+                    
+                    <div class="place-highlight">
+                        <strong>家庭文化体验</strong>：世界文化遗产，联合国教科文组织指定，适合全家人感受日本传统文化精髓。
+                    </div>
+                    
+                    <p>寺内的清水舞台采用悬空式建筑，完全由139根木柱支撑，没有使用一根钉子。这种建筑技术展现了古代日本工匠的卓越技艺和对自然的敬畏。</p>
+                    
+                    <p>清水寺的建立正值日本平安时代，其建筑风格体现了当时贵族文化的优雅与精致。寺院周围的自然环境优美，四季景色各异，是体验日本传统文化的最佳场所。</p>
+                    
+                    <div class="place-features">
+                        <div class="place-feature">
+                            <strong>建立年代</strong>
+                            公元778年
+                        </div>
+                        <div class="place-feature">
+                            <strong>建筑特色</strong>
+                            悬空舞台
+                        </div>
+                        <div class="place-feature">
+                            <strong>文化价值</strong>
+                            世界遗产
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="footer">
-        <p><strong>WASCELL·方舟计划 | 投资健康，共创圈层，共赢未来</strong></p>
-        <p>申请加入顶级企业家专属健康投资圈，开启您的生命品质与商界融合的双重增值之旅</p>
+        <p><strong>WASCELL·方舟计划 | 投资健康，共创温馨，共赢未来</strong></p>
+        <p>申请加入家庭健康投资计划，开启您的家庭健康与温馨时光的双重增值之旅</p>
     </div>
 
     <script src="period-switcher.js"></script>
 </body>
-</html>
+</html> 

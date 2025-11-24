@@ -47,6 +47,33 @@ npm start
 
 ### 服务器部署
 
+部署状态总结
+
+  | 服务/配置     | 状态    | 详情                                                   |
+  |-----------|-------|------------------------------------------------------|
+  | SSL证书     | ✅ 成功  | wascell.com + http://www.wascell.com                 |
+  | Nginx配置   | ✅ 成功  | 端口8446, 配置文件: /etc/nginx/sites-available/wascell.com |
+  | HAProxy配置 | ✅ 成功  | 已添加wascell.com路由，备份已创建                               |
+  | 端口监听      | ✅ 正常  | 80,443(HAProxy) + 8446(Nginx) + 3003(应用)             |
+  | PM2应用     | ✅ 运行中 | wascell-website, uptime 28分钟                         |
+  | 所有现有服务    | ✅ 正常  | lawsker, etemple, 其他应用都正常运行                          |
+
+  🌐 流量路径确认
+
+  用户请求 wascell.com:443
+      ↓
+  HAProxy SNI分流 (端口443)
+      ↓
+  Nginx反向代理 (端口8446)
+      ↓
+  Node.js应用 (端口3003)
+
+  🔒 安全配置确认
+
+  - ✅ SSL证书有效期：2026-01-26 (自动续期已配置)
+  - ✅ 所有HTTP请求自动重定向到HTTPS
+  - ✅ 3003端口仅内网访问，无需开放公网
+
 #### 📋 配置部署环境
 
 ```bash

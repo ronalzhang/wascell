@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>WASCELL · 方舟计划</title>
+    <title>WASCELL · 方舟计划 20260102期</title>
     <meta name="viewport" content="width=1024">
     <link rel="icon" type="image/png" href="favicon.png">
     <meta name="description" content="WASCELL生命焕新之旅，融合顶尖干细胞科技与日本五日深度文化体验。专为行业领袖定制，提供细胞采集、高端旅游、及四周后的核心回输服务，开启您的巅峰生命品质之旅。">
@@ -35,156 +35,6 @@
             padding: 40px 30px;
             position: relative;
             color: white;
-        }
-        
-        /* 期数切换器样式 */
-        .period-switcher {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            display: inline-block;
-        }
-        
-        .period-trigger {
-            background: var(--gold);
-            color: white;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border: none;
-            box-shadow: 0 2px 8px rgba(192, 168, 120, 0.3);
-        }
-        
-        .period-trigger:hover {
-            background: #d4b896;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(192, 168, 120, 0.4);
-        }
-        
-        .period-trigger .dropdown-icon {
-            font-size: 12px;
-            transition: transform 0.3s ease;
-        }
-        
-        .period-trigger.active .dropdown-icon {
-            transform: rotate(180deg);
-        }
-        
-        .period-dropdown {
-            position: absolute;
-            top: 100%;
-            right: 0;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-            padding: 8px;
-            margin-top: 8px;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-10px);
-            transition: all 0.3s ease;
-            z-index: 1000;
-            width: auto;
-            min-width: 180px;
-        }
-        
-        .period-dropdown.show {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-        }
-        
-        .period-option {
-            padding: 10px 12px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-decoration: none;
-            color: #333;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 4px;
-        }
-        
-        .period-option:last-child {
-            margin-bottom: 0;
-        }
-        
-        .period-option:hover {
-            background: #f8f4e9;
-            color: var(--navy);
-        }
-        
-        .period-option.active {
-            background: var(--navy);
-            color: white;
-        }
-        
-        .period-option .status-indicator {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            flex-shrink: 0;
-            margin-right: 8px;
-        }
-        
-        .period-option.available .status-indicator {
-            background: #22c55e;
-            box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
-        }
-        
-        .period-option.full .status-indicator {
-            background: #ef4444;
-            box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
-        }
-        
-        .period-option.coming-soon .status-indicator {
-            background: #f59e0b;
-            box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
-        }
-        
-        .period-option .status-text {
-            font-size: 12px;
-            color: #666;
-            margin-left: auto;
-            font-weight: 500;
-        }
-        
-        .period-option.available .status-text {
-            color: #22c55e;
-        }
-        
-        .period-option.full .status-text {
-            color: #ef4444;
-        }
-        
-        .period-option.coming-soon .status-text {
-            color: #9c6a13;
-        }
-        
-        /* 添加遮罩层 */
-        .period-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: transparent;
-            z-index: 999;
-            display: none;
-        }
-        
-        .period-overlay.show {
-            display: block;
         }
         .badge {
             position: absolute;
@@ -486,6 +336,156 @@
             box-shadow: 0 2px 8px rgba(192, 168, 120, 0.3);
         }
         
+        /* 期数切换器样式 */
+        .period-switcher {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: inline-block;
+        }
+        
+        .period-trigger {
+            background: var(--gold);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            box-shadow: 0 2px 8px rgba(192, 168, 120, 0.3);
+        }
+        
+        .period-trigger:hover {
+            background: #d4b896;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(192, 168, 120, 0.4);
+        }
+        
+        .period-trigger .dropdown-icon {
+            font-size: 12px;
+            transition: transform 0.3s ease;
+        }
+        
+        .period-trigger.active .dropdown-icon {
+            transform: rotate(180deg);
+        }
+        
+        .period-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            padding: 8px;
+            margin-top: 8px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            width: auto;
+            min-width: 180px;
+        }
+        
+        .period-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .period-option {
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+        
+        .period-option:last-child {
+            margin-bottom: 0;
+        }
+        
+        .period-option:hover {
+            background: #f8f4e9;
+            color: var(--navy);
+        }
+        
+        .period-option.active {
+            background: var(--navy);
+            color: white;
+        }
+        
+        .period-option .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-right: 8px;
+        }
+        
+        .period-option.available .status-indicator {
+            background: #22c55e;
+            box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+        }
+        
+        .period-option.full .status-indicator {
+            background: #ef4444;
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+        }
+        
+        .period-option.coming-soon .status-indicator {
+            background: #f59e0b;
+            box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
+        }
+        
+        .period-option .status-text {
+            font-size: 12px;
+            color: #666;
+            margin-left: auto;
+            font-weight: 500;
+        }
+        
+        .period-option.available .status-text {
+            color: #22c55e;
+        }
+        
+        .period-option.full .status-text {
+            color: #ef4444;
+        }
+        
+        .period-option.coming-soon .status-text {
+            color: #f59e0b;
+        }
+        
+        /* 添加遮罩层 */
+        .period-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: transparent;
+            z-index: 999;
+            display: none;
+        }
+        
+        .period-overlay.show {
+            display: block;
+        }
+        
     </style>
 </head>
 <body>
@@ -495,26 +495,26 @@
             <!-- 期数切换器 -->
             <div class="period-switcher">
                 <button class="period-trigger" id="periodTrigger">
-                    20260101期·已满员
+                    20260102期·可预约
                     <span class="dropdown-icon">▼</span>
                 </button>
                 <div class="period-dropdown" id="periodDropdown">
-                    <a href="/" class="period-option active full">
+                    <a href="/" class="period-option full">
                         <span class="status-indicator"></span>
                         <span class="period-name">20260101期</span>
                         <span class="status-text">已满员</span>
                     </a>
-                    <a href="20260102.html" class="period-option available">
+                    <a href="20250902.html" class="period-option available">
                         <span class="status-indicator"></span>
                         <span class="period-name">20260102期</span>
                         <span class="status-text">可预约</span>
                     </a>
-                    <a href="20260103.html" class="period-option available">
+                    <a href="20250903.html" class="period-option available">
                         <span class="status-indicator"></span>
                         <span class="period-name">20260103期</span>
                         <span class="status-text">可预约</span>
                     </a>
-                    <a href="20250201.html" class="period-option available">
+                    <a href="20251001.html" class="period-option active available">
                         <span class="status-indicator"></span>
                         <span class="period-name">20260201期</span>
                         <span class="status-text">可预约</span>
@@ -600,8 +600,8 @@
                             <p>日本厚生劳动省认证医院，全球0.01%人群享有的MSC自体脂肪间充质干细胞技术，体检报告解读</p>
                         </div>
                         <div class="experience">
-                            <h4>艺伎文化沙龙</h4>
-                            <p>非公开料亭私密聚会，企业家们在传统茶道中深度交流商业智慧</p>
+                            <h4>屋形船私董会</h4>
+                            <p>东京唯一政府认证屋形船，仅限几位企业家的深度商业对话的空间</p>
                         </div>
                         <div class="experience">
                             <h4>健康投资分享</h4>
@@ -614,12 +614,12 @@
                     <div class="day-header">Day 3｜商道传承·圈层融合</div>
                     <div class="day-content">
                         <div class="experience">
-                            <h4>国宝匠人私密会面</h4>
-                            <p>拜访皇室御用工坊传承人，探讨匠心精神与企业经营哲学</p>
+                            <h4>国宝级文物 · 东福寺</h4>
+                            <p>登顶三门参观内部佛像罗汉像，非公开区域</p>
                         </div>
                         <div class="experience">
-                            <h4>屋形船私董会</h4>
-                            <p>东京唯一政府认证屋形船，仅限几位企业家的深度商业对话的空间</p>
+                            <h4>八雲茶寮・禅味之道</h4>
+                            <p>承载禅味之道为特色的茶寮</p>
                         </div>
                         <div class="experience">
                             <h4>健康投资策略</h4>
@@ -632,12 +632,12 @@
                     <div class="day-header">Day 4｜精神修养·智慧共鸣</div>
                     <div class="day-content">
                         <div class="experience">
-                            <h4>能乐大师私人指导</h4>
-                            <p>与长山贵三郎探讨能乐精神与企业领导力的内在连接</p>
+                            <h4>企业管理新思维分享</h4>
+                            <p>与日本知名企业家探讨现代企业管理理念与东方智慧的结合</p>
                         </div>
                         <div class="experience">
-                            <h4>龙安寺禅修体验</h4>
-                            <p>世界遗产非公开区域，企业家团体禅修与商业思维升华</p>
+                            <h4>迷失东京</h4>
+                            <p>与顶级男公关探秘新宿歌舞伎町</p>
                         </div>
                         <div class="experience">
                             <h4>商界智慧分享</h4>
@@ -650,8 +650,8 @@
                     <div class="day-header">Day 5｜圈层深化·未来共赢</div>
                     <div class="day-content">
                         <div class="experience">
-                            <h4>茶道大师私人茶室</h4>
-                            <p>里千家家元关门弟子私宅，企业家们在茶道仪式中建立长期合作关系</p>
+                            <h4>日本盆栽鬼才小林国雄</h4>
+                            <p>拜访日本盆栽界的传奇人物</p>
                         </div>
                         <div class="experience">
                             <h4>共同签署旅行回忆录</h4>
@@ -694,7 +694,7 @@
         
         <div class="cta-container">
             <a href="mailto:wascell_cs@163.com?subject=XXX申请参加WASCELL(方舟计划)日本生命焕新之旅20260101期" class="cta-button" style="display: inline-block; text-decoration: none;">申请参加本次行程 &rarr;</a>
-            <p style="margin-top: 15px; font-size: 14px; color: var(--gold); font-weight: bold;">本期严格限额5席内 · 仅限企业家申请 · 本期截止2025年12月5日</p>
+            <p style="margin-top: 15px; font-size: 14px; color: var(--gold); font-weight: bold;">本期严格限额5席内 · 仅限企业家申请 · 本期截止2025年12月15日</p>
             <p style="margin-top: 10px; font-size: 13px; color: #666;">*申请需提供企业证明及半年内体检报告（附在邮件内），我们将进行资格审核、归档及免费身体评估</p>
         </div>
     </div>
@@ -714,7 +714,7 @@
                     <p>纯白木建造的船内高雅古典，搭配现代风吧台桌椅，仅能乘坐10位宾客。这是东京唯一一艘高级屋形船，于2023年被东京市政府认可为意匠典范。</p>
                     
                     <div class="place-highlight">
-                        <strong>独家体验</strong>：日本料理大厨乘船为宾客精心准备怀石料理，透过窗户可以看到闪耀的夜景和四季变幻的东京风景。
+                        <strong>精英专属体验</strong>：日本料理大厨乘船为企业家精心准备怀石料理，透过窗户可以看到闪耀的夜景和四季变幻的东京风景。
                     </div>
                     
                     <p>从平安时代延续至今备受喜爱的"屋形船"文化，通过这无与伦比的特别空间和品味美食与传统的用餐体验，让您度过奢华的时光。</p>
@@ -736,40 +736,38 @@
                 </div>
             </div>
         </div>
-                
+
         <div class="place-card">
             <div class="place-header">
-                <div class="place-icon">🌸</div>
-                <h3>浅草的茶与舞之间 · 介绍制艺伎茶道</h3>
+                <div class="place-icon">🎭</div>
+                <h3>八雲茶寮・禅味之道</h3>
             </div>
             <div class="place-body">
-                <img src="imgs/geisha.jpg" 
-                    alt="浅草的茶与舞之间 · 介绍制艺伎茶道" class="place-image">
+                <img src="imgs/8yunchaliao.jpg" 
+                        alt="八雲茶寮・禅味之道" class="place-image">
                 <div class="place-desc">
-                    <p>在浅草的静谧街巷中，隐匿着一家非公开制、预约限定的老字号料亭。自1950年创立以来，这里始终作为体验日本艺妓文化的私密场所。</p>
+                    <p>八雲茶寮，位于京都，是一家以禅味之道为特色的茶寮。</p>
                     
                     <div class="place-highlight">
-                        <strong>绝对稀缺</strong>：采用介绍制接待，普通客人无法自行入内，此次为您特别安排进入。
+                        <strong>僧侣深澤亮道先生</strong>：出生于曹洞宗寺院的次子，曾于福井县的大本山永平寺修行，之后在曹洞宗综合研究中心专研现代弘法与教育。
                     </div>
                     
-                    <p>在全包间的私密空间中，您将沉浸式体验两项极具代表性的日本传统文化：</p>
+                    <p>位于目黑区八云幽静住宅区的「八雲茶寮」，静静伫立于一隅。地名“八云”源自近邻的八云冰川神社，其祭神素戔嗚尊所吟咏的日本最古老和歌。</p>
                     
-                    <p><strong>正统茶道体验</strong> —— 由艺妓在和式包厢中亲自演绎，包含奉茶、讲解、互动，让您感受"一期一会"的茶道精神。</p>
-                    
-                    <p><strong>传统舞蹈表演</strong> —— 艺妓将带来私人表演，在温馨氛围中深入了解日本待客之道与审美文化。</p>
+                    <p>深澤亮道先生致力于向大众传递禅的本质，让佛教更贴近生活。为了将佛法传播得更广，他不担任特定寺院的住持，而是活跃于日本各地，通过讲座与工作坊推广佛教文化</p>
                     
                     <div class="place-features">
                         <div class="place-feature">
-                            <strong>创立时间</strong>
-                            1950年老字号
+                            <strong>指导老师</strong>
+                            僧侣深澤亮道先生
                         </div>
                         <div class="place-feature">
-                            <strong>接待方式</strong>
-                            介绍制专属
+                            <strong>艺术价值</strong>
+                            茶寮非遗
                         </div>
                         <div class="place-feature">
-                            <strong>文化体验</strong>
-                            茶道+舞蹈
+                            <strong>体验内容</strong>
+                            椅子坐禅
                         </div>
                     </div>
                 </div>
@@ -778,35 +776,35 @@
 
         <div class="place-card">
             <div class="place-header">
-                <div class="place-icon">🏛</div>
-                <h3>世界文化遗产 · 龙安寺（非公开区域）</h3>
+                <div class="place-icon">👑</div>
+                <h3>迷失东京</h3>
             </div>
             <div class="place-body">
-                <img src="imgs/longtemple.jpg" 
-                        alt="世界文化遗产 · 龙安寺" class="place-image">
+                <img src="imgs/nangongguan.jpg" 
+                        alt="与顶级男公关探秘新宿歌舞伎町" class="place-image">
                 <div class="place-desc">
-                    <p>龙安寺是一座由室町时代东军大将细川胜元于宝德二年（公元1450年）创建的禅宗古寺，以其悠久的历史和精致的艺术而闻名于世。</p>
+                    <p>与顶级男公关探秘新宿歌舞伎町</p>
                     
                     <div class="place-highlight">
-                        <strong>世界文化遗产</strong>：联合国教科文组织指定，证明其在日本文化史上的重要地位。
+                        <strong>新宿歌舞伎町</strong>：新宿歌舞伎町是东京最繁华的娱乐区之一，拥有众多的酒吧、夜总会和餐厅。
                     </div>
                     
-                    <p>寺内的庭园被誉为日本庭园抽象美的代表之一。在方丈前的一片矩形白砂地上，分布着五组青苔覆盖的岩石，这种简约而优雅的布局展现出了极致的平衡与和谐。</p>
+                    <p>作为东京最大的红灯区，歌舞伎町有许多风俗店和夜间俱乐部, 如今以其丰富多彩的夜生活和多样的娱乐活动而闻名。</p>
                     
-                    <p>龙安寺的建立正值日本视觉艺术发生大革新之时，其庭园设计风格独树一帜。枯山水庭园展示了对自然的敬畏和对美的追求，同时体现了禅宗的精神理念。</p>
+                    <p>歌舞伎町不仅是一个娱乐中心，也是东京城市文化的要组成部分。它在电影、电视和文学作品中频频出现，代表了东京夜生活的一个特侧面。</p>
                     
                     <div class="place-features">
                         <div class="place-feature">
-                            <strong>建立年代</strong>
-                            公元1450年
+                            <strong>陪同对象</strong>
+                            现役男公关向导
                         </div>
                         <div class="place-feature">
-                            <strong>庭园特色</strong>
-                            枯山水经典
+                            <strong>服务内容</strong>
+                            探秘歌舞伎町
                         </div>
                         <div class="place-feature">
-                            <strong>文化价值</strong>
-                            世界遗产
+                            <strong>体验场所</strong>
+                            复古酒吧,牛郎俱乐部
                         </div>
                     </div>
                 </div>
@@ -816,34 +814,71 @@
         <div class="place-card">
             <div class="place-header">
                 <div class="place-icon">🍵</div>
-                <h3>拜访日本茶人私宅 · 茶道体验</h3>
+                <h3>拜访日本盆栽鬼才小林国雄</h3>
             </div>
             <div class="place-body">
-                <img src="imgs/home.jpg" 
-                        alt="拜访日本茶人私宅 · 茶道体验" class="place-image">
+                <img src="imgs/xiaolinguoxiong.jpg" 
+                        alt="拜访日本盆栽鬼才小林国雄 · 盆栽体验" class="place-image">
                 <div class="place-desc">
-                    <p>位于东京市中心著名豪宅区目黑柿木坂，探访里千家茶道大师舩越老师的私人宅邸。舩越老师是里千家家元的关门弟子，在京都专注茶道研习已逾三十载。</p>
+                    <p>春花园坐落于东京都江户川区，占地超过2400平方米。在这座东京繁华都市里，拥有如此广阔的土地实属罕见，而这一壮举得益于小林先生的慷慨捐赠，他陆续投入了超过10亿日元。</p>
                     
                     <div class="place-highlight">
-                        <strong>私人独享</strong>：常人很少有机会得以一窥的私人茶室，融合传统与现代的独特建筑风格。
+                        <strong>私人独享</strong>：小林先生是日本盆栽界的传奇人物，他的盆栽作品多次获得国际大奖，被誉为“盆栽鬼才”。
                     </div>
                     
-                    <p>与其夫人一同，他们都是职业茶人，且怀抱着对中国文化的深厚喜爱。虽位于繁华都市中心，却环境幽雅安静。</p>
+                    <p>如今已年逾七旬的小林先生，从28岁开始涉足盆栽艺术，至今已有46个春秋。小林先生的非凡之处在于，他并非得自名师指点，而是全凭自己的毅力和天赋，自一人摸索探索，由此自成一家之言。这种草根式的创作道路使得他犹如中国绘画大师齐白石一般，虽未受传统教诲，却因天资过人、创作到而成为“天才”级别的大师。</p>
                     
-                    <p><strong>专属体验</strong>：亲眼目睹茶道礼法展示，品尝老师亲手调制的现打抹茶，学习茶室礼仪，感受茶道文化的深厚底蕴。</p>
+                    <p><strong>专属体验</strong>：春花园内种植了超过1000种植物，包括樱花、枫树、竹子等。这些植物都是小林先生精心挑选的，每一棵都经过他的精心培育。</p>
                     
                     <div class="place-features">
                         <div class="place-feature">
-                            <strong>茶道地位</strong>
-                            家元关门弟子
+                            <strong>盆栽地位</strong>
+                            小林流创始人
                         </div>
                         <div class="place-feature">
                             <strong>研习时间</strong>
-                            三十载专精
+                            四十六载专精
                         </div>
                         <div class="place-feature">
                             <strong>独特体验</strong>
-                            私宅茶道
+                            包场艺术馆及盆栽体验
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="place-card">
+            <div class="place-header">
+                <div class="place-icon">🏛</div>
+                <h3>国宝级文物 · 东福寺（非公开区域）</h3>
+            </div>
+            <div class="place-body">
+                <img src="imgs/dongtemple.jpg" 
+                        alt="国宝级文物 · 东福寺" class="place-image">
+                <div class="place-desc">
+                    <p>大本山东福寺被誉为京都五山之一的著名禅寺,由镰仓时代的摄政关白九条道家所建。</p>
+                    
+                    <div class="place-highlight">
+                        <strong>国宝级文物</strong>：东福寺三门于1952年被指定为国宝级文物,其高度32米有余,为五间三门的二层二式结构,被称为日本最古,最大,最好的禅宗三门。
+                    </div>
+                    
+                    <p>第一代住持是被赠予圣一国师称号的一代高僧,作为临济宗大本山的东福寺,继承了中世纪以来禅宗建筑,拥有京都首屈一指的宏大殿堂,佛塔和迦蓝。</p>
+                    
+                    <p>正面宝冠释迦如来像和十六罗汉像据传为室町时代初期之作,东福寺三门可以说是日本代表性的三门杰作。楼上的妙云阁匾额,为室町幕府四代将军足利义持公的手笔,天棚画出自兆殿司,寒殿司之手。</p>
+                    
+                    <div class="place-features">
+                        <div class="place-feature">
+                            <strong>建立年代</strong>
+                            公元1244年
+                        </div>
+                        <div class="place-feature">
+                            <strong>建筑特色</strong>
+                            五间三门的二层二式结构
+                        </div>
+                        <div class="place-feature">
+                            <strong>文化价值</strong>
+                            日本国宝级的三门杰作
                         </div>
                     </div>
                 </div>
@@ -858,4 +893,4 @@
 
     <script src="period-switcher.js"></script>
 </body>
-</html>
+</html> 

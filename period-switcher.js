@@ -62,17 +62,17 @@ function initializePeriodSwitcher() {
 function getCurrentPeriod() {
     // 从URL中获取当前期数
     const path = window.location.pathname;
-    if (path.includes('20251002')) {
-        return '20251002期';
-    } else if (path.includes('20251003')) {
-        return '20251003期';
-    } else if (path.includes('20251101')) {
-        return '20251101期';
+    if (path.includes('20260102')) {
+        return '20260102期';
+    } else if (path.includes('20260103')) {
+        return '20260103期';
+    } else if (path.includes('20260201')) {
+        return '20260201期';
     } else if (path.includes('index.html') || path === '/' || path === '') {
-        return '20251001期';
+        return '20260101期';
     }
     
-    return '20251001期'; // 默认
+    return '20260101期'; // 默认
 }
 
 function updateTriggerText(period) {
