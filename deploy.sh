@@ -22,7 +22,7 @@ echo "🚀 开始部署 WASCELL 网站..."
 # 配置信息（从环境变量读取，如果没有则使用默认值）
 SERVER_IP="${DEPLOY_SERVER_IP:-43.134.38.231}"
 SERVER_USER="${DEPLOY_SERVER_USER:-ubuntu}"
-SERVER_PASS="${DEPLOY_SERVER_PASS:-123abc$74531ABC}"
+SERVER_PASS="${DEPLOY_SERVER_PASS:-123abc\$74531ABC}"
 APP_DIR="${DEPLOY_APP_DIR:-/ubuntu/wascell}"
 APP_NAME="${DEPLOY_APP_NAME:-wascell-website}"
 
@@ -81,9 +81,9 @@ push_to_github || echo "⚠️  跳过GitHub推送，直接部署到服务器"
 # 2. 检查服务器连接
 echo "🔍 检查服务器连接..."
 if [ -n "$TIMEOUT_CMD" ]; then
-    SSH_CMD="$TIMEOUT_CMD sshpass -p \"$SERVER_PASS\" ssh -o ConnectTimeout=10 \"$SERVER_USER@$SERVER_IP\" \"echo '✅ 服务器连接成功'\""
+    SSH_CMD="$TIMEOUT_CMD sshpass -p '$SERVER_PASS' ssh -o ConnectTimeout=10 \"$SERVER_USER@$SERVER_IP\" \"echo '✅ 服务器连接成功'\""
 else
-    SSH_CMD="sshpass -p \"$SERVER_PASS\" ssh -o ConnectTimeout=10 \"$SERVER_USER@$SERVER_IP\" \"echo '✅ 服务器连接成功'\""
+    SSH_CMD="sshpass -p '$SERVER_PASS' ssh -o ConnectTimeout=10 \"$SERVER_USER@$SERVER_IP\" \"echo '✅ 服务器连接成功'\""
 fi
 
 if ! eval $SSH_CMD; then
@@ -105,9 +105,9 @@ if [ "$SERVER_REPO_STATUS" != "ERROR" ]; then
     
     echo "📥 尝试从GitHub拉取最新代码..."
     if [ -n "$TIMEOUT_CMD" ]; then
-        PULL_CMD="$TIMEOUT_CMD sshpass -p \"$SERVER_PASS\" ssh \"$SERVER_USER@$SERVER_IP\" \"cd $APP_DIR && git pull origin main\""
+        PULL_CMD="$TIMEOUT_CMD sshpass -p '$SERVER_PASS' ssh \"$SERVER_USER@$SERVER_IP\" \"cd $APP_DIR && git pull origin main\""
     else
-        PULL_CMD="sshpass -p \"$SERVER_PASS\" ssh \"$SERVER_USER@$SERVER_IP\" \"cd $APP_DIR && git pull origin main\""
+        PULL_CMD="sshpass -p '$SERVER_PASS' ssh \"$SERVER_USER@$SERVER_IP\" \"cd $APP_DIR && git pull origin main\""
     fi
     
     if eval $PULL_CMD; then
@@ -140,9 +140,9 @@ fi
 # 4. 安装依赖（如果有更新）
 echo "📦 更新依赖包..."
 if [ -n "$TIMEOUT_CMD" ]; then
-    NPM_CMD="$TIMEOUT_CMD sshpass -p \"$SERVER_PASS\" ssh \"$SERVER_USER@$SERVER_IP\" \"cd $APP_DIR && npm install --production\""
+    NPM_CMD="$TIMEOUT_CMD sshpass -p '$SERVER_PASS' ssh \"$SERVER_USER@$SERVER_IP\" \"cd $APP_DIR && npm install --production\""
 else
-    NPM_CMD="sshpass -p \"$SERVER_PASS\" ssh \"$SERVER_USER@$SERVER_IP\" \"cd $APP_DIR && npm install --production\""
+    NPM_CMD="sshpass -p '$SERVER_PASS' ssh \"$SERVER_USER@$SERVER_IP\" \"cd $APP_DIR && npm install --production\""
 fi
 
 if ! eval $NPM_CMD; then
