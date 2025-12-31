@@ -38,10 +38,10 @@ async function processWriteQueue() {
     if (isWritingStats || writeQueue.length === 0) {
         return;
     }
-    
+
     isWritingStats = true;
     const { stats, resolve, reject } = writeQueue.shift();
-    
+
     try {
         // 转换Set为数组保存
         const dailyStats = {};
@@ -51,18 +51,18 @@ async function processWriteQueue() {
                 uniqueIPs: Array.from(stats.daily[date].uniqueIPs)
             };
         });
-        
+
         const saveStats = {
             ...stats,
             daily: dailyStats,
             lastUpdated: new Date().toISOString()
         };
-        
+
         // 写入临时文件，然后原子性重命名
         const tempFile = STATS_FILE + '.tmp';
         await writeFileAsync(tempFile, JSON.stringify(saveStats, null, 2));
         await renameAsync(tempFile, STATS_FILE);
-        
+
         resolve();
     } catch (error) {
         console.error('安全写入统计文件失败:', error);
@@ -97,7 +97,7 @@ app.use((req, res, next) => {
     const ip = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for'];
     const userAgent = req.get('User-Agent') || '';
     const referer = req.get('Referer') || '';
-    
+
     const logEntry = {
         timestamp,
         ip,
@@ -106,7 +106,7 @@ app.use((req, res, next) => {
         userAgent,
         referer
     };
-    
+
     // 异步写入访问日志和更新统计
     setImmediate(async () => {
         try {
@@ -117,7 +117,7 @@ app.use((req, res, next) => {
             console.error('写入日志或更新统计失败:', error);
         }
     });
-    
+
     next();
 });
 
@@ -127,7 +127,7 @@ async function rotateLogIfNeeded() {
         if (fs.existsSync(LOG_FILE)) {
             const stats = await statAsync(LOG_FILE);
             const fileSizeMB = stats.size / (1024 * 1024);
-            
+
             // 如果日志文件超过50MB，进行轮转
             if (fileSizeMB > 50) {
                 const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -146,7 +146,7 @@ async function updateStatsAsync(logEntry) {
     try {
         let stats = await getStatsAsync();
         const today = getToday();
-        
+
         // 初始化今日数据
         if (!stats.daily[today]) {
             stats.daily[today] = {
@@ -155,18 +155,18 @@ async function updateStatsAsync(logEntry) {
                 pages: {}
             };
         }
-        
+
         // 更新统计
         stats.totalVisits++;
         stats.daily[today].totalVisits++;
         stats.daily[today].uniqueIPs.add(logEntry.ip);
-        
+
         // 页面访问统计
         if (!stats.daily[today].pages[logEntry.url]) {
             stats.daily[today].pages[logEntry.url] = 0;
         }
         stats.daily[today].pages[logEntry.url]++;
-        
+
         // IP统计
         if (!stats.ipStats[logEntry.ip]) {
             stats.ipStats[logEntry.ip] = {
@@ -177,7 +177,7 @@ async function updateStatsAsync(logEntry) {
         }
         stats.ipStats[logEntry.ip].count++;
         stats.ipStats[logEntry.ip].lastVisit = logEntry.timestamp;
-        
+
         // 使用安全写入机制
         await safeWriteStats(stats);
     } catch (error) {
@@ -223,7 +223,7 @@ async function getStatsAsync() {
         }
         return defaultStats;
     }
-    
+
     return {
         totalVisits: 0,
         daily: {},
@@ -256,7 +256,7 @@ function getStats() {
             createdAt: new Date().toISOString()
         };
     }
-    
+
     return {
         totalVisits: 0,
         daily: {},
@@ -267,6 +267,7 @@ function getStats() {
 
 // 静态文件服务
 app.use(express.static('.', {
+    extensions: ['html'],
     setHeaders: (res, path) => {
         if (path.endsWith('.html')) {
             res.set('Cache-Control', 'no-cache');
@@ -278,12 +279,12 @@ app.use(express.static('.', {
 app.post('/api/admin/login', (req, res) => {
     try {
         const { password } = req.body;
-        
+
         // 输入验证
         if (!password || typeof password !== 'string') {
             return res.status(400).json({ success: false, message: '密码格式无效' });
         }
-        
+
         if (password === ADMIN_PASSWORD) {
             res.json({ success: true, message: '登录成功' });
         } else {
@@ -299,13 +300,13 @@ app.post('/api/admin/login', (req, res) => {
 app.get('/api/admin/stats', async (req, res) => {
     try {
         const { period = 'day' } = req.query;
-        
+
         // 输入验证
         const validPeriods = ['day', 'week', 'month', 'last3days'];
         if (!validPeriods.includes(period)) {
             return res.status(400).json({ message: '无效的时间周期参数' });
         }
-        
+
         // 对于last3days，我们需要从原始日志计算，因为stats.json是按天聚合的
         if (period === 'last3days') {
             try {
@@ -319,7 +320,7 @@ app.get('/api/admin/stats', async (req, res) => {
 
         // 对于 day, week, month，继续使用现有的同步逻辑
         const stats = getStats();
-        
+
         // 处理统计数据
         const now = new Date();
         const result = {
@@ -327,7 +328,7 @@ app.get('/api/admin/stats', async (req, res) => {
             totalIPs: Object.keys(stats.ipStats).length,
             periodData: []
         };
-        
+
         // 根据周期生成数据
         if (period === 'day') {
             // 最近30天
@@ -335,7 +336,7 @@ app.get('/api/admin/stats', async (req, res) => {
                 const date = new Date(now);
                 date.setDate(date.getDate() - i);
                 const dateStr = date.toISOString().split('T')[0];
-                
+
                 const dayData = stats.daily[dateStr] || { totalVisits: 0, uniqueIPs: [] };
                 result.periodData.push({
                     date: dateStr,
@@ -350,10 +351,10 @@ app.get('/api/admin/stats', async (req, res) => {
                 weekStart.setDate(weekStart.getDate() - (weekStart.getDay() + i * 7));
                 const weekEnd = new Date(weekStart);
                 weekEnd.setDate(weekEnd.getDate() + 6);
-                
+
                 let weekVisits = 0;
                 const weekIPs = new Set();
-                
+
                 for (let d = new Date(weekStart); d <= weekEnd; d.setDate(d.getDate() + 1)) {
                     const dateStr = d.toISOString().split('T')[0];
                     const dayData = stats.daily[dateStr];
@@ -364,10 +365,10 @@ app.get('/api/admin/stats', async (req, res) => {
                         }
                     }
                 }
-                
+
                 // 修复：使用周开始日期作为横坐标，格式化为易读格式
                 const weekLabel = `${weekStart.getMonth() + 1}/${weekStart.getDate()}`;
-                
+
                 result.periodData.push({
                     date: weekStart.toISOString().split('T')[0], // 保持ISO格式用于图表解析
                     label: weekLabel, // 添加显示标签
@@ -380,10 +381,10 @@ app.get('/api/admin/stats', async (req, res) => {
             for (let i = 11; i >= 0; i--) {
                 const month = new Date(now.getFullYear(), now.getMonth() - i, 1);
                 const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0);
-                
+
                 let monthVisits = 0;
                 const monthIPs = new Set();
-                
+
                 for (let d = new Date(month); d <= monthEnd; d.setDate(d.getDate() + 1)) {
                     const dateStr = d.toISOString().split('T')[0];
                     const dayData = stats.daily[dateStr];
@@ -394,7 +395,7 @@ app.get('/api/admin/stats', async (req, res) => {
                         }
                     }
                 }
-                
+
                 result.periodData.push({
                     date: `${month.getFullYear()}-${(month.getMonth() + 1).toString().padStart(2, '0')}`,
                     visits: monthVisits,
@@ -402,13 +403,13 @@ app.get('/api/admin/stats', async (req, res) => {
                 });
             }
         }
-        
+
         // 热门IP统计
         result.topIPs = Object.entries(stats.ipStats)
             .map(([ip, data]) => ({ ip, ...data }))
             .sort((a, b) => b.count - a.count)
             .slice(0, 10);
-        
+
         res.json(result);
     } catch (error) {
         console.error('获取统计数据失败:', error);
@@ -459,13 +460,13 @@ async function getHourlyStatsFromLog() {
             }
         }
     }
-    
+
     const periodData = Object.values(hourlyStats).map(hourData => ({
         date: hourData.date,
         visits: hourData.visits,
         uniqueIPs: hourData.uniqueIPs.size,
     }));
-    
+
     // 由于是独立接口，这里也返回 topIPs
     const stats = getStats();
     const topIPs = Object.entries(stats.ipStats)
@@ -482,7 +483,7 @@ app.get('/api/admin/realtime', (req, res) => {
         const stats = getStats();
         const today = getToday();
         const todayData = stats.daily[today] || { totalVisits: 0, uniqueIPs: [] };
-        
+
         res.json({
             todayVisits: todayData.totalVisits,
             todayUniqueIPs: todayData.uniqueIPs instanceof Set ? todayData.uniqueIPs.size : (Array.isArray(todayData.uniqueIPs) ? todayData.uniqueIPs.length : 0),
