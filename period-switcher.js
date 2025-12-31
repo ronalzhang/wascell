@@ -1,5 +1,5 @@
 // 期数切换器交互增强
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     initializePeriodSwitcher();
 });
 
@@ -7,31 +7,31 @@ function initializePeriodSwitcher() {
     const trigger = document.getElementById('periodTrigger');
     const dropdown = document.getElementById('periodDropdown');
     const overlay = document.getElementById('periodOverlay');
-    
+
     if (!trigger || !dropdown) return;
-    
+
     // 获取当前期数并设置触发器文本
     const currentPeriod = getCurrentPeriod();
     // updateTriggerText(currentPeriod); // 注释掉这行，避免覆盖手动设置的状态文字
-    
+
     // 更新下拉菜单状态
     updateDropdownStatus(currentPeriod);
-    
+
     // 触发器点击事件
-    trigger.addEventListener('click', function(e) {
+    trigger.addEventListener('click', function (e) {
         e.stopPropagation();
         toggleDropdown();
     });
-    
+
     // 遮罩层点击事件
-    overlay.addEventListener('click', function() {
+    overlay.addEventListener('click', function () {
         closeDropdown();
     });
-    
+
     // 下拉菜单选项点击事件
     const options = dropdown.querySelectorAll('.period-option');
     options.forEach(option => {
-        option.addEventListener('click', function(e) {
+        option.addEventListener('click', function (e) {
             const href = this.getAttribute('href');
             if (href === '#') {
                 e.preventDefault();
@@ -43,16 +43,16 @@ function initializePeriodSwitcher() {
             }
         });
     });
-    
+
     // ESC键关闭下拉菜单
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
             closeDropdown();
         }
     });
-    
+
     // 点击页面其他地方关闭下拉菜单
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         if (!trigger.contains(e.target) && !dropdown.contains(e.target)) {
             closeDropdown();
         }
@@ -62,17 +62,17 @@ function initializePeriodSwitcher() {
 function getCurrentPeriod() {
     // 从URL中获取当前期数
     const path = window.location.pathname;
-    if (path.includes('20260102')) {
-        return '20260102期';
-    } else if (path.includes('20260103')) {
-        return '20260103期';
-    } else if (path.includes('20260201')) {
-        return '20260201期';
+    if (path.includes('20260202')) {
+        return '20260202期';
+    } else if (path.includes('20260203')) {
+        return '20260203期';
+    } else if (path.includes('20260301')) {
+        return '20260301期';
     } else if (path.includes('index.html') || path === '/' || path === '') {
-        return '20260101期';
+        return '20260201期';
     }
-    
-    return '20260101期'; // 默认
+
+    return '20260201期'; // 默认
 }
 
 function updateTriggerText(period) {
@@ -91,14 +91,14 @@ function updateTriggerText(period) {
 
 function updateDropdownStatus(currentPeriod) {
     const options = document.querySelectorAll('.period-option');
-    
+
     options.forEach(option => {
         const periodNameElement = option.querySelector('.period-name');
         const periodText = periodNameElement ? periodNameElement.textContent.trim() : option.textContent.trim();
-        
+
         // 移除所有active类
         option.classList.remove('active');
-        
+
         // 如果匹配当前期数，添加active类
         if (periodText === currentPeriod) {
             option.classList.add('active');
@@ -110,7 +110,7 @@ function toggleDropdown() {
     const trigger = document.getElementById('periodTrigger');
     const dropdown = document.getElementById('periodDropdown');
     const overlay = document.getElementById('periodOverlay');
-    
+
     if (dropdown.classList.contains('show')) {
         closeDropdown();
     } else {
@@ -122,7 +122,7 @@ function openDropdown() {
     const trigger = document.getElementById('periodTrigger');
     const dropdown = document.getElementById('periodDropdown');
     const overlay = document.getElementById('periodOverlay');
-    
+
     trigger.classList.add('active');
     dropdown.classList.add('show');
     overlay.classList.add('show');
@@ -132,7 +132,7 @@ function closeDropdown() {
     const trigger = document.getElementById('periodTrigger');
     const dropdown = document.getElementById('periodDropdown');
     const overlay = document.getElementById('periodOverlay');
-    
+
     trigger.classList.remove('active');
     dropdown.classList.remove('show');
     overlay.classList.remove('show');
@@ -155,7 +155,7 @@ function showComingSoonMessage() {
         z-index: 1001;
         animation: fadeInOut 2s ease-in-out;
     `;
-    
+
     // 添加动画样式
     const style = document.createElement('style');
     style.textContent = `
@@ -167,9 +167,9 @@ function showComingSoonMessage() {
         }
     `;
     document.head.appendChild(style);
-    
+
     document.body.appendChild(message);
-    
+
     // 2秒后移除消息
     setTimeout(() => {
         if (document.body.contains(message)) {

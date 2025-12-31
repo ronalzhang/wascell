@@ -22,7 +22,7 @@ echo "🚀 开始部署 WASCELL 网站..."
 # 配置信息（从环境变量读取，如果没有则使用默认值）
 SERVER_IP="${DEPLOY_SERVER_IP:-43.134.38.231}"
 SERVER_USER="${DEPLOY_SERVER_USER:-ubuntu}"
-SERVER_PASS="${DEPLOY_SERVER_PASS:-Pr971V3j}"
+SERVER_PASS="${DEPLOY_SERVER_PASS:-123abc$74531ABC}"
 APP_DIR="${DEPLOY_APP_DIR:-/ubuntu/wascell}"
 APP_NAME="${DEPLOY_APP_NAME:-wascell-website}"
 
