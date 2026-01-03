@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>WASCELL · 方舟计划 2026·四月二期</title>
+    <meta name="viewport" content="width=1024">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <meta name="description" content="方舟计划 | 封闭式生命资产管理 · 仅限5席 · 日本厚生省认证">
+    <style>
+        :root {
+            --black: #0a0a0a;
+            --dark: #111111;
+            --dark-light: #1a1a1a;
+            --gold: #c9a962;
+            --gold-light: #dfc07a;
+            --white: #ffffff;
+            --gray: #999999;
+            --gray-dark: #666666;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', sans-serif;
+            background: var(--black);
+            color: var(--white);
+            line-height: 1.8;
+            min-width: 1024px;
+        }
+
+        .container { max-width: 960px; margin: 0 auto; padding: 0 40px; }
+
+        /* ===== 顶部栏 ===== */
+        .topbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(10,10,10,0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(201,169,98,0.15);
+        }
+        .topbar-inner {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 16px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            font-size: 18px;
+            font-weight: 300;
+            letter-spacing: 6px;
+            color: var(--gold);
+        }
+        /* 期数切换器 */
+        .period-switcher { position: relative; }
+        .period-trigger {
+            background: transparent;
+            border: 1px solid rgba(201,169,98,0.5);
+            color: var(--gold);
+            padding: 10px 20px;
+            font-size: 13px;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .period-trigger:hover { background: rgba(201,169,98,0.1); }
+        .period-trigger .dropdown-icon { font-size: 10px; transition: transform 0.3s; }
+        .period-trigger.active .dropdown-icon { transform: rotate(180deg); }
+        .period-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: var(--dark);
+            border: 1px solid rgba(201,169,98,0.2);
+            min-width: 180px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-8px);
+            transition: all 0.25s;
+        }
+        .period-dropdown.show { opacity: 1; visibility: visible; transform: translateY(0); }
+        .period-option {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 18px;
+            color: var(--gray);
+            text-decoration: none;
+            font-size: 13px;
+            transition: all 0.2s;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+        .period-option:last-child { border-bottom: none; }
+        .period-option:hover { background: rgba(201,169,98,0.08); color: var(--white); }
+        .period-option.active { background: var(--gold); color: var(--black); }
+        .period-option .status-indicator {
+            width: 6px; height: 6px; border-radius: 50%;
+        }
+        .period-option.available .status-indicator { background: #4ade80; }
+        .period-option.full .status-indicator { background: #f87171; }
+        .period-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 99; display: none;
+        }
+        .period-overlay.show { display: block; }
+
+        /* ===== 主视觉 ===== */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 140px 40px 100px;
+            background: linear-gradient(180deg, var(--black) 0%, var(--dark) 100%);
+            position: relative;
+        }
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 1px;
+            height: 80px;
+            background: linear-gradient(180deg, var(--gold) 0%, transparent 100%);
+        }
+        .hero-badge {
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            padding: 10px 30px;
+            font-size: 11px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: 50px;
+        }
+        .hero-title {
+            font-size: 52px;
+            font-weight: 200;
+            letter-spacing: 12px;
+            margin-bottom: 16px;
+        }
+        .hero-period {
+            font-size: 16px;
+            color: var(--gray);
+            letter-spacing: 3px;
+            margin-bottom: 60px;
+        }
+        .hero-price {
+            margin-bottom: 20px;
+        }
+        .hero-price .amount {
+            font-size: 42px;
+            font-weight: 200;
+            color: var(--gold);
+            letter-spacing: 2px;
+        }
+        .hero-price .unit {
+            font-size: 16px;
+            color: var(--gray);
+            margin-left: 8px;
+        }
+        .hero-price-note {
+            font-size: 13px;
+            color: var(--gray-dark);
+            letter-spacing: 1px;
+        }
+        .hero-desc {
+            margin-top: 50px;
+            font-size: 15px;
+            color: var(--gray);
+            line-height: 2.2;
+            max-width: 600px;
+        }
+        .hero-desc strong {
+            color: var(--gold-light);
+            font-weight: 400;
+        }
+
+        /* ===== 核心价值 ===== */
+        .value-section {
+            padding: 100px 0;
+            background: var(--dark);
+        }
+        .section-header {
+            text-align: center;
+            margin-bottom: 70px;
+        }
+        .section-tag {
+            font-size: 11px;
+            color: var(--gold);
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+        .section-title {
+            font-size: 28px;
+            font-weight: 200;
+            letter-spacing: 4px;
+        }
+        .value-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1px;
+            background: rgba(201,169,98,0.15);
+        }
+        .value-card {
+            background: var(--dark);
+            padding: 50px 35px;
+            text-align: center;
+            transition: all 0.4s;
+            position: relative;
+        }
+        .value-card:hover {
+            background: var(--dark-light);
+        }
+        .value-num {
+            font-size: 11px;
+            color: var(--gold);
+            letter-spacing: 3px;
+            margin-bottom: 30px;
+            opacity: 0.6;
+        }
+        .value-title {
+            font-size: 16px;
+            color: var(--white);
+            letter-spacing: 3px;
+            margin-bottom: 24px;
+            font-weight: 400;
+        }
+        .value-desc {
+            font-size: 13px;
+            color: var(--gray);
+            line-height: 2.2;
+            letter-spacing: 0.5px;
+        }
+
+        /* ===== 申请区 ===== */
+        .apply-section {
+            padding: 80px 0;
+            background: var(--black);
+            text-align: center;
+        }
+        .apply-btn {
+            display: inline-block;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            padding: 18px 60px;
+            font-size: 14px;
+            letter-spacing: 4px;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        .apply-btn:hover {
+            background: var(--gold);
+            color: var(--black);
+        }
+        .apply-note {
+            margin-top: 24px;
+            font-size: 12px;
+            color: var(--gray-dark);
+            letter-spacing: 1px;
+        }
+
+        /* ===== 行程展示 ===== */
+        .itinerary-section {
+            padding: 100px 0;
+            background: var(--dark);
+        }
+        .itinerary-intro {
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto 60px;
+            font-size: 14px;
+            color: var(--gray);
+            line-height: 2;
+        }
+        .place-card {
+            position: relative;
+            margin-bottom: 30px;
+            overflow: hidden;
+            height: 420px;
+        }
+        .place-card:hover .place-image {
+            transform: scale(1.03);
+        }
+        .place-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s ease;
+        }
+        .place-content {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 50px;
+            background: linear-gradient(0deg, rgba(10,10,10,0.95) 0%, rgba(10,10,10,0.8) 60%, transparent 100%);
+        }
+        .place-day {
+            font-size: 11px;
+            color: var(--gold);
+            letter-spacing: 3px;
+            margin-bottom: 12px;
+        }
+        .place-title {
+            font-size: 20px;
+            font-weight: 400;
+            letter-spacing: 2px;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+        .place-desc {
+            font-size: 13px;
+            color: var(--gray);
+            line-height: 2;
+            margin-bottom: 20px;
+            max-width: 600px;
+        }
+        .place-tags {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .place-tag {
+            font-size: 11px;
+            color: rgba(255,255,255,0.5);
+            border: 1px solid rgba(255,255,255,0.15);
+            padding: 6px 14px;
+            letter-spacing: 1px;
+        }
+
+        /* ===== 底部 ===== */
+        .footer {
+            padding: 60px 0;
+            background: var(--black);
+            text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+        .footer-logo {
+            font-size: 16px;
+            color: var(--gold);
+            letter-spacing: 6px;
+            margin-bottom: 16px;
+        }
+        .footer-text {
+            font-size: 12px;
+            color: var(--gray-dark);
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部栏 -->
+    <header class="topbar">
+        <div class="topbar-inner">
+            <div class="logo">WASCELL</div>
+            <div class="period-switcher">
+                <button class="period-trigger" id="periodTrigger">
+                    2026·四月二期 <span class="dropdown-icon">▼</span>
+                </button>
+                <div class="period-dropdown" id="periodDropdown">
+                    <a href="20260401" class="period-option available">
+                        <span>2026·四月首期</span>
+                        <span class="status-indicator"></span>
+                    </a>
+                    <a href="20260402" class="period-option active available">
+                        <span>2026·四月二期</span>
+                        <span class="status-indicator"></span>
+                    </a>
+                    <a href="20260403" class="period-option available">
+                        <span>2026·四月三期</span>
+                        <span class="status-indicator"></span>
+                    </a>
+                    <a href="20260501" class="period-option available">
+                        <span>2026·五月首期</span>
+                        <span class="status-indicator"></span>
+                    </a>
+                    <a href="20260502" class="period-option available">
+                        <span>2026·五月二期</span>
+                        <span class="status-indicator"></span>
+                    </a>
+                </div>
+            </div>
+            <div class="period-overlay" id="periodOverlay"></div>
+        </div>
+    </header>
+
+    <!-- 主视觉 -->
+    <section class="hero">
+        <div class="hero-badge">仅限 5 席 · 邀请制</div>
+        <h1 class="hero-title">方舟计划</h1>
+        <p class="hero-period">2026·四月二期 生命资产管理</p>
+        <div class="hero-price">
+            <span class="amount">¥580,000</span>
+            <span class="unit">/ 席位</span>
+        </div>
+        <p class="hero-price-note">含在日全部吃住行费用，不含往返机票</p>
+        <p class="hero-desc">
+            建立您的<strong>私人生物备份库</strong><br>
+            日本厚生劳动省认证 · 全球仅 0.01% 人群享有的特权
+        </p>
+    </section>
+
+    <!-- 核心价值 -->
+    <section class="value-section">
+        <div class="container">
+            <div class="section-header">
+                <p class="section-tag">Core Value</p>
+                <h2 class="section-title">三大核心价值</h2>
+            </div>
+            <div class="value-grid">
+                <div class="value-card">
+                    <p class="value-num">— 01 —</p>
+                    <h3 class="value-title">生命资产管理</h3>
+                    <p class="value-desc">日本厚生劳动省认证<br>预约制高端干细胞诊所<br>建立您的私人生物备份库</p>
+                </div>
+                <div class="value-card">
+                    <p class="value-num">— 02 —</p>
+                    <h3 class="value-title">精英圈层准入</h3>
+                    <p class="value-desc">严格筛选的行业掌舵人<br>封闭式私董会深度对话<br>签署保密协议确保质量</p>
+                </div>
+                <div class="value-card">
+                    <p class="value-num">— 03 —</p>
+                    <h3 class="value-title">稀缺文化特权</h3>
+                    <p class="value-desc">非公开寺院与皇室工坊<br>介绍制料亭与私人茶室<br>无法复制的在地体验</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 申请区 -->
+    <section class="apply-section">
+        <div class="container">
+            <a href="mailto:wascell_cs@163.com?subject=申请参加WASCELL方舟计划2026四月二期" class="apply-btn">
+                申请资格审核
+            </a>
+            <p class="apply-note">申请需提供企业证明及半年内体检报告 · 本期截止 2026年3月15日</p>
+        </div>
+    </section>
+
+    <!-- 行程展示 -->
+    <section class="itinerary-section">
+        <div class="container">
+            <div class="section-header">
+                <p class="section-tag">Itinerary</p>
+                <h2 class="section-title">本期行程安排</h2>
+            </div>
+            <p class="itinerary-intro">
+                五日四晚封闭式行程，第一阶段完成细胞采集与文化体验，<br>
+                四周后返回日本进行细胞回输（半日）。以下为本期精选行程。
+            </p>
+
+            <!-- Day 1 -->
+            <div class="place-card">
+                <img src="imgs/kaiseki.jpg" alt="屋形船" class="place-image">
+                <div class="place-content">
+                    <p class="place-day">DAY 1 · 精英汇聚</p>
+                    <h3 class="place-title">白木匠造屋形船 · 东京湾私董会</h3>
+                    <p class="place-desc">东京唯一政府认可的高级屋形船，仅容10席。料理大厨随船准备怀石料理，在东京湾夜景中开启圈层初识。</p>
+                    <div class="place-tags">
+                        <span class="place-tag">政府认可</span>
+                        <span class="place-tag">限定10席</span>
+                        <span class="place-tag">船上怀石</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Day 2 -->
+            <div class="place-card">
+                <img src="imgs/geisha.jpg" alt="艺伎茶道" class="place-image">
+                <div class="place-content">
+                    <p class="place-day">DAY 2 · 核心医疗</p>
+                    <h3 class="place-title">细胞采集 + 介绍制艺伎茶道</h3>
+                    <p class="place-desc">上午完成脂肪干细胞采集。傍晚前往浅草1950年老字号料亭，介绍制接待，艺伎亲自演绎茶道与舞蹈。</p>
+                    <div class="place-tags">
+                        <span class="place-tag">厚生省认证</span>
+                        <span class="place-tag">介绍制</span>
+                        <span class="place-tag">1950年创立</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Day 3 -->
+            <div class="place-card">
+                <img src="imgs/longtemple.jpg" alt="龙安寺" class="place-image">
+                <div class="place-content">
+                    <p class="place-day">DAY 3 · 禅意修行</p>
+                    <h3 class="place-title">世界遗产龙安寺 · 非公开区域</h3>
+                    <p class="place-desc">公元1450年创建的禅宗古寺，联合国世界文化遗产。进入非公开区域，在枯山水庭园中进行团体禅修。</p>
+                    <div class="place-tags">
+                        <span class="place-tag">世界遗产</span>
+                        <span class="place-tag">非公开区域</span>
+                        <span class="place-tag">枯山水</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Day 4 -->
+            <div class="place-card">
+                <img src="imgs/home.jpg" alt="茶人私宅" class="place-image">
+                <div class="place-content">
+                    <p class="place-day">DAY 4 · 茶道传承</p>
+                    <h3 class="place-title">里千家大师私宅 · 茶道体验</h3>
+                    <p class="place-desc">目黑柿木坂，里千家家元关门弟子私人宅邸。三十载茶道研习，亲手为您调制抹茶，感受一期一会。</p>
+                    <div class="place-tags">
+                        <span class="place-tag">家元关门弟子</span>
+                        <span class="place-tag">私人茶室</span>
+                        <span class="place-tag">三十载专精</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Day 5 -->
+            <div class="place-card">
+                <img src="imgs/caiguoqiang.jpg" alt="皇室工坊" class="place-image">
+                <div class="place-content">
+                    <p class="place-day">DAY 5 · 圈层深化</p>
+                    <h3 class="place-title">皇室御用工坊 · 国宝级工艺</h3>
+                    <p class="place-desc">探访为皇室制作器物的传统工坊，观摩国宝级工艺师现场制作。签署旅行回忆录，建立长期合作关系。</p>
+                    <div class="place-tags">
+                        <span class="place-tag">皇室专用</span>
+                        <span class="place-tag">国宝级</span>
+                        <span class="place-tag">数百年传承</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 底部 -->
+    <footer class="footer">
+        <p class="footer-logo">WASCELL</p>
+        <p class="footer-text">方舟计划 · 生命资产管理 · 精英圈层</p>
+    </footer>
+
+    <script src="period-switcher.js"></script>
+</body>
+</html>
