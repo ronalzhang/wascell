@@ -73,52 +73,52 @@
 
         /* ===== 主视觉 ===== */
         .hero {
-            min-height: 100vh; display: flex; flex-direction: column;
+            display: flex; flex-direction: column;
             justify-content: center; align-items: center; text-align: center;
-            padding: 140px 40px 100px;
+            padding: 140px 40px 80px;
             background: linear-gradient(180deg, var(--black) 0%, var(--dark) 100%);
             position: relative;
         }
         .hero::after {
             content: ''; position: absolute; bottom: 0; left: 50%;
-            transform: translateX(-50%); width: 1px; height: 80px;
+            transform: translateX(-50%); width: 1px; height: 60px;
             background: linear-gradient(180deg, var(--gold) 0%, transparent 100%);
         }
         .hero-badge {
             border: 1px solid var(--gold); color: var(--gold);
-            padding: 10px 30px; font-size: 11px; letter-spacing: 4px;
-            text-transform: uppercase; margin-bottom: 50px;
+            padding: 12px 36px; font-size: 14px; letter-spacing: 5px;
+            text-transform: uppercase; margin-bottom: 40px;
         }
-        .hero-title { font-size: 52px; font-weight: 200; letter-spacing: 12px; margin-bottom: 16px; }
-        .hero-period { font-size: 16px; color: var(--gray); letter-spacing: 3px; margin-bottom: 60px; }
-        .hero-price { margin-bottom: 20px; }
-        .hero-price .amount { font-size: 42px; font-weight: 200; color: var(--gold); letter-spacing: 2px; }
-        .hero-price .unit { font-size: 16px; color: var(--gray); margin-left: 8px; }
-        .hero-price-note { font-size: 13px; color: var(--gray-dark); letter-spacing: 1px; }
-        .hero-desc { margin-top: 50px; font-size: 15px; color: var(--gray); line-height: 2.2; max-width: 600px; }
+        .hero-title { font-size: 64px; font-weight: 200; letter-spacing: 14px; margin-bottom: 20px; }
+        .hero-period { font-size: 20px; color: var(--gray); letter-spacing: 4px; margin-bottom: 50px; }
+        .hero-price { margin-bottom: 16px; }
+        .hero-price .amount { font-size: 54px; font-weight: 200; color: var(--gold); letter-spacing: 3px; }
+        .hero-price .unit { font-size: 20px; color: var(--gray); margin-left: 8px; }
+        .hero-price-note { font-size: 16px; color: var(--gray-dark); letter-spacing: 1px; }
+        .hero-desc { margin-top: 40px; font-size: 18px; color: var(--gray); line-height: 2.2; max-width: 650px; }
         .hero-desc strong { color: var(--gold-light); font-weight: 400; }
 
         /* ===== 核心价值 ===== */
-        .value-section { padding: 100px 0; background: var(--dark); }
-        .section-header { text-align: center; margin-bottom: 70px; }
-        .section-tag { font-size: 11px; color: var(--gold); letter-spacing: 4px; text-transform: uppercase; margin-bottom: 16px; }
-        .section-title { font-size: 28px; font-weight: 200; letter-spacing: 4px; }
+        .value-section { padding: 80px 0; background: var(--dark); }
+        .section-header { text-align: center; margin-bottom: 60px; }
+        .section-tag { font-size: 14px; color: var(--gold); letter-spacing: 5px; text-transform: uppercase; margin-bottom: 16px; }
+        .section-title { font-size: 34px; font-weight: 200; letter-spacing: 5px; }
         .value-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: rgba(201,169,98,0.15); }
-        .value-card { background: var(--dark); padding: 50px 35px; text-align: center; transition: all 0.4s; }
+        .value-card { background: var(--dark); padding: 50px 28px; text-align: center; transition: all 0.4s; }
         .value-card:hover { background: var(--dark-light); }
-        .value-num { font-size: 11px; color: var(--gold); letter-spacing: 3px; margin-bottom: 30px; opacity: 0.6; }
-        .value-title { font-size: 16px; color: var(--white); letter-spacing: 3px; margin-bottom: 24px; font-weight: 400; }
-        .value-desc { font-size: 13px; color: var(--gray); line-height: 2.2; letter-spacing: 0.5px; }
+        .value-num { font-size: 13px; color: var(--gold); letter-spacing: 3px; margin-bottom: 26px; opacity: 0.6; }
+        .value-title { font-size: 18px; color: var(--white); letter-spacing: 2px; margin-bottom: 22px; font-weight: 400; }
+        .value-desc { font-size: 15px; color: var(--gray); line-height: 2.0; letter-spacing: 0.3px; }
 
         /* ===== 申请区 ===== */
-        .apply-section { padding: 80px 0; background: var(--black); text-align: center; }
+        .apply-section { padding: 70px 0; background: var(--black); text-align: center; }
         .apply-btn {
             display: inline-block; border: 1px solid var(--gold); color: var(--gold);
-            padding: 18px 60px; font-size: 14px; letter-spacing: 4px;
+            padding: 20px 70px; font-size: 17px; letter-spacing: 4px;
             text-decoration: none; transition: all 0.3s;
         }
         .apply-btn:hover { background: var(--gold); color: var(--black); }
-        .apply-note { margin-top: 24px; font-size: 12px; color: var(--gray-dark); letter-spacing: 1px; }
+        .apply-note { margin-top: 24px; font-size: 15px; color: var(--gray-dark); letter-spacing: 1px; }
 
         /* ===== 行程展示 ===== */
         .itinerary-section { padding: 100px 0; background: var(--dark); }
@@ -141,25 +141,6 @@
         .footer-logo { font-size: 16px; color: var(--gold); letter-spacing: 6px; margin-bottom: 16px; }
         .footer-text { font-size: 12px; color: var(--gray-dark); letter-spacing: 2px; }
 
-        /* ===== 移动端优化 ===== */
-        @media screen and (max-width: 1024px) {
-            .hero { padding: 160px 50px 120px; }
-            .hero-badge { font-size: 13px; padding: 12px 36px; letter-spacing: 5px; }
-            .hero-title { font-size: 64px; letter-spacing: 14px; }
-            .hero-period { font-size: 19px; letter-spacing: 4px; }
-            .hero-price .amount { font-size: 52px; }
-            .hero-price .unit { font-size: 19px; }
-            .hero-price-note { font-size: 15px; }
-            .hero-desc { font-size: 18px; line-height: 2.4; }
-            .section-tag { font-size: 13px; letter-spacing: 5px; }
-            .section-title { font-size: 34px; letter-spacing: 5px; }
-            .value-card { padding: 55px 30px; }
-            .value-num { font-size: 12px; }
-            .value-title { font-size: 17px; letter-spacing: 2px; }
-            .value-desc { font-size: 14px; line-height: 2.0; }
-            .apply-btn { font-size: 16px; padding: 20px 70px; }
-            .apply-note { font-size: 14px; }
-        }
     </style>
 </head>
 <body>
