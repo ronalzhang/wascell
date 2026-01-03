@@ -76,8 +76,7 @@ function getCurrentPeriod() {
     if (path.includes('20260301')) return '2026·三月首期';
     if (path.includes('20260302')) return '2026·三月二期';
     if (path.includes('20260303')) return '2026·三月三期';
-    if (path.includes('20260203')) return '2026·二月三期';
-    if (path.includes('20260202')) return '2026·二月二期';
+
     
     // 旧风格页面期数匹配（保持兼容）
     if (path.includes('20260202')) return '20260202期';
