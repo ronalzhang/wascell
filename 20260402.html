@@ -5,7 +5,7 @@
     <title>WASCELL · 方舟计划 2026·四月二期</title>
     <meta name="viewport" content="width=1024">
     <link rel="icon" type="image/png" href="favicon.png">
-    <meta name="description" content="方舟计划 | 封闭式生命资产管理 · 仅限5席 · 日本厚生省认证">
+    <meta name="description" content="方舟计划 | 生命资产管理 · 仅限5席 · 日本厚生省认证">
     <style>
         :root {
             --black: #0a0a0a;
@@ -17,9 +17,7 @@
             --gray: #999999;
             --gray-dark: #666666;
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', sans-serif;
             background: var(--black);
@@ -27,366 +25,151 @@
             line-height: 1.8;
             min-width: 1024px;
         }
-
         .container { max-width: 960px; margin: 0 auto; padding: 0 40px; }
 
         /* ===== 顶部栏 ===== */
         .topbar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
             background: rgba(10,10,10,0.95);
             backdrop-filter: blur(20px);
             border-bottom: 1px solid rgba(201,169,98,0.15);
         }
         .topbar-inner {
-            max-width: 960px;
-            margin: 0 auto;
-            padding: 16px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            max-width: 960px; margin: 0 auto; padding: 16px 40px;
+            display: flex; justify-content: space-between; align-items: center;
         }
-        .logo {
-            font-size: 18px;
-            font-weight: 300;
-            letter-spacing: 6px;
-            color: var(--gold);
-        }
-        /* 期数切换器 */
+        .logo { font-size: 18px; font-weight: 300; letter-spacing: 6px; color: var(--gold); }
         .period-switcher { position: relative; }
         .period-trigger {
-            background: transparent;
-            border: 1px solid rgba(201,169,98,0.5);
-            color: var(--gold);
-            padding: 10px 20px;
-            font-size: 13px;
-            letter-spacing: 1px;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            background: transparent; border: 1px solid rgba(201,169,98,0.5);
+            color: var(--gold); padding: 10px 20px; font-size: 13px;
+            letter-spacing: 1px; cursor: pointer; transition: all 0.3s;
+            display: flex; align-items: center; gap: 10px;
         }
         .period-trigger:hover { background: rgba(201,169,98,0.1); }
         .period-trigger .dropdown-icon { font-size: 10px; transition: transform 0.3s; }
         .period-trigger.active .dropdown-icon { transform: rotate(180deg); }
         .period-dropdown {
-            position: absolute;
-            top: calc(100% + 8px);
-            right: 0;
-            background: var(--dark);
-            border: 1px solid rgba(201,169,98,0.2);
-            min-width: 180px;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-8px);
-            transition: all 0.25s;
+            position: absolute; top: calc(100% + 8px); right: 0;
+            background: var(--dark); border: 1px solid rgba(201,169,98,0.2);
+            min-width: 180px; opacity: 0; visibility: hidden;
+            transform: translateY(-8px); transition: all 0.25s;
         }
         .period-dropdown.show { opacity: 1; visibility: visible; transform: translateY(0); }
         .period-option {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 14px 18px;
-            color: var(--gray);
-            text-decoration: none;
-            font-size: 13px;
-            transition: all 0.2s;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 18px; color: var(--gray); text-decoration: none;
+            font-size: 13px; transition: all 0.2s;
             border-bottom: 1px solid rgba(255,255,255,0.03);
         }
         .period-option:last-child { border-bottom: none; }
         .period-option:hover { background: rgba(201,169,98,0.08); color: var(--white); }
         .period-option.active { background: var(--gold); color: var(--black); }
-        .period-option .status-indicator {
-            width: 6px; height: 6px; border-radius: 50%;
-        }
-        .period-option.available .status-indicator { background: #4ade80; }
-        .period-option.full .status-indicator { background: #f87171; }
-        .period-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            z-index: 99; display: none;
-        }
+        .period-option .status-indicator { width: 6px; height: 6px; border-radius: 50%; }
+        .period-option.available .status-indicator { background: #86efac; }
+        .period-option.full .status-indicator { background: #dc2626; }
+        .period-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 99; display: none; }
         .period-overlay.show { display: block; }
 
         /* ===== 主视觉 ===== */
         .hero {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
+            min-height: 100vh; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; text-align: center;
             padding: 140px 40px 100px;
             background: linear-gradient(180deg, var(--black) 0%, var(--dark) 100%);
             position: relative;
         }
         .hero::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 1px;
-            height: 80px;
+            content: ''; position: absolute; bottom: 0; left: 50%;
+            transform: translateX(-50%); width: 1px; height: 80px;
             background: linear-gradient(180deg, var(--gold) 0%, transparent 100%);
         }
         .hero-badge {
-            border: 1px solid var(--gold);
-            color: var(--gold);
-            padding: 10px 30px;
-            font-size: 11px;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            margin-bottom: 50px;
+            border: 1px solid var(--gold); color: var(--gold);
+            padding: 10px 30px; font-size: 11px; letter-spacing: 4px;
+            text-transform: uppercase; margin-bottom: 50px;
         }
-        .hero-title {
-            font-size: 52px;
-            font-weight: 200;
-            letter-spacing: 12px;
-            margin-bottom: 16px;
-        }
-        .hero-period {
-            font-size: 16px;
-            color: var(--gray);
-            letter-spacing: 3px;
-            margin-bottom: 60px;
-        }
-        .hero-price {
-            margin-bottom: 20px;
-        }
-        .hero-price .amount {
-            font-size: 42px;
-            font-weight: 200;
-            color: var(--gold);
-            letter-spacing: 2px;
-        }
-        .hero-price .unit {
-            font-size: 16px;
-            color: var(--gray);
-            margin-left: 8px;
-        }
-        .hero-price-note {
-            font-size: 13px;
-            color: var(--gray-dark);
-            letter-spacing: 1px;
-        }
-        .hero-desc {
-            margin-top: 50px;
-            font-size: 15px;
-            color: var(--gray);
-            line-height: 2.2;
-            max-width: 600px;
-        }
-        .hero-desc strong {
-            color: var(--gold-light);
-            font-weight: 400;
-        }
+        .hero-title { font-size: 52px; font-weight: 200; letter-spacing: 12px; margin-bottom: 16px; }
+        .hero-period { font-size: 16px; color: var(--gray); letter-spacing: 3px; margin-bottom: 60px; }
+        .hero-price { margin-bottom: 20px; }
+        .hero-price .amount { font-size: 42px; font-weight: 200; color: var(--gold); letter-spacing: 2px; }
+        .hero-price .unit { font-size: 16px; color: var(--gray); margin-left: 8px; }
+        .hero-price-note { font-size: 13px; color: var(--gray-dark); letter-spacing: 1px; }
+        .hero-desc { margin-top: 50px; font-size: 15px; color: var(--gray); line-height: 2.2; max-width: 600px; }
+        .hero-desc strong { color: var(--gold-light); font-weight: 400; }
 
         /* ===== 核心价值 ===== */
-        .value-section {
-            padding: 100px 0;
-            background: var(--dark);
-        }
-        .section-header {
-            text-align: center;
-            margin-bottom: 70px;
-        }
-        .section-tag {
-            font-size: 11px;
-            color: var(--gold);
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            margin-bottom: 16px;
-        }
-        .section-title {
-            font-size: 28px;
-            font-weight: 200;
-            letter-spacing: 4px;
-        }
-        .value-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1px;
-            background: rgba(201,169,98,0.15);
-        }
-        .value-card {
-            background: var(--dark);
-            padding: 50px 35px;
-            text-align: center;
-            transition: all 0.4s;
-            position: relative;
-        }
-        .value-card:hover {
-            background: var(--dark-light);
-        }
-        .value-num {
-            font-size: 11px;
-            color: var(--gold);
-            letter-spacing: 3px;
-            margin-bottom: 30px;
-            opacity: 0.6;
-        }
-        .value-title {
-            font-size: 16px;
-            color: var(--white);
-            letter-spacing: 3px;
-            margin-bottom: 24px;
-            font-weight: 400;
-        }
-        .value-desc {
-            font-size: 13px;
-            color: var(--gray);
-            line-height: 2.2;
-            letter-spacing: 0.5px;
-        }
+        .value-section { padding: 100px 0; background: var(--dark); }
+        .section-header { text-align: center; margin-bottom: 70px; }
+        .section-tag { font-size: 11px; color: var(--gold); letter-spacing: 4px; text-transform: uppercase; margin-bottom: 16px; }
+        .section-title { font-size: 28px; font-weight: 200; letter-spacing: 4px; }
+        .value-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: rgba(201,169,98,0.15); }
+        .value-card { background: var(--dark); padding: 50px 35px; text-align: center; transition: all 0.4s; }
+        .value-card:hover { background: var(--dark-light); }
+        .value-num { font-size: 11px; color: var(--gold); letter-spacing: 3px; margin-bottom: 30px; opacity: 0.6; }
+        .value-title { font-size: 16px; color: var(--white); letter-spacing: 3px; margin-bottom: 24px; font-weight: 400; }
+        .value-desc { font-size: 13px; color: var(--gray); line-height: 2.2; letter-spacing: 0.5px; }
 
         /* ===== 申请区 ===== */
-        .apply-section {
-            padding: 80px 0;
-            background: var(--black);
-            text-align: center;
-        }
+        .apply-section { padding: 80px 0; background: var(--black); text-align: center; }
         .apply-btn {
-            display: inline-block;
-            border: 1px solid var(--gold);
-            color: var(--gold);
-            padding: 18px 60px;
-            font-size: 14px;
-            letter-spacing: 4px;
-            text-decoration: none;
-            transition: all 0.3s;
+            display: inline-block; border: 1px solid var(--gold); color: var(--gold);
+            padding: 18px 60px; font-size: 14px; letter-spacing: 4px;
+            text-decoration: none; transition: all 0.3s;
         }
-        .apply-btn:hover {
-            background: var(--gold);
-            color: var(--black);
-        }
-        .apply-note {
-            margin-top: 24px;
-            font-size: 12px;
-            color: var(--gray-dark);
-            letter-spacing: 1px;
-        }
+        .apply-btn:hover { background: var(--gold); color: var(--black); }
+        .apply-note { margin-top: 24px; font-size: 12px; color: var(--gray-dark); letter-spacing: 1px; }
 
         /* ===== 行程展示 ===== */
-        .itinerary-section {
-            padding: 100px 0;
-            background: var(--dark);
-        }
-        .itinerary-intro {
-            text-align: center;
-            max-width: 600px;
-            margin: 0 auto 60px;
-            font-size: 14px;
-            color: var(--gray);
-            line-height: 2;
-        }
-        .place-card {
-            position: relative;
-            margin-bottom: 30px;
-            overflow: hidden;
-            height: 420px;
-        }
-        .place-card:hover .place-image {
-            transform: scale(1.03);
-        }
-        .place-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.6s ease;
-        }
+        .itinerary-section { padding: 100px 0; background: var(--dark); }
+        .itinerary-intro { text-align: center; max-width: 600px; margin: 0 auto 60px; font-size: 14px; color: var(--gray); line-height: 2; }
+        .place-card { position: relative; margin-bottom: 30px; overflow: hidden; height: 420px; }
+        .place-card:hover .place-image { transform: scale(1.03); }
+        .place-image { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease; }
         .place-content {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 50px;
+            position: absolute; bottom: 0; left: 0; right: 0; padding: 50px;
             background: linear-gradient(0deg, rgba(10,10,10,0.95) 0%, rgba(10,10,10,0.8) 60%, transparent 100%);
         }
-        .place-day {
-            font-size: 11px;
-            color: var(--gold);
-            letter-spacing: 3px;
-            margin-bottom: 12px;
-        }
-        .place-title {
-            font-size: 20px;
-            font-weight: 400;
-            letter-spacing: 2px;
-            margin-bottom: 16px;
-            line-height: 1.5;
-        }
-        .place-desc {
-            font-size: 13px;
-            color: var(--gray);
-            line-height: 2;
-            margin-bottom: 20px;
-            max-width: 600px;
-        }
-        .place-tags {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-        .place-tag {
-            font-size: 11px;
-            color: rgba(255,255,255,0.5);
-            border: 1px solid rgba(255,255,255,0.15);
-            padding: 6px 14px;
-            letter-spacing: 1px;
-        }
+        .place-day { font-size: 11px; color: var(--gold); letter-spacing: 3px; margin-bottom: 12px; }
+        .place-title { font-size: 20px; font-weight: 400; letter-spacing: 2px; margin-bottom: 16px; line-height: 1.5; }
+        .place-desc { font-size: 13px; color: var(--gray); line-height: 2; margin-bottom: 20px; max-width: 600px; }
+        .place-tags { display: flex; gap: 12px; flex-wrap: wrap; }
+        .place-tag { font-size: 11px; color: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.15); padding: 6px 14px; letter-spacing: 1px; }
 
         /* ===== 底部 ===== */
-        .footer {
-            padding: 60px 0;
-            background: var(--black);
-            text-align: center;
-            border-top: 1px solid rgba(255,255,255,0.05);
-        }
-        .footer-logo {
-            font-size: 16px;
-            color: var(--gold);
-            letter-spacing: 6px;
-            margin-bottom: 16px;
-        }
-        .footer-text {
-            font-size: 12px;
-            color: var(--gray-dark);
-            letter-spacing: 2px;
-        }
+        .footer { padding: 60px 0; background: var(--black); text-align: center; border-top: 1px solid rgba(255,255,255,0.05); }
+        .footer-logo { font-size: 16px; color: var(--gold); letter-spacing: 6px; margin-bottom: 16px; }
+        .footer-text { font-size: 12px; color: var(--gray-dark); letter-spacing: 2px; }
     </style>
 </head>
 <body>
     <!-- 顶部栏 -->
     <header class="topbar">
         <div class="topbar-inner">
-            <div class="logo">WASCELL</div>
+            <div class="logo">WASCELL.com</div>
             <div class="period-switcher">
                 <button class="period-trigger" id="periodTrigger">
                     2026·四月二期 <span class="dropdown-icon">▼</span>
                 </button>
                 <div class="period-dropdown" id="periodDropdown">
+                    <a href="20260301" class="period-option available">
+                        <span>2026·三月首期</span>
+                        <span class="status-indicator"></span>
+                    </a>
+                    <a href="20260302" class="period-option active available">
+                        <span>2026·三月二期</span>
+                        <span class="status-indicator"></span>
+                    </a>
+                    <a href="20260303" class="period-option available">
+                        <span>2026·三月三期</span>
+                        <span class="status-indicator"></span>
+                    </a>
                     <a href="20260401" class="period-option available">
                         <span>2026·四月首期</span>
                         <span class="status-indicator"></span>
                     </a>
-                    <a href="20260402" class="period-option active available">
+                    <a href="20260402" class="period-option available">
                         <span>2026·四月二期</span>
-                        <span class="status-indicator"></span>
-                    </a>
-                    <a href="20260403" class="period-option available">
-                        <span>2026·四月三期</span>
-                        <span class="status-indicator"></span>
-                    </a>
-                    <a href="20260501" class="period-option available">
-                        <span>2026·五月首期</span>
-                        <span class="status-indicator"></span>
-                    </a>
-                    <a href="20260502" class="period-option available">
-                        <span>2026·五月二期</span>
                         <span class="status-indicator"></span>
                     </a>
                 </div>
@@ -399,7 +182,7 @@
     <section class="hero">
         <div class="hero-badge">仅限 5 席 · 邀请制</div>
         <h1 class="hero-title">方舟计划</h1>
-        <p class="hero-period">2026·四月二期 生命资产管理</p>
+        <p class="hero-period">2026·三月二期 生命资产管理</p>
         <div class="hero-price">
             <span class="amount">¥580,000</span>
             <span class="unit">/ 席位</span>
@@ -441,10 +224,10 @@
     <!-- 申请区 -->
     <section class="apply-section">
         <div class="container">
-            <a href="mailto:wascell_cs@163.com?subject=申请参加WASCELL方舟计划2026四月二期" class="apply-btn">
+            <a href="mailto:wascell_cs@163.com?subject=申请参加WASCELL方舟计划2026三月二期" class="apply-btn">
                 申请资格审核
             </a>
-            <p class="apply-note">申请需提供企业证明及半年内体检报告 · 本期截止 2026年3月15日</p>
+            <p class="apply-note">申请需提供企业证明及半年内体检报告 · 本期截止 2026年2月15日</p>
         </div>
     </section>
 
@@ -477,45 +260,45 @@
 
             <!-- Day 2 -->
             <div class="place-card">
-                <img src="imgs/geisha.jpg" alt="艺伎茶道" class="place-image">
+                <img src="imgs/sushi.jpg" alt="江户前寿司" class="place-image">
                 <div class="place-content">
                     <p class="place-day">DAY 2 · 核心医疗</p>
-                    <h3 class="place-title">细胞采集 + 介绍制艺伎茶道</h3>
-                    <p class="place-desc">上午完成脂肪干细胞采集。傍晚前往浅草1950年老字号料亭，介绍制接待，艺伎亲自演绎茶道与舞蹈。</p>
+                    <h3 class="place-title">细胞采集 + 银座顶级割烹</h3>
+                    <p class="place-desc">上午完成脂肪干细胞采集。傍晚前往银座预约制高级割烹，仅设8席，米其林三星主厨亲制江户前寿司。</p>
                     <div class="place-tags">
                         <span class="place-tag">厚生省认证</span>
-                        <span class="place-tag">介绍制</span>
-                        <span class="place-tag">1950年创立</span>
+                        <span class="place-tag">米其林三星</span>
+                        <span class="place-tag">仅8席</span>
                     </div>
                 </div>
             </div>
 
             <!-- Day 3 -->
             <div class="place-card">
-                <img src="imgs/longtemple.jpg" alt="龙安寺" class="place-image">
+                <img src="imgs/qingshuitemple.jpg" alt="清水寺" class="place-image">
                 <div class="place-content">
-                    <p class="place-day">DAY 3 · 禅意修行</p>
-                    <h3 class="place-title">世界遗产龙安寺 · 非公开区域</h3>
-                    <p class="place-desc">公元1450年创建的禅宗古寺，联合国世界文化遗产。进入非公开区域，在枯山水庭园中进行团体禅修。</p>
+                    <p class="place-day">DAY 3 · 千年古寺</p>
+                    <h3 class="place-title">清水寺舞台 · 夜间特别参拜</h3>
+                    <p class="place-desc">夜幕降临后独享清水寺舞台的特别参拜时光。在灯光营造的神秘氛围中，感受这座千年古寺的庄严与美丽。</p>
                     <div class="place-tags">
-                        <span class="place-tag">世界遗产</span>
-                        <span class="place-tag">非公开区域</span>
-                        <span class="place-tag">枯山水</span>
+                        <span class="place-tag">夜间专属</span>
+                        <span class="place-tag">千年古寺</span>
+                        <span class="place-tag">灯光清水舞台</span>
                     </div>
                 </div>
             </div>
 
             <!-- Day 4 -->
             <div class="place-card">
-                <img src="imgs/home.jpg" alt="茶人私宅" class="place-image">
+                <img src="imgs/bigtea.jpg" alt="能乐" class="place-image">
                 <div class="place-content">
-                    <p class="place-day">DAY 4 · 茶道传承</p>
-                    <h3 class="place-title">里千家大师私宅 · 茶道体验</h3>
-                    <p class="place-desc">目黑柿木坂，里千家家元关门弟子私人宅邸。三十载茶道研习，亲手为您调制抹茶，感受一期一会。</p>
+                    <p class="place-day">DAY 4 · 国宝艺术</p>
+                    <h3 class="place-title">能乐大师长山贵三郎 · 私人指导</h3>
+                    <p class="place-desc">与日本国宝级能乐大师面对面交流，学习这门被联合国教科文组织列为人类非物质文化遗产的传统艺术精髓。</p>
                     <div class="place-tags">
-                        <span class="place-tag">家元关门弟子</span>
-                        <span class="place-tag">私人茶室</span>
-                        <span class="place-tag">三十载专精</span>
+                        <span class="place-tag">国宝级大师</span>
+                        <span class="place-tag">UNESCO非遗</span>
+                        <span class="place-tag">私人指导</span>
                     </div>
                 </div>
             </div>
