@@ -1086,7 +1086,7 @@
                 tbody.innerHTML = this.filteredIpData.map((ip, index) => `
                     <tr>
                         <td><strong>#${index + 1}</strong></td>
-                        <td><code>${ip.ip || '-'}</code></td>
+                        <td><code>${ip.ip || '-'}</code>${ip.location ? ` <span style="color: #64748b; font-size: 0.8em;">(${ip.location})</span>` : ''}</td>
                         <td><strong>${(ip.count || 0).toLocaleString()}</strong></td>
                         <td>${ip.firstVisit ? new Date(ip.firstVisit).toLocaleString('zh-CN') : '-'}</td>
                         <td>${ip.lastVisit ? new Date(ip.lastVisit).toLocaleString('zh-CN') : '-'}</td>

@@ -5,6 +5,7 @@ const { promisify } = require('util');
 const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
+const http = require('http');
 
 // 异步文件操作
 const writeFileAsync = promisify(fs.writeFile);
@@ -21,6 +22,60 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '123abc74531'; // 从环境
 // 访问日志文件路径
 const LOG_FILE = path.join(__dirname, 'access.log');
 const STATS_FILE = path.join(__dirname, 'stats.json');
+
+// IP地理位置缓存
+const ipLocationCache = new Map();
+
+// 获取IP地理位置（使用免费的 ip-api.com）
+async function getIPLocation(ip) {
+    // 清理IP格式（移除 ::ffff: 前缀）
+    const cleanIP = ip.replace(/^::ffff:/, '');
+    
+    // 跳过本地IP
+    if (cleanIP === '127.0.0.1' || cleanIP === '::1' || cleanIP.startsWith('192.168.') || cleanIP.startsWith('10.')) {
+        return '本地网络';
+    }
+    
+    // 检查缓存
+    if (ipLocationCache.has(cleanIP)) {
+        return ipLocationCache.get(cleanIP);
+    }
+    
+    try {
+        const location = await new Promise((resolve, reject) => {
+            const req = http.get(`http://ip-api.com/json/${cleanIP}?fields=status,country,city&lang=zh-CN`, {
+                timeout: 3000
+            }, (res) => {
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => {
+                    try {
+                        const json = JSON.parse(data);
+                        if (json.status === 'success') {
+                            const loc = json.city ? `${json.country} ${json.city}` : json.country || '未知';
+                            resolve(loc);
+                        } else {
+                            resolve('未知');
+                        }
+                    } catch (e) {
+                        resolve('未知');
+                    }
+                });
+            });
+            req.on('error', () => resolve('未知'));
+            req.on('timeout', () => {
+                req.destroy();
+                resolve('未知');
+            });
+        });
+        
+        // 缓存结果
+        ipLocationCache.set(cleanIP, location);
+        return location;
+    } catch (error) {
+        return '未知';
+    }
+}
 
 // 文件锁机制
 let isWritingStats = false;
@@ -74,6 +129,9 @@ async function processWriteQueue() {
     }
 }
 
+// 信任反向代理，正确获取客户端真实IP
+app.set('trust proxy', true);
+
 // 中间件配置
 app.use(helmet({
     contentSecurityPolicy: {
@@ -94,7 +152,11 @@ app.use(express.urlencoded({ extended: true }));
 // 访问统计中间件
 app.use((req, res, next) => {
     const timestamp = new Date().toISOString();
-    const ip = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for'];
+    // 优先从代理头获取真实客户端IP
+    const ip = req.headers['x-real-ip'] || 
+               (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 
+               req.ip || 
+               req.connection.remoteAddress;
     const userAgent = req.get('User-Agent') || '';
     const referer = req.get('Referer') || '';
 
@@ -337,11 +399,11 @@ app.get('/api/admin/stats', async (req, res) => {
                 date.setDate(date.getDate() - i);
                 const dateStr = date.toISOString().split('T')[0];
 
-                const dayData = stats.daily[dateStr] || { totalVisits: 0, uniqueIPs: [] };
+                const dayData = stats.daily[dateStr] || { totalVisits: 0, uniqueIPs: new Set() };
                 result.periodData.push({
                     date: dateStr,
                     visits: dayData.totalVisits,
-                    uniqueIPs: Array.isArray(dayData.uniqueIPs) ? dayData.uniqueIPs.length : 0
+                    uniqueIPs: dayData.uniqueIPs instanceof Set ? dayData.uniqueIPs.size : (Array.isArray(dayData.uniqueIPs) ? dayData.uniqueIPs.length : 0)
                 });
             }
         } else if (period === 'week') {
@@ -360,7 +422,10 @@ app.get('/api/admin/stats', async (req, res) => {
                     const dayData = stats.daily[dateStr];
                     if (dayData) {
                         weekVisits += dayData.totalVisits;
-                        if (Array.isArray(dayData.uniqueIPs)) {
+                        // 支持 Set 和 Array 两种格式
+                        if (dayData.uniqueIPs instanceof Set) {
+                            dayData.uniqueIPs.forEach(ip => weekIPs.add(ip));
+                        } else if (Array.isArray(dayData.uniqueIPs)) {
                             dayData.uniqueIPs.forEach(ip => weekIPs.add(ip));
                         }
                     }
@@ -390,7 +455,10 @@ app.get('/api/admin/stats', async (req, res) => {
                     const dayData = stats.daily[dateStr];
                     if (dayData) {
                         monthVisits += dayData.totalVisits;
-                        if (Array.isArray(dayData.uniqueIPs)) {
+                        // 支持 Set 和 Array 两种格式
+                        if (dayData.uniqueIPs instanceof Set) {
+                            dayData.uniqueIPs.forEach(ip => monthIPs.add(ip));
+                        } else if (Array.isArray(dayData.uniqueIPs)) {
                             dayData.uniqueIPs.forEach(ip => monthIPs.add(ip));
                         }
                     }
@@ -405,10 +473,16 @@ app.get('/api/admin/stats', async (req, res) => {
         }
 
         // 热门IP统计
-        result.topIPs = Object.entries(stats.ipStats)
+        const topIPsRaw = Object.entries(stats.ipStats)
             .map(([ip, data]) => ({ ip, ...data }))
             .sort((a, b) => b.count - a.count)
             .slice(0, 10);
+
+        // 获取IP地理位置
+        result.topIPs = await Promise.all(topIPsRaw.map(async (item) => {
+            const location = await getIPLocation(item.ip);
+            return { ...item, location };
+        }));
 
         res.json(result);
     } catch (error) {
