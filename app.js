@@ -152,8 +152,12 @@ app.use(express.urlencoded({ extended: true }));
 // 访问统计中间件
 app.use((req, res, next) => {
     const timestamp = new Date().toISOString();
-    // 优先从代理头获取真实客户端IP
-    const ip = req.headers['x-real-ip'] || 
+    // 优先从 Cloudflare 头获取真实客户端IP，然后是其他代理头
+    // CF-Connecting-IP: Cloudflare 提供的真实用户 IP
+    // X-Real-IP: Nginx 代理头
+    // X-Forwarded-For: 标准代理头（取第一个IP）
+    const ip = req.headers['cf-connecting-ip'] ||
+               req.headers['x-real-ip'] || 
                (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 
                req.ip || 
                req.connection.remoteAddress;

@@ -23,6 +23,7 @@ echo "🚀 开始部署 WASCELL 网站..."
 SERVER_IP="${DEPLOY_SERVER_IP:-43.134.38.231}"
 SERVER_USER="${DEPLOY_SERVER_USER:-ubuntu}"
 SERVER_PASS="${DEPLOY_SERVER_PASS:-123abc\$74531ABC}"
+SERVER_PORT="${DEPLOY_SERVER_PORT:-22026}"
 APP_DIR="${DEPLOY_APP_DIR:-/ubuntu/wascell}"
 APP_NAME="${DEPLOY_APP_NAME:-wascell-website}"
 
@@ -81,9 +82,9 @@ push_to_github || echo "⚠️  跳过GitHub推送，直接部署到服务器"
 # 2. 检查服务器连接
 echo "🔍 检查服务器连接..."
 if [ -n "$TIMEOUT_CMD" ]; then
-    SSH_CMD="$TIMEOUT_CMD sshpass -p '$SERVER_PASS' ssh -o ConnectTimeout=10 \"$SERVER_USER@$SERVER_IP\" \"echo '✅ 服务器连接成功'\""
+    SSH_CMD="$TIMEOUT_CMD sshpass -p '$SERVER_PASS' ssh -p $SERVER_PORT -o ConnectTimeout=10 \"$SERVER_USER@$SERVER_IP\" \"echo '✅ 服务器连接成功'\""
 else
-    SSH_CMD="sshpass -p '$SERVER_PASS' ssh -o ConnectTimeout=10 \"$SERVER_USER@$SERVER_IP\" \"echo '✅ 服务器连接成功'\""
+    SSH_CMD="sshpass -p '$SERVER_PASS' ssh -p $SERVER_PORT -o ConnectTimeout=10 \"$SERVER_USER@$SERVER_IP\" \"echo '✅ 服务器连接成功'\""
 fi
 
 if ! eval $SSH_CMD; then
@@ -95,19 +96,19 @@ fi
 echo "📥 同步代码到服务器..."
 
 # 先检查服务器上Git仓库状态
-SERVER_REPO_STATUS=$(sshpass -p "$SERVER_PASS" ssh "$SERVER_USER@$SERVER_IP" "cd $APP_DIR && git status --porcelain" 2>/dev/null || echo "ERROR")
+SERVER_REPO_STATUS=$(sshpass -p "$SERVER_PASS" ssh -p $SERVER_PORT "$SERVER_USER@$SERVER_IP" "cd $APP_DIR && git status --porcelain" 2>/dev/null || echo "ERROR")
 
 if [ "$SERVER_REPO_STATUS" != "ERROR" ]; then
     echo "🔧 清理服务器上的未跟踪文件..."
-    sshpass -p "$SERVER_PASS" ssh "$SERVER_USER@$SERVER_IP" "cd $APP_DIR && git clean -fd"
+    sshpass -p "$SERVER_PASS" ssh -p $SERVER_PORT "$SERVER_USER@$SERVER_IP" "cd $APP_DIR && git clean -fd"
     echo "🔄 重置本地更改..."
-    sshpass -p "$SERVER_PASS" ssh "$SERVER_USER@$SERVER_IP" "cd $APP_DIR && git reset --hard HEAD"
+    sshpass -p "$SERVER_PASS" ssh -p $SERVER_PORT "$SERVER_USER@$SERVER_IP" "cd $APP_DIR && git reset --hard HEAD"
     
     echo "📥 尝试从GitHub拉取最新代码..."
     if [ -n "$TIMEOUT_CMD" ]; then
-        PULL_CMD="$TIMEOUT_CMD sshpass -p '$SERVER_PASS' ssh \"$SERVER_USER@$SERVER_IP\" \"cd $APP_DIR && git pull origin main\""
+        PULL_CMD="$TIMEOUT_CMD sshpass -p '$SERVER_PASS' ssh -p $SERVER_PORT \"$SERVER_USER@$SERVER_IP\" \"cd $APP_DIR && git pull origin main\""
     else
-        PULL_CMD="sshpass -p '$SERVER_PASS' ssh \"$SERVER_USER@$SERVER_IP\" \"cd $APP_DIR && git pull origin main\""
+        PULL_CMD="sshpass -p '$SERVER_PASS' ssh -p $SERVER_PORT \"$SERVER_USER@$SERVER_IP\" \"cd $APP_DIR && git pull origin main\""
     fi
     
     if eval $PULL_CMD; then
@@ -126,7 +127,7 @@ if [ "$SERVER_REPO_STATUS" != "ERROR" ]; then
                 --exclude='access.log' \
                 --exclude='stats.json' \
                 ./ "$SERVER_USER@$SERVER_IP:$APP_DIR/" \
-                -e "sshpass -p '$SERVER_PASS' ssh -o StrictHostKeyChecking=no"
+                -e "sshpass -p '$SERVER_PASS' ssh -p $SERVER_PORT -o StrictHostKeyChecking=no"
             echo -e "${GREEN}✅ 代码文件同步完成${NC}"
         else
             echo -e "${RED}❌ rsync不可用，请安装rsync或手动同步代码${NC}"
@@ -140,9 +141,9 @@ fi
 # 4. 安装依赖（如果有更新）
 echo "📦 更新依赖包..."
 if [ -n "$TIMEOUT_CMD" ]; then
-    NPM_CMD="$TIMEOUT_CMD sshpass -p '$SERVER_PASS' ssh \"$SERVER_USER@$SERVER_IP\" \"cd $APP_DIR && npm install --production\""
+    NPM_CMD="$TIMEOUT_CMD sshpass -p '$SERVER_PASS' ssh -p $SERVER_PORT \"$SERVER_USER@$SERVER_IP\" \"cd $APP_DIR && npm install --production\""
 else
-    NPM_CMD="sshpass -p '$SERVER_PASS' ssh \"$SERVER_USER@$SERVER_IP\" \"cd $APP_DIR && npm install --production\""
+    NPM_CMD="sshpass -p '$SERVER_PASS' ssh -p $SERVER_PORT \"$SERVER_USER@$SERVER_IP\" \"cd $APP_DIR && npm install --production\""
 fi
 
 if ! eval $NPM_CMD; then
@@ -151,10 +152,10 @@ fi
 
 # 5. 重启应用
 echo "🔄 重启应用..."
-if ! sshpass -p "$SERVER_PASS" ssh "$SERVER_USER@$SERVER_IP" "cd $APP_DIR && pm2 restart $APP_NAME 2>/dev/null"; then
+if ! sshpass -p "$SERVER_PASS" ssh -p $SERVER_PORT "$SERVER_USER@$SERVER_IP" "cd $APP_DIR && pm2 restart $APP_NAME 2>/dev/null"; then
     echo -e "${YELLOW}⚠️  重启失败，尝试删除并重新创建应用...${NC}"
-    sshpass -p "$SERVER_PASS" ssh "$SERVER_USER@$SERVER_IP" "cd $APP_DIR && pm2 delete $APP_NAME 2>/dev/null || true"
-    sshpass -p "$SERVER_PASS" ssh "$SERVER_USER@$SERVER_IP" "cd $APP_DIR && pm2 start app.js --name $APP_NAME" || {
+    sshpass -p "$SERVER_PASS" ssh -p $SERVER_PORT "$SERVER_USER@$SERVER_IP" "cd $APP_DIR && pm2 delete $APP_NAME 2>/dev/null || true"
+    sshpass -p "$SERVER_PASS" ssh -p $SERVER_PORT "$SERVER_USER@$SERVER_IP" "cd $APP_DIR && pm2 start app.js --name $APP_NAME" || {
         echo -e "${RED}❌ 应用启动失败，请手动检查${NC}"
         exit 1
     }
@@ -163,17 +164,17 @@ fi
 
 # 保存PM2配置
 echo "💾 保存PM2配置..."
-sshpass -p "$SERVER_PASS" ssh "$SERVER_USER@$SERVER_IP" "pm2 save"
+sshpass -p "$SERVER_PASS" ssh -p $SERVER_PORT "$SERVER_USER@$SERVER_IP" "pm2 save"
 
 # 6. 检查应用状态
 echo "✅ 检查应用状态..."
-sshpass -p "$SERVER_PASS" ssh "$SERVER_USER@$SERVER_IP" "pm2 status | grep $APP_NAME" || {
+sshpass -p "$SERVER_PASS" ssh -p $SERVER_PORT "$SERVER_USER@$SERVER_IP" "pm2 status | grep $APP_NAME" || {
     echo -e "${YELLOW}⚠️  无法获取应用状态${NC}"
 }
 
 # 7. 显示应用日志
 echo "📋 最新日志："
-sshpass -p "$SERVER_PASS" ssh "$SERVER_USER@$SERVER_IP" "pm2 logs $APP_NAME --lines 5 --nostream" 2>/dev/null || echo -e "${YELLOW}⚠️  无法获取日志${NC}"
+sshpass -p "$SERVER_PASS" ssh -p $SERVER_PORT "$SERVER_USER@$SERVER_IP" "pm2 logs $APP_NAME --lines 5 --nostream" 2>/dev/null || echo -e "${YELLOW}⚠️  无法获取日志${NC}"
 
 # 8. 测试网站访问
 echo "🌐 测试网站访问..."
