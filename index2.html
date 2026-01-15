@@ -116,6 +116,7 @@
             display: inline-block; border: 1px solid var(--gold); color: var(--gold);
             padding: 18px 60px; font-size: 14px; letter-spacing: 4px;
             text-decoration: none; transition: all 0.3s;
+            background: transparent; cursor: pointer; font-family: inherit;
         }
         .apply-btn:hover { background: var(--gold); color: var(--black); }
         .apply-note { margin-top: 24px; font-size: 12px; color: var(--gray-dark); letter-spacing: 1px; }
@@ -224,9 +225,9 @@
     <!-- 申请区 -->
     <section class="apply-section">
         <div class="container">
-            <a href="mailto:vip@wascell.com?subject=预定参加WASCELL方舟计划2026三月首期" class="apply-btn">
+            <button class="apply-btn" onclick="window.location.href='mailto:vip@wascell.com?subject=' + encodeURIComponent('预定参加WASCELL方舟计划2026三月首期')">
                 确认预定
-            </a>
+            </button>
             <p class="apply-note">预定需提供企业家信息及半年内体检报告 · 本期截止 2026年2月5日</p>
         </div>
     </section>
