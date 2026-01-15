@@ -26,6 +26,48 @@ const STATS_FILE = path.join(__dirname, 'stats.json');
 // IP地理位置缓存
 const ipLocationCache = new Map();
 
+// 恶意请求模式列表（用于黑名单检测）
+const maliciousPatterns = [
+    /\.php$/i,
+    /wp-admin/i,
+    /wp-content/i,
+    /wp-includes/i,
+    /xmlrpc\.php/i,
+    /\.env$/i,
+    /\.git/i,
+    /\.aws/i,
+    /phpmyadmin/i,
+    /shell\.php/i,
+    /admin\.php/i,
+    /config\.php/i,
+];
+
+// 检测IP是否为恶意IP（基于访问模式）
+function isBlacklistedIP(ip, ipStats) {
+    if (!ipStats || !ipStats[ip]) return false;
+    
+    const stats = ipStats[ip];
+    const count = stats.count || 0;
+    
+    // 规则1: 访问次数超过50次的IP
+    if (count > 50) {
+        // 检查是否有恶意请求记录
+        if (stats.maliciousCount && stats.maliciousCount > 5) {
+            return true;
+        }
+    }
+    
+    // 规则2: 恶意请求占比超过80%
+    if (stats.maliciousCount && count > 10) {
+        const maliciousRatio = stats.maliciousCount / count;
+        if (maliciousRatio > 0.8) {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
 // 获取IP地理位置（使用免费的 ip-api.com）
 async function getIPLocation(ip) {
     // 清理IP格式（移除 ::ffff: 前缀）
@@ -163,6 +205,10 @@ app.use((req, res, next) => {
                req.connection.remoteAddress;
     const userAgent = req.get('User-Agent') || '';
     const referer = req.get('Referer') || '';
+    
+    // 检测是否为恶意请求
+    const url = req.url.toLowerCase();
+    const isMalicious = maliciousPatterns.some(pattern => pattern.test(url));
 
     const logEntry = {
         timestamp,
@@ -170,7 +216,8 @@ app.use((req, res, next) => {
         method: req.method,
         url: req.url,
         userAgent,
-        referer
+        referer,
+        isMalicious // 标记是否为恶意请求
     };
 
     // 异步写入访问日志和更新统计
@@ -237,12 +284,18 @@ async function updateStatsAsync(logEntry) {
         if (!stats.ipStats[logEntry.ip]) {
             stats.ipStats[logEntry.ip] = {
                 count: 0,
+                maliciousCount: 0,
                 firstVisit: logEntry.timestamp,
                 lastVisit: logEntry.timestamp
             };
         }
         stats.ipStats[logEntry.ip].count++;
         stats.ipStats[logEntry.ip].lastVisit = logEntry.timestamp;
+        
+        // 记录恶意请求次数
+        if (logEntry.isMalicious) {
+            stats.ipStats[logEntry.ip].maliciousCount = (stats.ipStats[logEntry.ip].maliciousCount || 0) + 1;
+        }
 
         // 使用安全写入机制
         await safeWriteStats(stats);
@@ -476,17 +529,39 @@ app.get('/api/admin/stats', async (req, res) => {
             }
         }
 
-        // 热门IP统计
-        const topIPsRaw = Object.entries(stats.ipStats)
-            .map(([ip, data]) => ({ ip, ...data }))
-            .sort((a, b) => b.count - a.count)
-            .slice(0, 10);
+        // 热门IP统计 - 支持分页
+        const page = parseInt(req.query.page) || 1;
+        const pageSize = 20;
+        
+        const allIPs = Object.entries(stats.ipStats)
+            .map(([ip, data]) => ({ 
+                ip, 
+                ...data,
+                isBlacklisted: isBlacklistedIP(ip, stats.ipStats)
+            }))
+            .sort((a, b) => b.count - a.count);
+        
+        const totalIPs = allIPs.length;
+        const totalPages = Math.ceil(totalIPs / pageSize);
+        const startIndex = (page - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        const paginatedIPs = allIPs.slice(startIndex, endIndex);
 
         // 获取IP地理位置
-        result.topIPs = await Promise.all(topIPsRaw.map(async (item) => {
+        result.topIPs = await Promise.all(paginatedIPs.map(async (item) => {
             const location = await getIPLocation(item.ip);
             return { ...item, location };
         }));
+        
+        // 添加分页信息
+        result.pagination = {
+            currentPage: page,
+            pageSize: pageSize,
+            totalIPs: totalIPs,
+            totalPages: totalPages,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1
+        };
 
         res.json(result);
     } catch (error) {

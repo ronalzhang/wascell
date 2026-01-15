@@ -397,32 +397,54 @@
             color: var(--text-primary);
         }
 
-        .search-box {
-            position: relative;
-            max-width: 300px;
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
         }
 
-        .search-input {
-            width: 100%;
-            padding: 0.5rem 1rem 0.5rem 2.5rem;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
+        .pagination-info {
             font-size: 0.875rem;
-            background: var(--surface);
-        }
-
-        .search-input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
-        }
-
-        .search-icon {
-            position: absolute;
-            left: 0.75rem;
-            top: 50%;
-            transform: translateY(-50%);
             color: var(--text-secondary);
+        }
+
+        .pagination-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .pagination-button {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            background: var(--surface);
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-primary);
+        }
+
+        .pagination-button:hover:not(:disabled) {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .pagination-button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .blacklist-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            background: var(--error-color);
+            color: white;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
         }
 
         .data-table {
@@ -673,9 +695,12 @@
             <div class="table-section">
                 <div class="table-header">
                     <h2 class="table-title">热门访问IP</h2>
-                    <div class="search-box">
-                        <div class="search-icon">🔍</div>
-                        <input type="text" id="searchInput" class="search-input" placeholder="搜索IP地址...">
+                    <div class="pagination-controls">
+                        <div class="pagination-info" id="paginationInfo">-</div>
+                        <div class="pagination-buttons">
+                            <button id="prevPageButton" class="pagination-button">上一页</button>
+                            <button id="nextPageButton" class="pagination-button">下一页</button>
+                        </div>
                     </div>
                 </div>
                 <div class="table-container">
@@ -684,6 +709,7 @@
                             <tr>
                                 <th>排名</th>
                                 <th>IP地址</th>
+                                <th>状态</th>
                                 <th>访问次数</th>
                                 <th>首次访问</th>
                                 <th>最后访问</th>
@@ -691,7 +717,7 @@
                         </thead>
                         <tbody id="ipTableBody">
                             <tr>
-                                <td colspan="5" class="loading">
+                                <td colspan="6" class="loading">
                                     <div class="spinner"></div>
                                     <span>加载数据中...</span>
                                 </td>
@@ -714,7 +740,8 @@
                 this.chart = null;
                 this.refreshInterval = null;
                 this.ipData = [];
-                this.filteredIpData = [];
+                this.currentPage = 1;
+                this.pagination = null;
                 
                 this.init();
             }
@@ -748,17 +775,13 @@
                     });
                 });
 
-                // IP搜索
-                document.getElementById('searchInput').addEventListener('input', (e) => {
-                    this.filterIPs(e.target.value);
+                // 分页按钮
+                document.getElementById('prevPageButton').addEventListener('click', () => {
+                    this.goToPrevPage();
                 });
 
-                // 键盘快捷键
-                document.addEventListener('keydown', (e) => {
-                    if (e.key === 'Escape' && this.isLoggedIn) {
-                        document.getElementById('searchInput').value = '';
-                        this.filterIPs('');
-                    }
+                document.getElementById('nextPageButton').addEventListener('click', () => {
+                    this.goToNextPage();
                 });
             }
 
@@ -917,11 +940,11 @@
                 chartLoading.classList.remove('hidden');
 
                 try {
-                    const response = await fetch(`/api/admin/stats?period=${this.currentPeriod}`);
+                    const response = await fetch(`/api/admin/stats?period=${this.currentPeriod}&page=${this.currentPage}`);
                     const data = await response.json();
 
                     this.updateChart(data);
-                    this.updateIPTable(data.topIPs || []);
+                    this.updateIPTable(data.topIPs || [], data.pagination);
 
                 } catch (error) {
                     console.error('加载图表数据失败:', error);
@@ -1069,44 +1092,68 @@
                 });
             }
 
-            updateIPTable(topIPs) {
+            updateIPTable(topIPs, pagination) {
                 this.ipData = topIPs || [];
-                this.filteredIpData = [...this.ipData];
+                this.pagination = pagination;
                 this.renderIPTable();
+                this.updatePaginationControls();
             }
 
             renderIPTable() {
                 const tbody = document.getElementById('ipTableBody');
                 
-                if (this.filteredIpData.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #64748b; padding: 2rem;">暂无数据</td></tr>';
+                if (this.ipData.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #64748b; padding: 2rem;">暂无数据</td></tr>';
                     return;
                 }
 
-                tbody.innerHTML = this.filteredIpData.map((ip, index) => `
+                const startRank = this.pagination ? (this.pagination.currentPage - 1) * this.pagination.pageSize + 1 : 1;
+
+                tbody.innerHTML = this.ipData.map((ip, index) => `
                     <tr>
-                        <td><strong>#${index + 1}</strong></td>
+                        <td><strong>#${startRank + index}</strong></td>
                         <td><code>${ip.ip || '-'}</code>${ip.location ? ` <span style="color: #64748b; font-size: 0.8em;">(${ip.location})</span>` : ''}</td>
-                        <td><strong>${(ip.count || 0).toLocaleString()}</strong></td>
+                        <td>${ip.isBlacklisted ? '<span class="blacklist-badge">黑名单</span>' : '<span style="color: #059669; font-size: 0.875rem;">正常</span>'}</td>
+                        <td><strong>${(ip.count || 0).toLocaleString()}</strong>${ip.maliciousCount ? ` <span style="color: #dc2626; font-size: 0.75rem;">(恶意: ${ip.maliciousCount})</span>` : ''}</td>
                         <td>${ip.firstVisit ? new Date(ip.firstVisit).toLocaleString('zh-CN') : '-'}</td>
                         <td>${ip.lastVisit ? new Date(ip.lastVisit).toLocaleString('zh-CN') : '-'}</td>
                     </tr>
                 `).join('');
             }
 
-            filterIPs(searchTerm) {
-                if (!searchTerm.trim()) {
-                    this.filteredIpData = [...this.ipData];
+            updatePaginationControls() {
+                const paginationInfo = document.getElementById('paginationInfo');
+                const prevButton = document.getElementById('prevPageButton');
+                const nextButton = document.getElementById('nextPageButton');
+
+                if (this.pagination) {
+                    paginationInfo.textContent = `第 ${this.pagination.currentPage} / ${this.pagination.totalPages} 页 (共 ${this.pagination.totalIPs} 个IP)`;
+                    prevButton.disabled = !this.pagination.hasPrevPage;
+                    nextButton.disabled = !this.pagination.hasNextPage;
                 } else {
-                    this.filteredIpData = this.ipData.filter(ip => 
-                        ip.ip && ip.ip.toLowerCase().includes(searchTerm.toLowerCase())
-                    );
+                    paginationInfo.textContent = '-';
+                    prevButton.disabled = true;
+                    nextButton.disabled = true;
                 }
-                this.renderIPTable();
+            }
+
+            goToPrevPage() {
+                if (this.pagination && this.pagination.hasPrevPage) {
+                    this.currentPage--;
+                    this.loadChartData();
+                }
+            }
+
+            goToNextPage() {
+                if (this.pagination && this.pagination.hasNextPage) {
+                    this.currentPage++;
+                    this.loadChartData();
+                }
             }
 
             switchPeriod(period) {
                 this.currentPeriod = period;
+                this.currentPage = 1; // 切换周期时重置到第一页
                 
                 // 更新按钮状态
                 document.querySelectorAll('.time-filter').forEach(btn => {
