@@ -444,7 +444,48 @@
             border-radius: 4px;
             font-size: 0.75rem;
             font-weight: 600;
+        }
+
+        /* 标签页样式 */
+        .table-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .table-tab {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: transparent;
+            border-bottom: 3px solid transparent;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-secondary);
+            position: relative;
+            bottom: -2px;
+        }
+
+        .table-tab:hover {
+            color: var(--text-primary);
+        }
+
+        .table-tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .table-tab-badge {
+            display: inline-block;
             margin-left: 0.5rem;
+            padding: 0.125rem 0.5rem;
+            background: var(--error-color);
+            color: white;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
         }
 
         .data-table {
@@ -693,8 +734,18 @@
 
             <!-- IP统计表格 -->
             <div class="table-section">
+                <!-- 标签页切换 -->
+                <div class="table-tabs">
+                    <button class="table-tab active" data-filter="all">
+                        访问IP
+                    </button>
+                    <button class="table-tab" data-filter="blacklist">
+                        黑名单 <span class="table-tab-badge" id="blacklistCount">0</span>
+                    </button>
+                </div>
+
                 <div class="table-header">
-                    <h2 class="table-title">热门访问IP</h2>
+                    <h2 class="table-title" id="tableTitle">访问IP列表</h2>
                     <div class="pagination-controls">
                         <div class="pagination-info" id="paginationInfo">-</div>
                         <div class="pagination-buttons">
@@ -737,11 +788,13 @@
             constructor() {
                 this.isLoggedIn = false;
                 this.currentPeriod = 'last3days';
+                this.currentFilter = 'all'; // 'all' 或 'blacklist'
                 this.chart = null;
                 this.refreshInterval = null;
                 this.ipData = [];
                 this.currentPage = 1;
                 this.pagination = null;
+                this.blacklistCount = 0;
                 
                 this.init();
             }
@@ -782,6 +835,14 @@
 
                 document.getElementById('nextPageButton').addEventListener('click', () => {
                     this.goToNextPage();
+                });
+
+                // 标签页切换
+                document.querySelectorAll('.table-tab').forEach(tab => {
+                    tab.addEventListener('click', (e) => {
+                        const filter = e.target.closest('.table-tab').dataset.filter;
+                        this.switchFilter(filter);
+                    });
                 });
             }
 
@@ -940,11 +1001,17 @@
                 chartLoading.classList.remove('hidden');
 
                 try {
-                    const response = await fetch(`/api/admin/stats?period=${this.currentPeriod}&page=${this.currentPage}`);
+                    const response = await fetch(`/api/admin/stats?period=${this.currentPeriod}&page=${this.currentPage}&filter=${this.currentFilter}`);
                     const data = await response.json();
 
                     this.updateChart(data);
                     this.updateIPTable(data.topIPs || [], data.pagination);
+                    
+                    // 更新黑名单计数
+                    if (data.blacklistCount !== undefined) {
+                        this.blacklistCount = data.blacklistCount;
+                        document.getElementById('blacklistCount').textContent = data.blacklistCount;
+                    }
 
                 } catch (error) {
                     console.error('加载图表数据失败:', error);
@@ -1149,6 +1216,28 @@
                     this.currentPage++;
                     this.loadChartData();
                 }
+            }
+
+            switchFilter(filter) {
+                this.currentFilter = filter;
+                this.currentPage = 1; // 切换过滤器时重置到第一页
+                
+                // 更新标签页状态
+                document.querySelectorAll('.table-tab').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+                
+                // 更新标题
+                const tableTitle = document.getElementById('tableTitle');
+                if (filter === 'blacklist') {
+                    tableTitle.textContent = '黑名单IP列表';
+                } else {
+                    tableTitle.textContent = '访问IP列表';
+                }
+                
+                // 重新加载数据
+                this.loadChartData();
             }
 
             switchPeriod(period) {

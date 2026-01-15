@@ -68,7 +68,7 @@ function isBlacklistedIP(ip, ipStats) {
     return false;
 }
 
-// 获取IP地理位置（使用免费的 ip-api.com）
+// 获取IP地理位置（使用多个数据源）
 async function getIPLocation(ip) {
     // 清理IP格式（移除 ::ffff: 前缀）
     const cleanIP = ip.replace(/^::ffff:/, '');
@@ -83,40 +83,94 @@ async function getIPLocation(ip) {
         return ipLocationCache.get(cleanIP);
     }
     
-    try {
-        const location = await new Promise((resolve, reject) => {
-            const req = http.get(`http://ip-api.com/json/${cleanIP}?fields=status,country,city&lang=zh-CN`, {
-                timeout: 3000
-            }, (res) => {
-                let data = '';
-                res.on('data', chunk => data += chunk);
-                res.on('end', () => {
-                    try {
-                        const json = JSON.parse(data);
-                        if (json.status === 'success') {
-                            const loc = json.city ? `${json.country} ${json.city}` : json.country || '未知';
-                            resolve(loc);
-                        } else {
-                            resolve('未知');
+    // IPv6地址特殊处理
+    if (cleanIP.includes(':')) {
+        ipLocationCache.set(cleanIP, 'IPv6地址');
+        return 'IPv6地址';
+    }
+    
+    // 尝试多个数据源
+    const sources = [
+        // 数据源1: ipapi.co (支持中文，每天1000次免费)
+        async () => {
+            return new Promise((resolve) => {
+                const https = require('https');
+                const req = https.get(`https://ipapi.co/${cleanIP}/json/`, {
+                    timeout: 2000,
+                    headers: { 'User-Agent': 'node.js' }
+                }, (res) => {
+                    let data = '';
+                    res.on('data', chunk => data += chunk);
+                    res.on('end', () => {
+                        try {
+                            const json = JSON.parse(data);
+                            if (json.country_name && json.city) {
+                                resolve(`${json.country_name} ${json.city}`);
+                            } else if (json.country_name) {
+                                resolve(json.country_name);
+                            } else {
+                                resolve(null);
+                            }
+                        } catch (e) {
+                            resolve(null);
                         }
-                    } catch (e) {
-                        resolve('未知');
-                    }
+                    });
+                });
+                req.on('error', () => resolve(null));
+                req.on('timeout', () => {
+                    req.destroy();
+                    resolve(null);
                 });
             });
-            req.on('error', () => resolve('未知'));
-            req.on('timeout', () => {
-                req.destroy();
-                resolve('未知');
+        },
+        // 数据源2: ip-api.com (中文支持)
+        async () => {
+            return new Promise((resolve) => {
+                const req = http.get(`http://ip-api.com/json/${cleanIP}?fields=status,country,city&lang=zh-CN`, {
+                    timeout: 2000
+                }, (res) => {
+                    let data = '';
+                    res.on('data', chunk => data += chunk);
+                    res.on('end', () => {
+                        try {
+                            const json = JSON.parse(data);
+                            if (json.status === 'success') {
+                                const loc = json.city ? `${json.country} ${json.city}` : json.country;
+                                resolve(loc || null);
+                            } else {
+                                resolve(null);
+                            }
+                        } catch (e) {
+                            resolve(null);
+                        }
+                    });
+                });
+                req.on('error', () => resolve(null));
+                req.on('timeout', () => {
+                    req.destroy();
+                    resolve(null);
+                });
             });
-        });
-        
-        // 缓存结果
-        ipLocationCache.set(cleanIP, location);
-        return location;
-    } catch (error) {
-        return '未知';
+        }
+    ];
+    
+    // 依次尝试数据源
+    for (const source of sources) {
+        try {
+            const location = await source();
+            if (location) {
+                ipLocationCache.set(cleanIP, location);
+                return location;
+            }
+        } catch (error) {
+            continue;
+        }
     }
+    
+    // 所有数据源都失败
+    const fallback = '未知';
+    ipLocationCache.set(cleanIP, fallback);
+    return fallback;
 }
 
 // 文件锁机制
@@ -418,7 +472,7 @@ app.post('/api/admin/login', (req, res) => {
 // 获取统计数据API
 app.get('/api/admin/stats', async (req, res) => {
     try {
-        const { period = 'day' } = req.query;
+        const { period = 'day', filter = 'all' } = req.query;
 
         // 输入验证
         const validPeriods = ['day', 'week', 'month', 'last3days'];
@@ -529,17 +583,22 @@ app.get('/api/admin/stats', async (req, res) => {
             }
         }
 
-        // 热门IP统计 - 支持分页
+        // 热门IP统计 - 支持分页和过滤
         const page = parseInt(req.query.page) || 1;
         const pageSize = 20;
         
-        const allIPs = Object.entries(stats.ipStats)
+        let allIPs = Object.entries(stats.ipStats)
             .map(([ip, data]) => ({ 
                 ip, 
                 ...data,
                 isBlacklisted: isBlacklistedIP(ip, stats.ipStats)
             }))
             .sort((a, b) => b.count - a.count);
+        
+        // 根据filter参数过滤
+        if (filter === 'blacklist') {
+            allIPs = allIPs.filter(ip => ip.isBlacklisted);
+        }
         
         const totalIPs = allIPs.length;
         const totalPages = Math.ceil(totalIPs / pageSize);
@@ -562,6 +621,12 @@ app.get('/api/admin/stats', async (req, res) => {
             hasNextPage: page < totalPages,
             hasPrevPage: page > 1
         };
+        
+        // 添加黑名单总数（用于标签页显示）
+        const blacklistTotal = Object.entries(stats.ipStats)
+            .filter(([ip, data]) => isBlacklistedIP(ip, stats.ipStats))
+            .length;
+        result.blacklistCount = blacklistTotal;
 
         res.json(result);
     } catch (error) {
