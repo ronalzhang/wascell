@@ -447,11 +447,18 @@
         }
 
         /* 标签页样式 */
+        .table-tabs-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0;
+        }
+
         .table-tabs {
             display: flex;
             gap: 0.5rem;
-            margin-bottom: 1.5rem;
-            border-bottom: 2px solid var(--border-color);
         }
 
         .table-tab {
@@ -486,6 +493,13 @@
             border-radius: 12px;
             font-size: 0.75rem;
             font-weight: 600;
+        }
+
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.75rem;
         }
 
         .data-table {
@@ -568,13 +582,15 @@
                 justify-content: center;
             }
 
-            .table-header {
+            .table-tabs-row {
                 flex-direction: column;
                 align-items: stretch;
+                gap: 1rem;
             }
 
-            .search-box {
-                max-width: none;
+            .pagination-controls {
+                justify-content: space-between;
+                width: 100%;
             }
 
             .chart-info {
@@ -734,18 +750,16 @@
 
             <!-- IP统计表格 -->
             <div class="table-section">
-                <!-- 标签页切换 -->
-                <div class="table-tabs">
-                    <button class="table-tab active" data-filter="all">
-                        访问IP
-                    </button>
-                    <button class="table-tab" data-filter="blacklist">
-                        黑名单 <span class="table-tab-badge" id="blacklistCount">0</span>
-                    </button>
-                </div>
-
-                <div class="table-header">
-                    <h2 class="table-title" id="tableTitle">访问IP列表</h2>
+                <!-- 标签页和翻页按钮在同一行 -->
+                <div class="table-tabs-row">
+                    <div class="table-tabs">
+                        <button class="table-tab active" data-filter="all">
+                            访问IP
+                        </button>
+                        <button class="table-tab" data-filter="blacklist">
+                            黑名单 <span class="table-tab-badge" id="blacklistCount">0</span>
+                        </button>
+                    </div>
                     <div class="pagination-controls">
                         <div class="pagination-info" id="paginationInfo">-</div>
                         <div class="pagination-buttons">
@@ -1244,14 +1258,6 @@
                     tab.classList.remove('active');
                 });
                 document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
-                
-                // 更新标题
-                const tableTitle = document.getElementById('tableTitle');
-                if (filter === 'blacklist') {
-                    tableTitle.textContent = '黑名单IP列表';
-                } else {
-                    tableTitle.textContent = '访问IP列表';
-                }
                 
                 // 重新加载数据
                 this.loadChartData();

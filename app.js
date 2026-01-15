@@ -686,7 +686,11 @@ app.get('/api/admin/stats', async (req, res) => {
         
         // 根据filter参数过滤
         if (filter === 'blacklist') {
+            // 黑名单：只显示黑名单IP
             allIPs = allIPs.filter(ip => ip.isBlacklisted);
+        } else {
+            // 访问IP：只显示非黑名单IP
+            allIPs = allIPs.filter(ip => !ip.isBlacklisted);
         }
         
         const totalIPs = allIPs.length;
