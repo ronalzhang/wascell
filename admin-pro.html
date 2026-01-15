@@ -1176,16 +1176,33 @@
 
                 const startRank = this.pagination ? (this.pagination.currentPage - 1) * this.pagination.pageSize + 1 : 1;
 
-                tbody.innerHTML = this.ipData.map((ip, index) => `
-                    <tr>
-                        <td><strong>#${startRank + index}</strong></td>
-                        <td><code>${ip.ip || '-'}</code>${ip.location ? ` <span style="color: #64748b; font-size: 0.8em;">(${ip.location})</span>` : ''}</td>
-                        <td>${ip.isBlacklisted ? '<span class="blacklist-badge">黑名单</span>' : '<span style="color: #059669; font-size: 0.875rem;">正常</span>'}</td>
-                        <td><strong>${(ip.count || 0).toLocaleString()}</strong>${ip.maliciousCount ? ` <span style="color: #dc2626; font-size: 0.75rem;">(恶意: ${ip.maliciousCount})</span>` : ''}</td>
-                        <td>${ip.firstVisit ? new Date(ip.firstVisit).toLocaleString('zh-CN') : '-'}</td>
-                        <td>${ip.lastVisit ? new Date(ip.lastVisit).toLocaleString('zh-CN') : '-'}</td>
-                    </tr>
-                `).join('');
+                tbody.innerHTML = this.ipData.map((ip, index) => {
+                    // 简化颜色：中国蓝色，海外红色，特殊灰色
+                    let locationColor = '#64748b'; // 默认灰色
+                    const location = ip.location || '';
+                    
+                    if (location.includes('中国') || location.includes('China')) {
+                        locationColor = '#2563eb'; // 蓝色 - 中国
+                    } else if (location === 'IPv6地址' || location === '本地网络' || location === '未知') {
+                        locationColor = '#64748b'; // 灰色 - 特殊
+                    } else {
+                        locationColor = '#dc2626'; // 红色 - 海外
+                    }
+                    
+                    return `
+                        <tr>
+                            <td><strong>#${startRank + index}</strong></td>
+                            <td>
+                                <code>${ip.ip || '-'}</code>
+                                ${ip.location ? ` <span style="color: ${locationColor}; font-size: 0.8em; font-weight: 600;">(${ip.location})</span>` : ''}
+                            </td>
+                            <td>${ip.isBlacklisted ? '<span class="blacklist-badge">黑名单</span>' : '<span style="color: #059669; font-size: 0.875rem;">正常</span>'}</td>
+                            <td><strong>${(ip.count || 0).toLocaleString()}</strong>${ip.maliciousCount ? ` <span style="color: #dc2626; font-size: 0.75rem;">(恶意: ${ip.maliciousCount})</span>` : ''}</td>
+                            <td>${ip.firstVisit ? new Date(ip.firstVisit).toLocaleString('zh-CN') : '-'}</td>
+                            <td>${ip.lastVisit ? new Date(ip.lastVisit).toLocaleString('zh-CN') : '-'}</td>
+                        </tr>
+                    `;
+                }).join('');
             }
 
             updatePaginationControls() {
@@ -1254,18 +1271,32 @@
                 this.loadChartData();
             }
 
-            refreshData() {
+            async refreshData() {
                 const refreshButton = document.getElementById('refreshButton');
                 const refreshIcon = document.getElementById('refreshIcon');
                 
                 refreshButton.disabled = true;
                 refreshIcon.style.animation = 'spin 1s linear infinite';
                 
-                this.loadDashboardData().finally(() => {
+                try {
+                    // 先重新计算黑名单（静默执行）
+                    await fetch('/api/admin/recalculate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+                    
+                    // 然后刷新数据
+                    await this.loadDashboardData();
+                    this.showNotification('数据已刷新', 'success');
+                } catch (error) {
+                    console.error('刷新失败:', error);
+                    this.showNotification('刷新失败', 'error');
+                } finally {
                     refreshButton.disabled = false;
                     refreshIcon.style.animation = '';
-                    this.showNotification('数据已刷新', 'success');
-                });
+                }
             }
 
             startAutoRefresh() {

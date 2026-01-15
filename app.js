@@ -48,18 +48,16 @@ function isBlacklistedIP(ip, ipStats) {
     
     const stats = ipStats[ip];
     const count = stats.count || 0;
+    const maliciousCount = stats.maliciousCount || 0;
     
-    // 规则1: 访问次数超过50次的IP
-    if (count > 50) {
-        // 检查是否有恶意请求记录
-        if (stats.maliciousCount && stats.maliciousCount > 5) {
-            return true;
-        }
+    // 规则1: 访问次数超过50次且恶意请求超过5次
+    if (count > 50 && maliciousCount > 5) {
+        return true;
     }
     
-    // 规则2: 恶意请求占比超过80%
-    if (stats.maliciousCount && count > 10) {
-        const maliciousRatio = stats.maliciousCount / count;
+    // 规则2: 恶意请求占比超过80%（总访问>10次）
+    if (count > 10 && maliciousCount > 0) {
+        const maliciousRatio = maliciousCount / count;
         if (maliciousRatio > 0.8) {
             return true;
         }
@@ -68,7 +66,62 @@ function isBlacklistedIP(ip, ipStats) {
     return false;
 }
 
-// 获取IP地理位置（使用多个数据源）
+// 从日志文件重新计算恶意请求次数（用于修复旧数据）
+async function recalculateMaliciousCount() {
+    console.log('开始重新计算恶意请求次数...');
+    
+    const stats = await getStatsAsync();
+    const maliciousCounts = {};
+    
+    // 读取日志文件
+    if (fs.existsSync(LOG_FILE)) {
+        const readline = require('readline');
+        const logStream = fs.createReadStream(LOG_FILE, { encoding: 'utf8' });
+        const rl = readline.createInterface({
+            input: logStream,
+            crlfDelay: Infinity
+        });
+
+        for await (const line of rl) {
+            try {
+                if (line.trim() === '') continue;
+                const logEntry = JSON.parse(line);
+                const ip = logEntry.ip;
+                const url = logEntry.url ? logEntry.url.toLowerCase() : '';
+                
+                // 检测是否为恶意请求
+                const isMalicious = maliciousPatterns.some(pattern => pattern.test(url));
+                
+                if (isMalicious) {
+                    maliciousCounts[ip] = (maliciousCounts[ip] || 0) + 1;
+                }
+            } catch (e) {
+                // 忽略无法解析的行
+            }
+        }
+    }
+    
+    // 更新 stats.json 中的 maliciousCount
+    let updated = false;
+    for (const ip in stats.ipStats) {
+        const maliciousCount = maliciousCounts[ip] || 0;
+        if (stats.ipStats[ip].maliciousCount !== maliciousCount) {
+            stats.ipStats[ip].maliciousCount = maliciousCount;
+            updated = true;
+        }
+    }
+    
+    if (updated) {
+        await safeWriteStats(stats);
+        console.log(`重新计算完成，更新了 ${Object.keys(maliciousCounts).length} 个IP的恶意请求次数`);
+    } else {
+        console.log('无需更新');
+    }
+    
+    return maliciousCounts;
+}
+
+// 获取IP地理位置（使用多个数据源，优先中文）
 async function getIPLocation(ip) {
     // 清理IP格式（移除 ::ffff: 前缀）
     const cleanIP = ip.replace(/^::ffff:/, '');
@@ -89,25 +142,22 @@ async function getIPLocation(ip) {
         return 'IPv6地址';
     }
     
-    // 尝试多个数据源
+    // 尝试多个数据源（优先中文）
     const sources = [
-        // 数据源1: ipapi.co (支持中文，每天1000次免费)
+        // 数据源1: ip-api.com (中文支持，优先使用)
         async () => {
             return new Promise((resolve) => {
-                const https = require('https');
-                const req = https.get(`https://ipapi.co/${cleanIP}/json/`, {
-                    timeout: 2000,
-                    headers: { 'User-Agent': 'node.js' }
+                const req = http.get(`http://ip-api.com/json/${cleanIP}?fields=status,country,city&lang=zh-CN`, {
+                    timeout: 2000
                 }, (res) => {
                     let data = '';
                     res.on('data', chunk => data += chunk);
                     res.on('end', () => {
                         try {
                             const json = JSON.parse(data);
-                            if (json.country_name && json.city) {
-                                resolve(`${json.country_name} ${json.city}`);
-                            } else if (json.country_name) {
-                                resolve(json.country_name);
+                            if (json.status === 'success') {
+                                const loc = json.city ? `${json.country} ${json.city}` : json.country;
+                                resolve(loc || null);
                             } else {
                                 resolve(null);
                             }
@@ -123,20 +173,59 @@ async function getIPLocation(ip) {
                 });
             });
         },
-        // 数据源2: ip-api.com (中文支持)
+        // 数据源2: ipapi.co (备用，英文)
         async () => {
             return new Promise((resolve) => {
-                const req = http.get(`http://ip-api.com/json/${cleanIP}?fields=status,country,city&lang=zh-CN`, {
-                    timeout: 2000
+                const https = require('https');
+                const req = https.get(`https://ipapi.co/${cleanIP}/json/`, {
+                    timeout: 2000,
+                    headers: { 'User-Agent': 'node.js' }
                 }, (res) => {
                     let data = '';
                     res.on('data', chunk => data += chunk);
                     res.on('end', () => {
                         try {
                             const json = JSON.parse(data);
-                            if (json.status === 'success') {
-                                const loc = json.city ? `${json.country} ${json.city}` : json.country;
-                                resolve(loc || null);
+                            if (json.country_name && json.city) {
+                                // 简单的英文到中文映射
+                                const countryMap = {
+                                    'China': '中国',
+                                    'United States': '美国',
+                                    'Japan': '日本',
+                                    'South Korea': '韩国',
+                                    'Singapore': '新加坡',
+                                    'India': '印度',
+                                    'Germany': '德国',
+                                    'France': '法国',
+                                    'United Kingdom': '英国',
+                                    'Canada': '加拿大',
+                                    'Australia': '澳大利亚',
+                                    'Russia': '俄罗斯',
+                                    'Brazil': '巴西',
+                                    'Netherlands': '荷兰',
+                                    'Ireland': '爱尔兰'
+                                };
+                                const country = countryMap[json.country_name] || json.country_name;
+                                resolve(`${country} ${json.city}`);
+                            } else if (json.country_name) {
+                                const countryMap = {
+                                    'China': '中国',
+                                    'United States': '美国',
+                                    'Japan': '日本',
+                                    'South Korea': '韩国',
+                                    'Singapore': '新加坡',
+                                    'India': '印度',
+                                    'Germany': '德国',
+                                    'France': '法国',
+                                    'United Kingdom': '英国',
+                                    'Canada': '加拿大',
+                                    'Australia': '澳大利亚',
+                                    'Russia': '俄罗斯',
+                                    'Brazil': '巴西',
+                                    'Netherlands': '荷兰',
+                                    'Ireland': '爱尔兰'
+                                };
+                                resolve(countryMap[json.country_name] || json.country_name);
                             } else {
                                 resolve(null);
                             }
@@ -711,6 +800,21 @@ app.get('/api/admin/realtime', (req, res) => {
     } catch (error) {
         console.error('获取实时数据失败:', error);
         res.status(500).json({ message: '服务器内部错误' });
+    }
+});
+
+// 重新计算恶意请求次数（管理员工具）
+app.post('/api/admin/recalculate', async (req, res) => {
+    try {
+        const maliciousCounts = await recalculateMaliciousCount();
+        res.json({ 
+            success: true, 
+            message: '重新计算完成',
+            updatedIPs: Object.keys(maliciousCounts).length
+        });
+    } catch (error) {
+        console.error('重新计算失败:', error);
+        res.status(500).json({ success: false, message: '重新计算失败' });
     }
 });
 
