@@ -84,8 +84,8 @@ function getCurrentPeriod() {
     // if (path.includes('20260301')) return '20260301期';
     
     // 首页
-    if (path.includes('index2')) return '2026·二月首期';
-    if (path.includes('index.html') || path === '/' || path === '') {
+    if (path.includes('index.html')) return '2026·四月首期';
+    if (path.includes('index2.html') || path === '/' || path === '') {
         // 检测是新风格还是旧风格
         const isNewStyle = document.querySelector('.topbar') !== null;
         return isNewStyle ? '2026·二月首期' : '20260201期';
