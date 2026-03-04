@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <title>WASCELL · 方舟计划 2026·四月二期</title>
@@ -17,7 +18,13 @@
             --gray: #999999;
             --gray-dark: #666666;
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', sans-serif;
             background: var(--black);
@@ -25,125 +32,431 @@
             line-height: 1.8;
             min-width: 1024px;
         }
-        .container { max-width: 960px; margin: 0 auto; padding: 0 40px; }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0 40px;
+        }
 
         /* ===== 顶部栏 ===== */
         .topbar {
-            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-            background: rgba(10,10,10,0.95);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(10, 10, 10, 0.95);
             backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(201,169,98,0.15);
+            border-bottom: 1px solid rgba(201, 169, 98, 0.15);
         }
+
         .topbar-inner {
-            max-width: 960px; margin: 0 auto; padding: 16px 40px;
-            display: flex; justify-content: space-between; align-items: center;
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 16px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .logo { font-size: 18px; font-weight: 300; letter-spacing: 6px; color: var(--gold); text-decoration: none; }
-        .period-switcher { position: relative; }
+
+        .logo {
+            font-size: 18px;
+            font-weight: 300;
+            letter-spacing: 6px;
+            color: var(--gold);
+            text-decoration: none;
+        }
+
+        .period-switcher {
+            position: relative;
+        }
+
         .period-trigger {
-            background: transparent; border: 1px solid rgba(201,169,98,0.5);
-            color: var(--gold); padding: 10px 20px; font-size: 13px;
-            letter-spacing: 1px; cursor: pointer; transition: all 0.3s;
-            display: flex; align-items: center; gap: 10px;
+            background: transparent;
+            border: 1px solid rgba(201, 169, 98, 0.5);
+            color: var(--gold);
+            padding: 10px 20px;
+            font-size: 13px;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
-        .period-trigger:hover { background: rgba(201,169,98,0.1); }
-        .period-trigger .dropdown-icon { font-size: 10px; transition: transform 0.3s; }
-        .period-trigger.active .dropdown-icon { transform: rotate(180deg); }
+
+        .period-trigger:hover {
+            background: rgba(201, 169, 98, 0.1);
+        }
+
+        .period-trigger .dropdown-icon {
+            font-size: 10px;
+            transition: transform 0.3s;
+        }
+
+        .period-trigger.active .dropdown-icon {
+            transform: rotate(180deg);
+        }
+
         .period-dropdown {
-            position: absolute; top: calc(100% + 8px); right: 0;
-            background: var(--dark); border: 1px solid rgba(201,169,98,0.2);
-            min-width: 180px; opacity: 0; visibility: hidden;
-            transform: translateY(-8px); transition: all 0.25s;
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: var(--dark);
+            border: 1px solid rgba(201, 169, 98, 0.2);
+            min-width: 180px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-8px);
+            transition: all 0.25s;
         }
-        .period-dropdown.show { opacity: 1; visibility: visible; transform: translateY(0); }
+
+        .period-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
         .period-option {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 14px 18px; color: var(--gray); text-decoration: none;
-            font-size: 13px; transition: all 0.2s;
-            border-bottom: 1px solid rgba(255,255,255,0.03);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 18px;
+            color: var(--gray);
+            text-decoration: none;
+            font-size: 13px;
+            transition: all 0.2s;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
         }
-        .period-option:last-child { border-bottom: none; }
-        .period-option:hover { background: rgba(201,169,98,0.08); color: var(--white); }
-        .period-option.active { background: var(--gold); color: var(--black); }
-        .period-option .status-indicator { width: 6px; height: 6px; border-radius: 50%; }
-        .period-option.available .status-indicator { background: #86efac; }
-        .period-option.full .status-indicator { background: #dc2626; }
-        .period-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 99; display: none; }
-        .period-overlay.show { display: block; }
+
+        .period-option:last-child {
+            border-bottom: none;
+        }
+
+        .period-option:hover {
+            background: rgba(201, 169, 98, 0.08);
+            color: var(--white);
+        }
+
+        .period-option.active {
+            background: var(--gold);
+            color: var(--black);
+        }
+
+        .period-option .status-indicator {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        .period-option.available .status-indicator {
+            background: #86efac;
+        }
+
+        .period-option.full .status-indicator {
+            background: #dc2626;
+        }
+
+        .period-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 99;
+            display: none;
+        }
+
+        .period-overlay.show {
+            display: block;
+        }
 
         /* ===== 主视觉 ===== */
         .hero {
-            min-height: 65vh; display: flex; flex-direction: column;
-            justify-content: center; align-items: center; text-align: center;
+            min-height: 65vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
             padding: 140px 40px 80px;
             background: linear-gradient(180deg, var(--black) 0%, var(--dark) 100%);
             position: relative;
         }
+
         .hero::after {
-            content: ''; position: absolute; bottom: 0; left: 50%;
-            transform: translateX(-50%); width: 1px; height: 60px;
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 1px;
+            height: 60px;
             background: linear-gradient(180deg, var(--gold) 0%, transparent 100%);
         }
+
         .hero-badge {
-            border: 1px solid var(--gold); color: var(--gold);
-            padding: 12px 36px; font-size: 14px; letter-spacing: 5px;
-            text-transform: uppercase; margin-bottom: 40px;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            padding: 12px 36px;
+            font-size: 14px;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            margin-bottom: 40px;
         }
-        .hero-title { font-size: 64px; font-weight: 200; letter-spacing: 14px; margin-bottom: 20px; }
-        .hero-period { font-size: 20px; color: var(--gray); letter-spacing: 4px; margin-bottom: 50px; }
-        .hero-price { margin-bottom: 16px; }
-        .hero-price .amount { font-size: 54px; font-weight: 200; color: var(--gold); letter-spacing: 3px; }
-        .hero-price .unit { font-size: 20px; color: var(--gray); margin-left: 8px; }
-        .hero-price-note { font-size: 16px; color: var(--gray-dark); letter-spacing: 1px; }
-        .hero-desc { margin-top: 40px; font-size: 18px; color: var(--gray); line-height: 2.2; max-width: 650px; }
-        .hero-desc strong { color: var(--gold-light); font-weight: 400; }
+
+        .hero-title {
+            font-size: 64px;
+            font-weight: 200;
+            letter-spacing: 14px;
+            margin-bottom: 20px;
+        }
+
+        .hero-period {
+            font-size: 20px;
+            color: var(--gray);
+            letter-spacing: 4px;
+            margin-bottom: 50px;
+        }
+
+        .hero-price {
+            margin-bottom: 16px;
+        }
+
+        .hero-price .amount {
+            font-size: 54px;
+            font-weight: 200;
+            color: var(--gold);
+            letter-spacing: 3px;
+        }
+
+        .hero-price .unit {
+            font-size: 20px;
+            color: var(--gray);
+            margin-left: 8px;
+        }
+
+        .hero-price-note {
+            font-size: 16px;
+            color: var(--gray-dark);
+            letter-spacing: 1px;
+        }
+
+        .hero-desc {
+            margin-top: 40px;
+            font-size: 18px;
+            color: var(--gray);
+            line-height: 2.2;
+            max-width: 650px;
+        }
+
+        .hero-desc strong {
+            color: var(--gold-light);
+            font-weight: 400;
+        }
 
         /* ===== 核心价值 ===== */
-        .value-section { padding: 80px 0; background: var(--dark); }
-        .section-header { text-align: center; margin-bottom: 60px; }
-        .section-tag { font-size: 14px; color: var(--gold); letter-spacing: 5px; text-transform: uppercase; margin-bottom: 16px; }
-        .section-title { font-size: 34px; font-weight: 200; letter-spacing: 5px; }
-        .value-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: rgba(201,169,98,0.15); }
-        .value-card { background: var(--dark); padding: 50px 28px; text-align: center; transition: all 0.4s; }
-        .value-card:hover { background: var(--dark-light); }
-        .value-num { font-size: 13px; color: var(--gold); letter-spacing: 3px; margin-bottom: 26px; opacity: 0.6; }
-        .value-title { font-size: 18px; color: var(--white); letter-spacing: 2px; margin-bottom: 22px; font-weight: 400; }
-        .value-desc { font-size: 15px; color: var(--gray); line-height: 2.0; letter-spacing: 0.3px; }
+        .value-section {
+            padding: 80px 0;
+            background: var(--dark);
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .section-tag {
+            font-size: 14px;
+            color: var(--gold);
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: 34px;
+            font-weight: 200;
+            letter-spacing: 5px;
+        }
+
+        .value-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1px;
+            background: rgba(201, 169, 98, 0.15);
+        }
+
+        .value-card {
+            background: var(--dark);
+            padding: 50px 28px;
+            text-align: center;
+            transition: all 0.4s;
+        }
+
+        .value-card:hover {
+            background: var(--dark-light);
+        }
+
+        .value-num {
+            font-size: 13px;
+            color: var(--gold);
+            letter-spacing: 3px;
+            margin-bottom: 26px;
+            opacity: 0.6;
+        }
+
+        .value-title {
+            font-size: 18px;
+            color: var(--white);
+            letter-spacing: 2px;
+            margin-bottom: 22px;
+            font-weight: 400;
+        }
+
+        .value-desc {
+            font-size: 15px;
+            color: var(--gray);
+            line-height: 2.0;
+            letter-spacing: 0.3px;
+        }
 
         /* ===== 申请区 ===== */
-        .apply-section { padding: 70px 0; background: var(--black); text-align: center; }
-        .apply-btn {
-            display: inline-block; border: 1px solid var(--gold); color: var(--gold);
-            padding: 20px 70px; font-size: 17px; letter-spacing: 4px;
-            text-decoration: none; transition: all 0.3s;
-            background: transparent; cursor: pointer; font-family: inherit;
+        .apply-section {
+            padding: 70px 0;
+            background: var(--black);
+            text-align: center;
         }
-        .apply-btn:hover { background: var(--gold); color: var(--black); }
-        .apply-note { margin-top: 24px; font-size: 15px; color: var(--gray-dark); letter-spacing: 1px; }
+
+        .apply-btn {
+            display: inline-block;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            padding: 20px 70px;
+            font-size: 17px;
+            letter-spacing: 4px;
+            text-decoration: none;
+            transition: all 0.3s;
+            background: transparent;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .apply-btn:hover {
+            background: var(--gold);
+            color: var(--black);
+        }
+
+        .apply-note {
+            margin-top: 24px;
+            font-size: 15px;
+            color: var(--gray-dark);
+            letter-spacing: 1px;
+        }
 
         /* ===== 行程展示 ===== */
-        .itinerary-section { padding: 100px 0; background: var(--dark); }
-        .itinerary-intro { text-align: center; max-width: 600px; margin: 0 auto 60px; font-size: 14px; color: var(--gray); line-height: 2; }
-        .place-card { position: relative; margin-bottom: 30px; overflow: hidden; height: 420px; }
-        .place-card:hover .place-image { transform: scale(1.03); }
-        .place-image { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease; }
-        .place-content {
-            position: absolute; bottom: 0; left: 0; right: 0; padding: 50px;
-            background: linear-gradient(0deg, rgba(10,10,10,0.95) 0%, rgba(10,10,10,0.8) 60%, transparent 100%);
+        .itinerary-section {
+            padding: 100px 0;
+            background: var(--dark);
         }
-        .place-day { font-size: 11px; color: var(--gold); letter-spacing: 3px; margin-bottom: 12px; }
-        .place-title { font-size: 20px; font-weight: 400; letter-spacing: 2px; margin-bottom: 16px; line-height: 1.5; }
-        .place-desc { font-size: 13px; color: var(--gray); line-height: 2; margin-bottom: 20px; max-width: 600px; }
-        .place-tags { display: flex; gap: 12px; flex-wrap: wrap; }
-        .place-tag { font-size: 11px; color: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.15); padding: 6px 14px; letter-spacing: 1px; }
+
+        .itinerary-intro {
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto 60px;
+            font-size: 14px;
+            color: var(--gray);
+            line-height: 2;
+        }
+
+        .place-card {
+            position: relative;
+            margin-bottom: 30px;
+            overflow: hidden;
+            height: 420px;
+        }
+
+        .place-card:hover .place-image {
+            transform: scale(1.03);
+        }
+
+        .place-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s ease;
+        }
+
+        .place-content {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 50px;
+            background: linear-gradient(0deg, rgba(10, 10, 10, 0.95) 0%, rgba(10, 10, 10, 0.8) 60%, transparent 100%);
+        }
+
+        .place-day {
+            font-size: 11px;
+            color: var(--gold);
+            letter-spacing: 3px;
+            margin-bottom: 12px;
+        }
+
+        .place-title {
+            font-size: 20px;
+            font-weight: 400;
+            letter-spacing: 2px;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        .place-desc {
+            font-size: 13px;
+            color: var(--gray);
+            line-height: 2;
+            margin-bottom: 20px;
+            max-width: 600px;
+        }
+
+        .place-tags {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .place-tag {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 6px 14px;
+            letter-spacing: 1px;
+        }
 
         /* ===== 底部 ===== */
-        .footer { padding: 60px 0; background: var(--black); text-align: center; border-top: 1px solid rgba(255,255,255,0.05); }
-        .footer-logo { font-size: 16px; color: var(--gold); letter-spacing: 6px; margin-bottom: 16px; }
-        .footer-text { font-size: 12px; color: var(--gray-dark); letter-spacing: 2px; }
+        .footer {
+            padding: 60px 0;
+            background: var(--black);
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
 
+        .footer-logo {
+            font-size: 16px;
+            color: var(--gold);
+            letter-spacing: 6px;
+            margin-bottom: 16px;
+        }
+
+        .footer-text {
+            font-size: 12px;
+            color: var(--gray-dark);
+            letter-spacing: 2px;
+        }
     </style>
 </head>
+
 <body>
     <!-- 顶部栏 -->
     <header class="topbar">
@@ -154,24 +467,24 @@
                     2026·四月二期 <span class="dropdown-icon">▼</span>
                 </button>
                 <div class="period-dropdown" id="periodDropdown">
-                    <a href="20260301" class="period-option available">
-                        <span>2026·三月首期</span>
-                        <span class="status-indicator"></span>
-                    </a>
-                    <a href="20260302" class="period-option available">
-                        <span>2026·三月二期</span>
-                        <span class="status-indicator"></span>
-                    </a>
-                    <a href="20260303" class="period-option available">
-                        <span>2026·三月三期</span>
-                        <span class="status-indicator"></span>
-                    </a>
                     <a href="20260401" class="period-option available">
                         <span>2026·四月首期</span>
                         <span class="status-indicator"></span>
                     </a>
-                    <a href="20260402" class="period-option active available">
+                    <a href="20260402" class="period-option available">
                         <span>2026·四月二期</span>
+                        <span class="status-indicator"></span>
+                    </a>
+                    <a href="20260403" class="period-option available">
+                        <span>2026·四月三期</span>
+                        <span class="status-indicator"></span>
+                    </a>
+                    <a href="20260501" class="period-option available">
+                        <span>2026·五月首期</span>
+                        <span class="status-indicator"></span>
+                    </a>
+                    <a href="20260502" class="period-option active available">
+                        <span>2026·五月二期</span>
                         <span class="status-indicator"></span>
                     </a>
                 </div>
@@ -184,7 +497,7 @@
     <section class="hero">
         <div class="hero-badge">仅限 5 席 · 预约邀请制</div>
         <h1 class="hero-title">方舟计划</h1>
-        <p class="hero-period">2026·三月二期 生命资产管理</p>
+        <p class="hero-period">2026·四月二期 生命资产管理</p>
         <div class="hero-price">
             <span class="amount">RMB 580,000</span>
             <span class="unit">/ 席位</span>
@@ -226,7 +539,8 @@
     <!-- 申请区 -->
     <section class="apply-section">
         <div class="container">
-            <a href="mailto:vip@wascell.com?subject=%E9%A2%84%E5%AE%9A%E5%8F%82%E5%8A%A0WASCELL%E6%96%B9%E8%88%9F%E8%AE%A1%E5%88%922026%E5%9B%9B%E6%9C%88%E4%BA%8C%E6%9C%9F" class="apply-btn">
+            <a href="mailto:vip@wascell.com?subject=%E9%A2%84%E5%AE%9A%E5%8F%82%E5%8A%A0WASCELL%E6%96%B9%E8%88%9F%E8%AE%A1%E5%88%922026%E5%9B%9B%E6%9C%88%E4%BA%8C%E6%9C%9F"
+                class="apply-btn">
                 确认预定
             </a>
             <p class="apply-note">预定需提供企业家信息及半年内体检报告 · 本期截止 2026年3月15日</p>
@@ -330,4 +644,5 @@
 
     <script src="period-switcher.js"></script>
 </body>
+
 </html>
