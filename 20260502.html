@@ -3,10 +3,10 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>WASCELL · 方舟计划</title>
+    <title>WASCELL · 方舟计划 2026·五月二期</title>
     <meta name="viewport" content="width=1024">
     <link rel="icon" type="image/png" href="favicon.png">
-    <meta name="description" content="方舟计划 | 封闭式生命资产管理 · 仅限5席 · 日本厚生省认证">
+    <meta name="description" content="方舟计划 | 生命资产管理 · 仅限5席 · 日本厚生省认证">
     <style>
         :root {
             --black: #0a0a0a;
@@ -65,6 +65,7 @@
             font-weight: 300;
             letter-spacing: 6px;
             color: var(--gold);
+            text-decoration: none;
         }
 
         .period-switcher {
@@ -150,11 +151,11 @@
         }
 
         .period-option.available .status-indicator {
-            background: #4ade80;
+            background: #86efac;
         }
 
         .period-option.full .status-indicator {
-            background: #f87171;
+            background: #dc2626;
         }
 
         .period-overlay {
@@ -173,13 +174,13 @@
 
         /* ===== 主视觉 ===== */
         .hero {
-            min-height: 100vh;
+            min-height: 65vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             text-align: center;
-            padding: 140px 40px 100px;
+            padding: 140px 40px 80px;
             background: linear-gradient(180deg, var(--black) 0%, var(--dark) 100%);
             position: relative;
         }
@@ -191,63 +192,63 @@
             left: 50%;
             transform: translateX(-50%);
             width: 1px;
-            height: 80px;
+            height: 60px;
             background: linear-gradient(180deg, var(--gold) 0%, transparent 100%);
         }
 
         .hero-badge {
             border: 1px solid var(--gold);
             color: var(--gold);
-            padding: 10px 30px;
-            font-size: 11px;
-            letter-spacing: 4px;
+            padding: 12px 36px;
+            font-size: 14px;
+            letter-spacing: 5px;
             text-transform: uppercase;
-            margin-bottom: 50px;
+            margin-bottom: 40px;
         }
 
         .hero-title {
-            font-size: 52px;
+            font-size: 64px;
             font-weight: 200;
-            letter-spacing: 12px;
-            margin-bottom: 16px;
-        }
-
-        .hero-period {
-            font-size: 16px;
-            color: var(--gray);
-            letter-spacing: 3px;
-            margin-bottom: 60px;
-        }
-
-        .hero-price {
+            letter-spacing: 14px;
             margin-bottom: 20px;
         }
 
+        .hero-period {
+            font-size: 20px;
+            color: var(--gray);
+            letter-spacing: 4px;
+            margin-bottom: 50px;
+        }
+
+        .hero-price {
+            margin-bottom: 16px;
+        }
+
         .hero-price .amount {
-            font-size: 42px;
+            font-size: 54px;
             font-weight: 200;
             color: var(--gold);
-            letter-spacing: 2px;
+            letter-spacing: 3px;
         }
 
         .hero-price .unit {
-            font-size: 16px;
+            font-size: 20px;
             color: var(--gray);
             margin-left: 8px;
         }
 
         .hero-price-note {
-            font-size: 13px;
+            font-size: 16px;
             color: var(--gray-dark);
             letter-spacing: 1px;
         }
 
         .hero-desc {
-            margin-top: 50px;
-            font-size: 15px;
+            margin-top: 40px;
+            font-size: 18px;
             color: var(--gray);
             line-height: 2.2;
-            max-width: 600px;
+            max-width: 650px;
         }
 
         .hero-desc strong {
@@ -257,27 +258,27 @@
 
         /* ===== 核心价值 ===== */
         .value-section {
-            padding: 100px 0;
+            padding: 80px 0;
             background: var(--dark);
         }
 
         .section-header {
             text-align: center;
-            margin-bottom: 70px;
+            margin-bottom: 60px;
         }
 
         .section-tag {
-            font-size: 11px;
+            font-size: 14px;
             color: var(--gold);
-            letter-spacing: 4px;
+            letter-spacing: 5px;
             text-transform: uppercase;
             margin-bottom: 16px;
         }
 
         .section-title {
-            font-size: 28px;
+            font-size: 34px;
             font-weight: 200;
-            letter-spacing: 4px;
+            letter-spacing: 5px;
         }
 
         .value-grid {
@@ -289,7 +290,7 @@
 
         .value-card {
             background: var(--dark);
-            padding: 50px 35px;
+            padding: 50px 28px;
             text-align: center;
             transition: all 0.4s;
         }
@@ -299,31 +300,31 @@
         }
 
         .value-num {
-            font-size: 11px;
+            font-size: 13px;
             color: var(--gold);
             letter-spacing: 3px;
-            margin-bottom: 30px;
+            margin-bottom: 26px;
             opacity: 0.6;
         }
 
         .value-title {
-            font-size: 16px;
+            font-size: 18px;
             color: var(--white);
-            letter-spacing: 3px;
-            margin-bottom: 24px;
+            letter-spacing: 2px;
+            margin-bottom: 22px;
             font-weight: 400;
         }
 
         .value-desc {
-            font-size: 13px;
+            font-size: 15px;
             color: var(--gray);
-            line-height: 2.2;
-            letter-spacing: 0.5px;
+            line-height: 2.0;
+            letter-spacing: 0.3px;
         }
 
         /* ===== 申请区 ===== */
         .apply-section {
-            padding: 80px 0;
+            padding: 70px 0;
             background: var(--black);
             text-align: center;
         }
@@ -332,8 +333,8 @@
             display: inline-block;
             border: 1px solid var(--gold);
             color: var(--gold);
-            padding: 18px 60px;
-            font-size: 14px;
+            padding: 20px 70px;
+            font-size: 17px;
             letter-spacing: 4px;
             text-decoration: none;
             transition: all 0.3s;
@@ -349,7 +350,7 @@
 
         .apply-note {
             margin-top: 24px;
-            font-size: 12px;
+            font-size: 15px;
             color: var(--gray-dark);
             letter-spacing: 1px;
         }
@@ -460,17 +461,17 @@
     <!-- 顶部栏 -->
     <header class="topbar">
         <div class="topbar-inner">
-            <div class="logo">WASCELL</div>
+            <a href="/" class="logo">WASCELL.com</a>
             <div class="period-switcher">
                 <button class="period-trigger" id="periodTrigger">
-                    2026·四月首期 <span class="dropdown-icon">▼</span>
+                    2026·五月二期 <span class="dropdown-icon">▼</span>
                 </button>
                 <div class="period-dropdown" id="periodDropdown">
-                    <a href="/" class="period-option active full">
+                    <a href="20260401" class="period-option available">
                         <span>2026·四月首期</span>
                         <span class="status-indicator"></span>
                     </a>
-                    <a href="20260402" class="period-option full">
+                    <a href="20260402" class="period-option available">
                         <span>2026·四月二期</span>
                         <span class="status-indicator"></span>
                     </a>
@@ -482,7 +483,7 @@
                         <span>2026·五月首期</span>
                         <span class="status-indicator"></span>
                     </a>
-                    <a href="20260502" class="period-option available">
+                    <a href="20260502" class="period-option active available">
                         <span>2026·五月二期</span>
                         <span class="status-indicator"></span>
                     </a>
@@ -496,15 +497,15 @@
     <section class="hero">
         <div class="hero-badge">仅限 5 席 · 预约邀请制</div>
         <h1 class="hero-title">方舟计划</h1>
-        <p class="hero-period">2026·四月首期 封闭式生命资产管理</p>
+        <p class="hero-period">2026·五月二期 生命资产管理</p>
         <div class="hero-price">
-            <span class="amount">¥580,000</span>
+            <span class="amount">RMB 580,000</span>
             <span class="unit">/ 席位</span>
         </div>
         <p class="hero-price-note">含在日全部吃住行费用，不含往返机票</p>
         <p class="hero-desc">
-            建立您的<strong>私人生物备份库</strong><br>
-            日本厚生劳动省认证 · 全球仅 0.01% 人群享有的特权
+            <strong>日本自体脂肪干细胞</strong> · 全球领先MSC技术<br>
+            厚生劳动省认证·会员预约制诊所·建立您的私人生物备份库
         </p>
     </section>
 
@@ -538,11 +539,11 @@
     <!-- 申请区 -->
     <section class="apply-section">
         <div class="container">
-            <a href="mailto:vip@wascell.com?subject=%E9%A2%84%E5%AE%9A%E5%8F%82%E5%8A%A0WASCELL%E6%96%B9%E8%88%9F%E8%AE%A1%E5%88%922026%E4%B8%89%E6%9C%88%E9%A6%96%E6%9C%9F"
+            <a href="mailto:vip@wascell.com?subject=%E9%A2%84%E5%AE%9A%E5%8F%82%E5%8A%A0WASCELL%E6%96%B9%E8%88%9F%E8%AE%A1%E5%88%922026%E5%9B%9B%E6%9C%88%E4%BA%8C%E6%9C%9F"
                 class="apply-btn">
                 确认预定
             </a>
-            <p class="apply-note">预定需提供企业家信息及半年内体检报告 · 本期截止 2026年3月5日</p>
+            <p class="apply-note">预定需提供企业家信息及半年内体检报告 · 本期截止 2026年4月15日</p>
         </div>
     </section>
 
@@ -575,45 +576,45 @@
 
             <!-- Day 2 -->
             <div class="place-card">
-                <img src="imgs/geisha.jpg" alt="艺伎茶道" class="place-image">
+                <img src="imgs/sushi.jpg" alt="江户前寿司" class="place-image">
                 <div class="place-content">
                     <p class="place-day">DAY 2 · 核心医疗</p>
-                    <h3 class="place-title">细胞采集 + 介绍制艺伎茶道</h3>
-                    <p class="place-desc">上午完成脂肪干细胞采集。傍晚前往浅草1950年老字号料亭，介绍制接待，艺伎亲自演绎茶道与舞蹈。</p>
+                    <h3 class="place-title">细胞采集 + 银座顶级割烹</h3>
+                    <p class="place-desc">上午完成脂肪干细胞采集。傍晚前往银座预约制高级割烹，仅设8席，米其林三星主厨亲制江户前寿司。</p>
                     <div class="place-tags">
                         <span class="place-tag">厚生省认证</span>
-                        <span class="place-tag">介绍制</span>
-                        <span class="place-tag">1950年创立</span>
+                        <span class="place-tag">米其林三星</span>
+                        <span class="place-tag">仅8席</span>
                     </div>
                 </div>
             </div>
 
             <!-- Day 3 -->
             <div class="place-card">
-                <img src="imgs/longtemple.jpg" alt="龙安寺" class="place-image">
+                <img src="imgs/qingshuitemple.jpg" alt="清水寺" class="place-image">
                 <div class="place-content">
-                    <p class="place-day">DAY 3 · 禅意修行</p>
-                    <h3 class="place-title">世界遗产龙安寺 · 非公开区域</h3>
-                    <p class="place-desc">公元1450年创建的禅宗古寺，联合国世界文化遗产。进入非公开区域，在枯山水庭园中进行团体禅修。</p>
+                    <p class="place-day">DAY 3 · 千年古寺</p>
+                    <h3 class="place-title">清水寺舞台 · 夜间特别参拜</h3>
+                    <p class="place-desc">夜幕降临后独享清水寺舞台的特别参拜时光。在灯光营造的神秘氛围中，感受这座千年古寺的庄严与美丽。</p>
                     <div class="place-tags">
-                        <span class="place-tag">世界遗产</span>
-                        <span class="place-tag">非公开区域</span>
-                        <span class="place-tag">枯山水</span>
+                        <span class="place-tag">夜间专属</span>
+                        <span class="place-tag">千年古寺</span>
+                        <span class="place-tag">灯光清水舞台</span>
                     </div>
                 </div>
             </div>
 
             <!-- Day 4 -->
             <div class="place-card">
-                <img src="imgs/home.jpg" alt="茶人私宅" class="place-image">
+                <img src="imgs/bigtea.jpg" alt="能乐" class="place-image">
                 <div class="place-content">
-                    <p class="place-day">DAY 4 · 茶道传承</p>
-                    <h3 class="place-title">里千家大师私宅 · 茶道体验</h3>
-                    <p class="place-desc">目黑柿木坂，里千家家元关门弟子私人宅邸。三十载茶道研习，亲手为您调制抹茶，感受一期一会。</p>
+                    <p class="place-day">DAY 4 · 国宝艺术</p>
+                    <h3 class="place-title">能乐大师长山贵三郎 · 私人指导</h3>
+                    <p class="place-desc">与日本国宝级能乐大师面对面交流，学习这门被联合国教科文组织列为人类非物质文化遗产的传统艺术精髓。</p>
                     <div class="place-tags">
-                        <span class="place-tag">家元关门弟子</span>
-                        <span class="place-tag">私人茶室</span>
-                        <span class="place-tag">三十载专精</span>
+                        <span class="place-tag">国宝级大师</span>
+                        <span class="place-tag">UNESCO非遗</span>
+                        <span class="place-tag">私人指导</span>
                     </div>
                 </div>
             </div>
