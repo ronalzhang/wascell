@@ -9,6 +9,7 @@ const TEMPLATES = {
     2: path.join(ROOT, '20260502.html'),
     3: path.join(ROOT, '20260503.html'),
 };
+const PERIOD_SWITCHER_VERSION = '20260603-2';
 
 const MONTH_NAMES = [
     '一月',
@@ -235,6 +236,8 @@ function updateHtml(template, period, periods, rootTargetId) {
             '五日四晚封闭式行程，本期特别设计适合父母长辈同行的舒适节奏，<br>'
         );
     }
+
+    html = html.replace(/period-switcher\.js(?:\?v=[^"]*)?/g, `period-switcher.js?v=${PERIOD_SWITCHER_VERSION}`);
 
     return html.endsWith('\n') ? html : `${html}\n`;
 }

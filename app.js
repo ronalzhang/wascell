@@ -533,6 +533,8 @@ app.use(express.static('.', {
     setHeaders: (res, path) => {
         if (path.endsWith('.html')) {
             res.set('Cache-Control', 'no-cache');
+        } else if (path.endsWith('.js')) {
+            res.set('Cache-Control', 'no-cache');
         }
     }
 }));
