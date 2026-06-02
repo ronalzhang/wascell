@@ -68,6 +68,8 @@ function initializePeriodSwitcher() {
 function getCurrentPeriod() {
     const path = normalizePath(window.location.pathname);
     const options = document.querySelectorAll('.period-option');
+    const trigger = document.getElementById('periodTrigger');
+    const triggerText = trigger ? trigger.textContent.replace('▼', '').trim() : '';
 
     for (const option of options) {
         const href = normalizePath(option.getAttribute('href') || '');
@@ -76,13 +78,10 @@ function getCurrentPeriod() {
         }
     }
 
+    if (triggerText) return triggerText;
+
     const activeOption = document.querySelector('.period-option.active');
     if (activeOption) return getOptionText(activeOption);
-
-    const trigger = document.getElementById('periodTrigger');
-    if (trigger) {
-        return trigger.textContent.replace('▼', '').trim();
-    }
 
     return '';
 }
