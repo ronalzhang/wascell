@@ -45,6 +45,26 @@ npm start
 - 后台管理：https://wascell.com/admin-pro
 - 开发环境：http://localhost:3003
 
+### 月度活动页更新
+
+右上角期数菜单和近期活动页可用脚本同步生成。默认从“下个月”开始生成 5 期：下个月首期/二期/三期，加下下个月首期/二期；三期使用父母长辈特惠模板。菜单中前 2 期会自动标记为满员状态，后续期数标记为可预约状态。
+
+```bash
+# 先查看会更新哪些文件
+npm run periods:dry-run
+
+# 正式生成
+npm run periods:update
+
+# 指定起始月份，例如生成 2026 年 2 月三期 + 3 月前两期
+npm run periods:update -- --start=2026-02
+
+# 临时调整展示期数，例如展示 6 期
+npm run periods:update -- --count=6
+```
+
+生成后请本地启动 `npm start`，检查首页 `/`、右上角下拉菜单和每月三期页面。
+
 ### 服务器部署
 
 部署状态总结

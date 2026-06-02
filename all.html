@@ -5,7 +5,7 @@
     <title>WASCELL · 独家文化体验全览</title>
     <meta name="viewport" content="width=1024">
     <link rel="icon" type="image/png" href="favicon.png">
-    <meta name="description" content="探索WASCELL方舟计划中40+个独家文化体验项目，从传统寺院到私人茶室，从皇室工坊到艺伎文化，每一个体验都是绝对稀缺的顶级文化之旅。">
+    <meta name="description" content="探索WASCELL方舟计划精选独家文化体验项目，从传统寺院到私人茶室，从怀石料理到艺伎文化，每一个体验都是绝对稀缺的顶级文化之旅。">
     <style>
         :root {
             --gold: #c0a878;
@@ -656,13 +656,13 @@
             <h1>独家文化体验全览</h1>
             <div class="subtitle">探索方舟计划中的每一个绝对稀缺的顶级文化体验</div>
             <div class="gold-divider"></div>
-            40+个独家项目等您发现
+            精选独家项目等您发现
         </div>
 
         <div class="stats-section">
             <div class="stats-container">
                 <div class="stat-item">
-                    <div class="stat-number">40+</div>
+                    <div class="stat-number">13</div>
                     <div class="stat-label">独家体验项目</div>
                 </div>
                 <div class="stat-item">
@@ -951,7 +951,7 @@
                 features: ["特殊季节：樱花盛开期", "参观场所：皇居东御苑", "文化价值：樱花文化精髓"],
                 fullDescription: "皇居东御苑拥有东京最美的樱花，每年樱花季都吸引无数游客。但您将享受到特别的参观待遇，在专业导览的陪同下，深入了解日本樱花文化的历史和精神内涵。"
             }
-        ];
+        ].filter(experience => ![8, 9, 10, 12, 15, 16, 18].includes(experience.id));
 
         // 页面功能
         let currentFilter = 'all';

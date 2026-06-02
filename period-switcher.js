@@ -66,32 +66,46 @@ function initializePeriodSwitcher() {
 }
 
 function getCurrentPeriod() {
-    // 从URL中获取当前期数
-    const path = window.location.pathname;
-    
-    // 新风格页面期数匹配
-    if (path.includes('20260401')) return '2026·四月首期';
-    if (path.includes('20260402')) return '2026·四月二期';
-    if (path.includes('20260403')) return '2026·四月三期';
-    if (path.includes('20260501')) return '2026·五月首期';
-    if (path.includes('20260502')) return '2026·五月二期';
-    if (path.includes('20260503')) return '2026·五月三期';
+    const path = normalizePath(window.location.pathname);
+    const options = document.querySelectorAll('.period-option');
 
-    
-    // 旧风格页面期数匹配（保持兼容）
-    if (path.includes('20260202')) return '20260202期';
-    if (path.includes('20260203')) return '20260203期';
-    // if (path.includes('20260301')) return '20260301期';
-    
-    // 首页
-    if (path.includes('index.html')) return '2026·四月首期';
-    if (path.includes('index2.html') || path === '/' || path === '') {
-        // 检测是新风格还是旧风格
-        const isNewStyle = document.querySelector('.topbar') !== null;
-        return isNewStyle ? '2026·二月首期' : '20260201期';
+    for (const option of options) {
+        const href = normalizePath(option.getAttribute('href') || '');
+        if (href && href === path) {
+            return getOptionText(option);
+        }
     }
 
-    return '20260201期'; // 默认
+    const activeOption = document.querySelector('.period-option.active');
+    if (activeOption) return getOptionText(activeOption);
+
+    const trigger = document.getElementById('periodTrigger');
+    if (trigger) {
+        return trigger.textContent.replace('▼', '').trim();
+    }
+
+    return '';
+}
+
+function normalizePath(value) {
+    if (!value || value === '#') return '';
+    if (value === '/' || value === '/index.html') return '/';
+
+    const withoutQuery = value.split('?')[0].split('#')[0];
+    const fileName = withoutQuery.split('/').pop();
+    if (!fileName) return '/';
+
+    return fileName.replace(/\.html$/, '');
+}
+
+function getOptionText(option) {
+    const firstSpan = option.querySelector('span:first-child');
+    if (firstSpan) return firstSpan.textContent.trim();
+
+    const periodNameElement = option.querySelector('.period-name');
+    if (periodNameElement) return periodNameElement.textContent.trim();
+
+    return option.textContent.trim();
 }
 
 function updateTriggerText(period) {
@@ -115,11 +129,9 @@ function updateDropdownStatus(currentPeriod, isNewStyle) {
         // 新风格：直接获取第一个span的文本；旧风格：获取.period-name
         let periodText;
         if (isNewStyle) {
-            const firstSpan = option.querySelector('span:first-child');
-            periodText = firstSpan ? firstSpan.textContent.trim() : option.textContent.trim();
+            periodText = getOptionText(option);
         } else {
-            const periodNameElement = option.querySelector('.period-name');
-            periodText = periodNameElement ? periodNameElement.textContent.trim() : option.textContent.trim();
+            periodText = getOptionText(option);
         }
 
         // 移除所有active类
