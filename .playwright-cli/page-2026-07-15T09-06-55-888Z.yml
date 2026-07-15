@@ -1,0 +1,366 @@
+- generic [active] [ref=f1e1]:
+  - generic [ref=f1e2]:
+    - generic [ref=f1e3]:
+      - link "← 返回主页" [ref=f1e4] [cursor=pointer]:
+        - /url: /
+      - heading "独家文化体验全览" [level=1] [ref=f1e5]
+      - generic [ref=f1e6]: 探索方舟计划中的每一个绝对稀缺的顶级文化体验
+      - text: 精选独家项目等您发现
+    - generic [ref=f1e9]:
+      - generic [ref=f1e10]:
+        - generic [ref=f1e11]: "13"
+        - generic [ref=f1e12]: 独家体验项目
+      - generic [ref=f1e13]:
+        - generic [ref=f1e14]: "8"
+        - generic [ref=f1e15]: 主要文化类别
+      - generic [ref=f1e16]:
+        - generic [ref=f1e17]: 99.9%
+        - generic [ref=f1e18]: 稀缺度指数
+      - generic [ref=f1e19]:
+        - generic [ref=f1e20]: 600年+
+        - generic [ref=f1e21]: 历史传承
+    - generic [ref=f1e22]:
+      - generic [ref=f1e23]:
+        - textbox "搜索您感兴趣的文化体验..." [ref=f1e24]
+        - generic [ref=f1e25]: 🔍
+      - generic [ref=f1e26]:
+        - button "全部体验" [ref=f1e27] [cursor=pointer]
+        - button "寺院禅修" [ref=f1e28] [cursor=pointer]
+        - button "茶道文化" [ref=f1e29] [cursor=pointer]
+        - button "传统艺术" [ref=f1e30] [cursor=pointer]
+        - button "顶级美食" [ref=f1e31] [cursor=pointer]
+        - button "皇室工艺" [ref=f1e32] [cursor=pointer]
+        - button "自然秘境" [ref=f1e33] [cursor=pointer]
+        - button "艺妓文化" [ref=f1e34] [cursor=pointer]
+        - button "私人定制" [ref=f1e35] [cursor=pointer]
+    - generic [ref=f1e37]:
+      - generic [ref=f1e38] [cursor=pointer]:
+        - generic [ref=f1e39]: 顶级美食
+        - generic [ref=f1e40]:
+          - generic [ref=f1e41]: ⛩
+          - heading "白木匠造和风屋形船 · 夜游东京湾" [level=3] [ref=f1e42]
+        - generic [ref=f1e43]:
+          - img "白木匠造和风屋形船 · 夜游东京湾" [ref=f1e44]
+          - button "❤️ 69" [ref=f1e45]:
+            - generic [ref=f1e46]: ❤️
+            - generic [ref=f1e47]: "69"
+        - generic [ref=f1e48]:
+          - paragraph [ref=f1e49]: 纯白木建造的船内高雅古典，搭配现代风吧台桌椅，仅能乘坐10位宾客。这是东京唯一一艘高级屋形船，于2023年被东京市政府认可为意匠典范。
+          - generic [ref=f1e50]:
+            - strong [ref=f1e51]: 独家体验：
+            - text: 日本料理大厨乘船为宾客精心准备怀石料理，透过窗户可以看到闪耀的夜景和四季变幻的东京风景。
+          - generic [ref=f1e52]:
+            - generic [ref=f1e53]:
+              - strong [ref=f1e54]: 限定座位
+              - text: 仅10位宾客
+            - generic [ref=f1e55]:
+              - strong [ref=f1e56]: 官方认证
+              - text: 政府认可典范
+            - generic [ref=f1e57]:
+              - strong [ref=f1e58]: 专属大厨
+              - text: 船上怀石料理
+      - generic [ref=f1e59] [cursor=pointer]:
+        - generic [ref=f1e60]: 艺妓文化
+        - generic [ref=f1e61]:
+          - generic [ref=f1e62]: 🌸
+          - heading "浅草茶与舞之间 · 介绍制艺伎茶道" [level=3] [ref=f1e63]
+        - generic [ref=f1e64]:
+          - img "浅草茶与舞之间 · 介绍制艺伎茶道" [ref=f1e65]
+          - button "❤️ 232" [ref=f1e66]:
+            - generic [ref=f1e67]: ❤️
+            - generic [ref=f1e68]: "232"
+        - generic [ref=f1e69]:
+          - paragraph [ref=f1e70]: 在浅草的静谧街巷中，隐匿着一家非公开制、预约限定的老字号料亭。自1950年创立以来，这里始终作为体验日本艺妓文化的私密场所。
+          - generic [ref=f1e71]:
+            - strong [ref=f1e72]: 独家体验：
+            - text: 采用介绍制接待，普通客人无法自行入内，此次为您特别安排进入。
+          - generic [ref=f1e73]:
+            - generic [ref=f1e74]:
+              - strong [ref=f1e75]: 创立时间
+              - text: 1950年老字号
+            - generic [ref=f1e76]:
+              - strong [ref=f1e77]: 接待方式
+              - text: 介绍制专属
+            - generic [ref=f1e78]:
+              - strong [ref=f1e79]: 文化体验
+              - text: 茶道+舞蹈
+      - generic [ref=f1e80] [cursor=pointer]:
+        - generic [ref=f1e81]: 寺院禅修
+        - generic [ref=f1e82]:
+          - generic [ref=f1e83]: 🏛
+          - heading "世界文化遗产 · 龙安寺非公开区域" [level=3] [ref=f1e84]
+        - generic [ref=f1e85]:
+          - img "世界文化遗产 · 龙安寺非公开区域" [ref=f1e86]
+          - button "❤️ 143" [ref=f1e87]:
+            - generic [ref=f1e88]: ❤️
+            - generic [ref=f1e89]: "143"
+        - generic [ref=f1e90]:
+          - paragraph [ref=f1e91]: 龙安寺是一座由室町时代东军大将细川胜元于宝德二年（公元1450年）创建的禅宗古寺，以其悠久的历史和精致的艺术而闻名于世。
+          - generic [ref=f1e92]:
+            - strong [ref=f1e93]: 独家体验：
+            - text: 联合国教科文组织指定的世界文化遗产，证明其在日本文化史上的重要地位。
+          - generic [ref=f1e94]:
+            - generic [ref=f1e95]:
+              - strong [ref=f1e96]: 建立年代
+              - text: 公元1450年
+            - generic [ref=f1e97]:
+              - strong [ref=f1e98]: 庭园特色
+              - text: 枯山水经典
+            - generic [ref=f1e99]:
+              - strong [ref=f1e100]: 文化价值
+              - text: 世界遗产
+      - generic [ref=f1e101] [cursor=pointer]:
+        - generic [ref=f1e102]: 茶道文化
+        - generic [ref=f1e103]:
+          - generic [ref=f1e104]: 🍵
+          - heading "里千家茶道大师私人宅邸 · 茶道体验" [level=3] [ref=f1e105]
+        - generic [ref=f1e106]:
+          - img "里千家茶道大师私人宅邸 · 茶道体验" [ref=f1e107]
+          - button "❤️ 156" [ref=f1e108]:
+            - generic [ref=f1e109]: ❤️
+            - generic [ref=f1e110]: "156"
+        - generic [ref=f1e111]:
+          - paragraph [ref=f1e112]: 位于东京市中心著名豪宅区目黑柿木坂，探访里千家茶道大师舩越老师的私人宅邸。舩越老师是里千家家元的关门弟子，在京都专注茶道研习已逾三十载。
+          - generic [ref=f1e113]:
+            - strong [ref=f1e114]: 独家体验：
+            - text: 常人很少有机会得以一窥的私人茶室，融合传统与现代的独特建筑风格。
+          - generic [ref=f1e115]:
+            - generic [ref=f1e116]:
+              - strong [ref=f1e117]: 茶道地位
+              - text: 家元关门弟子
+            - generic [ref=f1e118]:
+              - strong [ref=f1e119]: 研习时间
+              - text: 三十载专精
+            - generic [ref=f1e120]:
+              - strong [ref=f1e121]: 独特体验
+              - text: 私宅茶道
+      - generic [ref=f1e122] [cursor=pointer]:
+        - generic [ref=f1e123]: 寺院禅修
+        - generic [ref=f1e124]:
+          - generic [ref=f1e125]: 🔔
+          - heading "金阁寺住持私人禅修 · 晨钟暮鼓" [level=3] [ref=f1e126]
+        - generic [ref=f1e127]:
+          - img "金阁寺住持私人禅修 · 晨钟暮鼓" [ref=f1e128]
+          - button "❤️ 185" [ref=f1e129]:
+            - generic [ref=f1e130]: ❤️
+            - generic [ref=f1e131]: "185"
+        - generic [ref=f1e132]:
+          - paragraph [ref=f1e133]: 在金阁寺尚未对公众开放的清晨时分，与住持进行私人禅修体验。在没有游客喧嚣的宁静环境中，感受真正的禅意空间。
+          - generic [ref=f1e134]:
+            - strong [ref=f1e135]: 独家体验：
+            - text: 独享金阁寺的清晨时光，在住持的亲自指导下进行正宗的禅修体验。
+          - generic [ref=f1e136]:
+            - generic [ref=f1e137]:
+              - strong [ref=f1e138]: 独享时段
+              - text: 清晨闭园时间
+            - generic [ref=f1e139]:
+              - strong [ref=f1e140]: 指导老师
+              - text: 金阁寺住持
+            - generic [ref=f1e141]:
+              - strong [ref=f1e142]: 体验内容
+              - text: 正宗禅修
+      - generic [ref=f1e143] [cursor=pointer]:
+        - generic [ref=f1e144]: 顶级美食
+        - generic [ref=f1e145]:
+          - generic [ref=f1e146]: 🍣
+          - heading "银座顶级割烹 · 江户前寿司大师" [level=3] [ref=f1e147]
+        - generic [ref=f1e148]:
+          - img "银座顶级割烹 · 江户前寿司大师" [ref=f1e149]
+          - button "❤️ 97" [ref=f1e150]:
+            - generic [ref=f1e151]: ❤️
+            - generic [ref=f1e152]: "97"
+        - generic [ref=f1e153]:
+          - paragraph [ref=f1e154]: 预约制高级割烹店，仅设8个座位的寿司台。主厨师承三代江户前寿司传统，使用当日从筑地直送的最高级食材。
+          - generic [ref=f1e155]:
+            - strong [ref=f1e156]: 独家体验：
+            - text: 米其林三星主厨亲自为您制作每一贯寿司，讲解江户前寿司的历史和制作工艺。
+          - generic [ref=f1e157]:
+            - generic [ref=f1e158]:
+              - strong [ref=f1e159]: 座位限制
+              - text: 仅8个位置
+            - generic [ref=f1e160]:
+              - strong [ref=f1e161]: 主厨资历
+              - text: 三代传承
+            - generic [ref=f1e162]:
+              - strong [ref=f1e163]: 食材标准
+              - text: 筑地最高级
+      - generic [ref=f1e164] [cursor=pointer]:
+        - generic [ref=f1e165]: 寺院禅修
+        - generic [ref=f1e166]:
+          - generic [ref=f1e167]: 🌙
+          - heading "清水寺舞台夜间特别参拜" [level=3] [ref=f1e168]
+        - generic [ref=f1e169]:
+          - img "清水寺舞台夜间特别参拜" [ref=f1e170]
+          - button "❤️ 137" [ref=f1e171]:
+            - generic [ref=f1e172]: ❤️
+            - generic [ref=f1e173]: "137"
+        - generic [ref=f1e174]:
+          - paragraph [ref=f1e175]: 在夜幕降临后，独享清水寺舞台的特别参拜时光。在点灯营造的神秘氛围中，感受这座千年古寺的庄严与美丽。
+          - generic [ref=f1e176]:
+            - strong [ref=f1e177]: 独家体验：
+            - text: 夜间特别开放，在灯光映照下的清水舞台展现出与白天完全不同的神秘美感。
+          - generic [ref=f1e178]:
+            - generic [ref=f1e179]:
+              - strong [ref=f1e180]: 特殊时段
+              - text: 夜间专属
+            - generic [ref=f1e181]:
+              - strong [ref=f1e182]: 景观特色
+              - text: 灯光清水舞台
+            - generic [ref=f1e183]:
+              - strong [ref=f1e184]: 历史价值
+              - text: 千年古寺
+      - generic [ref=f1e185] [cursor=pointer]:
+        - generic [ref=f1e186]: 茶道文化
+        - generic [ref=f1e187]:
+          - generic [ref=f1e188]: 🫖
+          - heading "表参道茶室·现代茶道革新体验" [level=3] [ref=f1e189]
+        - generic [ref=f1e190]:
+          - img "表参道茶室·现代茶道革新体验" [ref=f1e191]
+          - button "❤️ 60" [ref=f1e192]:
+            - generic [ref=f1e193]: ❤️
+            - generic [ref=f1e194]: "60"
+        - generic [ref=f1e195]:
+          - paragraph [ref=f1e196]: 在表参道的现代化茶室中，体验融合传统与现代的革新茶道。茶道师将传统茶道精神与现代美学完美结合。
+          - generic [ref=f1e197]:
+            - strong [ref=f1e198]: 独家体验：
+            - text: 传统茶道与现代设计的完美融合，在都市中心体验茶道的现代演绎。
+          - generic [ref=f1e199]:
+            - generic [ref=f1e200]:
+              - strong [ref=f1e201]: 设计特色
+              - text: 现代茶室
+            - generic [ref=f1e202]:
+              - strong [ref=f1e203]: 理念融合
+              - text: 传统+现代
+            - generic [ref=f1e204]:
+              - strong [ref=f1e205]: 位置优势
+              - text: 表参道中心
+      - generic [ref=f1e206] [cursor=pointer]:
+        - generic [ref=f1e207]: 茶道文化
+        - generic [ref=f1e208]:
+          - generic [ref=f1e209]: 🏮
+          - heading "银座柳茶屋·昭和时代茶道重现" [level=3] [ref=f1e210]
+        - generic [ref=f1e211]:
+          - img "银座柳茶屋·昭和时代茶道重现" [ref=f1e212]
+          - button "❤️ 86" [ref=f1e213]:
+            - generic [ref=f1e214]: ❤️
+            - generic [ref=f1e215]: "86"
+        - generic [ref=f1e216]:
+          - paragraph [ref=f1e217]: 在保持昭和时代原貌的茶屋中，体验传统的茶道文化。茶屋主人将为您重现昭和时代的茶道礼仪和氛围。
+          - generic [ref=f1e218]:
+            - strong [ref=f1e219]: 独家体验：
+            - text: 完整保存昭和时代茶屋原貌，体验最地道的传统茶道文化。
+          - generic [ref=f1e220]:
+            - generic [ref=f1e221]:
+              - strong [ref=f1e222]: 历史保存
+              - text: 昭和时代原貌
+            - generic [ref=f1e223]:
+              - strong [ref=f1e224]: 文化体验
+              - text: 传统茶道
+            - generic [ref=f1e225]:
+              - strong [ref=f1e226]: 稀缺性
+              - text: 极少数保存完整
+      - generic [ref=f1e227] [cursor=pointer]:
+        - generic [ref=f1e228]: 自然秘境
+        - generic [ref=f1e229]:
+          - generic [ref=f1e230]: 🌺
+          - heading "东京都庭园·皇室私人庭园导览" [level=3] [ref=f1e231]
+        - generic [ref=f1e232]:
+          - img "东京都庭园·皇室私人庭园导览" [ref=f1e233]
+          - button "❤️ 155" [ref=f1e234]:
+            - generic [ref=f1e235]: ❤️
+            - generic [ref=f1e236]: "155"
+        - generic [ref=f1e237]:
+          - paragraph [ref=f1e238]: 探访通常不对外开放的皇室私人庭园，在专业园艺师的导览下，了解日本庭园艺术的最高水准。
+          - generic [ref=f1e239]:
+            - strong [ref=f1e240]: 独家体验：
+            - text: 皇室专用庭园，专业园艺师亲自导览，了解日本庭园艺术的至高境界。
+          - generic [ref=f1e241]:
+            - generic [ref=f1e242]:
+              - strong [ref=f1e243]: 独特性
+              - text: 皇室私人庭园
+            - generic [ref=f1e244]:
+              - strong [ref=f1e245]: 导览水准
+              - text: 专业园艺师
+            - generic [ref=f1e246]:
+              - strong [ref=f1e247]: 艺术价值
+              - text: 庭园艺术顶峰
+      - generic [ref=f1e248] [cursor=pointer]:
+        - generic [ref=f1e249]: 传统艺术
+        - generic [ref=f1e250]:
+          - generic [ref=f1e251]: 🎨
+          - heading "六本木艺术画廊·当代艺术私人鉴赏" [level=3] [ref=f1e252]
+        - generic [ref=f1e253]:
+          - img "六本木艺术画廊·当代艺术私人鉴赏" [ref=f1e254]
+          - button "❤️ 142" [ref=f1e255]:
+            - generic [ref=f1e256]: ❤️
+            - generic [ref=f1e257]: "142"
+        - generic [ref=f1e258]:
+          - paragraph [ref=f1e259]: 在六本木顶级画廊中，由艺术策展人陪同进行当代艺术作品的私人鉴赏，了解日本当代艺术的发展脉络。
+          - generic [ref=f1e260]:
+            - strong [ref=f1e261]: 独家体验：
+            - text: 顶级画廊私人鉴赏，艺术策展人专业讲解，深度了解日本当代艺术。
+          - generic [ref=f1e262]:
+            - generic [ref=f1e263]:
+              - strong [ref=f1e264]: 场所等级
+              - text: 顶级画廊
+            - generic [ref=f1e265]:
+              - strong [ref=f1e266]: 专业指导
+              - text: 艺术策展人
+            - generic [ref=f1e267]:
+              - strong [ref=f1e268]: 内容深度
+              - text: 当代艺术发展
+      - generic [ref=f1e269] [cursor=pointer]:
+        - generic [ref=f1e270]: 顶级美食
+        - generic [ref=f1e271]:
+          - generic [ref=f1e272]: 🍱
+          - heading "赤坂料亭·江户时代怀石料理" [level=3] [ref=f1e273]
+        - generic [ref=f1e274]:
+          - img "赤坂料亭·江户时代怀石料理" [ref=f1e275]
+          - button "❤️ 113" [ref=f1e276]:
+            - generic [ref=f1e277]: ❤️
+            - generic [ref=f1e278]: "113"
+        - generic [ref=f1e279]:
+          - paragraph [ref=f1e280]: 在保持江户时代建筑风格的赤坂料亭中，享用传统的怀石料理。每道菜都严格按照江户时代的制作工艺和摆盘方式。
+          - generic [ref=f1e281]:
+            - strong [ref=f1e282]: 独家体验：
+            - text: 江户时代建筑中的正宗怀石料理，严格按照传统工艺制作和摆盘。
+          - generic [ref=f1e283]:
+            - generic [ref=f1e284]:
+              - strong [ref=f1e285]: 建筑特色
+              - text: 江户时代风格
+            - generic [ref=f1e286]:
+              - strong [ref=f1e287]: 料理类型
+              - text: 传统怀石
+            - generic [ref=f1e288]:
+              - strong [ref=f1e289]: 制作标准
+              - text: 古法工艺
+      - generic [ref=f1e290] [cursor=pointer]:
+        - generic [ref=f1e291]: 自然秘境
+        - generic [ref=f1e292]:
+          - generic [ref=f1e293]: 🌸
+          - heading "皇居东御苑·樱花季特别参观" [level=3] [ref=f1e294]
+        - generic [ref=f1e295]:
+          - img "皇居东御苑·樱花季特别参观" [ref=f1e296]
+          - button "❤️ 243" [ref=f1e297]:
+            - generic [ref=f1e298]: ❤️
+            - generic [ref=f1e299]: "243"
+        - generic [ref=f1e300]:
+          - paragraph [ref=f1e301]: 在樱花盛开的季节，特别参观皇居东御苑。在皇室园林中欣赏最美的樱花，了解日本樱花文化的深层含义。
+          - generic [ref=f1e302]:
+            - strong [ref=f1e303]: 独家体验：
+            - text: 皇室园林中的樱花特别参观，体验最高等级的赏樱文化。
+          - generic [ref=f1e304]:
+            - generic [ref=f1e305]:
+              - strong [ref=f1e306]: 特殊季节
+              - text: 樱花盛开期
+            - generic [ref=f1e307]:
+              - strong [ref=f1e308]: 参观场所
+              - text: 皇居东御苑
+            - generic [ref=f1e309]:
+              - strong [ref=f1e310]: 文化价值
+              - text: 樱花文化精髓
+    - generic [ref=f1e311]:
+      - paragraph [ref=f1e312]:
+        - strong [ref=f1e313]: WASCELL·方舟计划 | 投资健康，共创圈层，共赢未来
+      - paragraph [ref=f1e314]: 申请加入顶级企业家专属健康投资圈，开启您的生命品质与商界融合的双重增值之旅
+  - button "↑" [ref=f1e315] [cursor=pointer]
