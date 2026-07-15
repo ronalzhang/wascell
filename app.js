@@ -323,9 +323,9 @@ app.use(helmet({
         directives: {
             defaultSrc: ["'self'"],
             styleSrc: ["'self'", "'unsafe-inline'"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://static.cloudflareinsights.com"],
             imgSrc: ["'self'", "data:"],
-            connectSrc: ["'self'"]
+            connectSrc: ["'self'", "https://cloudflareinsights.com"]
         }
     }
 }));

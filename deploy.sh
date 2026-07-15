@@ -32,13 +32,32 @@ TIMEOUT=30
 
 # 检查timeout命令（macOS兼容性）
 if command -v gtimeout > /dev/null; then
-    TIMEOUT_CMD="gtimeout $TIMEOUT"
+    TIMEOUT_BIN="gtimeout"
 elif command -v timeout > /dev/null; then
-    TIMEOUT_CMD="timeout $TIMEOUT"
+    TIMEOUT_BIN="timeout"
 else
-    TIMEOUT_CMD=""
+    TIMEOUT_BIN=""
     echo "⚠️  timeout命令不可用，将不使用超时限制"
 fi
+
+SSH_TARGET="$SERVER_USER@$SERVER_IP"
+SSH_ARGS=(-p "$SERVER_PORT" -o ConnectTimeout=10 -o StrictHostKeyChecking=no "$SSH_TARGET")
+
+run_with_timeout() {
+    if [ -n "$TIMEOUT_BIN" ]; then
+        "$TIMEOUT_BIN" "$TIMEOUT" "$@"
+    else
+        "$@"
+    fi
+}
+
+run_remote() {
+    sshpass -p "$SERVER_PASS" ssh "${SSH_ARGS[@]}" "$@"
+}
+
+run_remote_with_timeout() {
+    run_with_timeout sshpass -p "$SERVER_PASS" ssh "${SSH_ARGS[@]}" "$@"
+}
 
 # Git推送函数（带重试机制）
 push_to_github() {
@@ -57,17 +76,12 @@ push_to_github() {
     # 尝试推送，最多重试3次
     for i in {1..3}; do
         echo "🔄 尝试推送 (第 $i 次)..."
-        if [ -n "$TIMEOUT_CMD" ]; then
-            $TIMEOUT_CMD git push origin main
-        else
-            git push origin main
-        fi
-        if [ $? -eq 0 ]; then
-            echo -e "${GREEN}✅ GitHub推送成功${NC}"
-            return 0
-        else
+        if ! run_with_timeout git push origin main; then
             echo -e "${YELLOW}⚠️  推送失败，等待 5 秒后重试...${NC}"
             sleep 5
+        else
+            echo -e "${GREEN}✅ GitHub推送成功${NC}"
+            return 0
         fi
     done
     
@@ -81,13 +95,7 @@ push_to_github || echo "⚠️  跳过GitHub推送，直接部署到服务器"
 
 # 2. 检查服务器连接
 echo "🔍 检查服务器连接..."
-if [ -n "$TIMEOUT_CMD" ]; then
-    SSH_CMD="$TIMEOUT_CMD sshpass -p '$SERVER_PASS' ssh -p $SERVER_PORT -o ConnectTimeout=10 \"$SERVER_USER@$SERVER_IP\" \"echo '✅ 服务器连接成功'\""
-else
-    SSH_CMD="sshpass -p '$SERVER_PASS' ssh -p $SERVER_PORT -o ConnectTimeout=10 \"$SERVER_USER@$SERVER_IP\" \"echo '✅ 服务器连接成功'\""
-fi
-
-if ! eval $SSH_CMD; then
+if ! run_remote_with_timeout "echo '✅ 服务器连接成功'"; then
     echo -e "${RED}❌ 服务器连接失败，请检查IP、用户名和密码${NC}"
     exit 1
 fi
@@ -96,22 +104,14 @@ fi
 echo "📥 同步代码到服务器..."
 
 # 先检查服务器上Git仓库状态
-SERVER_REPO_STATUS=$(sshpass -p "$SERVER_PASS" ssh -p $SERVER_PORT "$SERVER_USER@$SERVER_IP" "cd $APP_DIR && git status --porcelain" 2>/dev/null || echo "ERROR")
-
-if [ "$SERVER_REPO_STATUS" != "ERROR" ]; then
+if SERVER_REPO_STATUS=$(run_remote_with_timeout "cd $APP_DIR && git status --porcelain" 2>/dev/null); then
     echo "🔧 清理服务器上的未跟踪文件..."
-    sshpass -p "$SERVER_PASS" ssh -p $SERVER_PORT "$SERVER_USER@$SERVER_IP" "cd $APP_DIR && git clean -fd"
+    run_remote "cd $APP_DIR && git clean -fd"
     echo "🔄 重置本地更改..."
-    sshpass -p "$SERVER_PASS" ssh -p $SERVER_PORT "$SERVER_USER@$SERVER_IP" "cd $APP_DIR && git reset --hard HEAD"
+    run_remote "cd $APP_DIR && git reset --hard HEAD"
     
     echo "📥 尝试从GitHub拉取最新代码..."
-    if [ -n "$TIMEOUT_CMD" ]; then
-        PULL_CMD="$TIMEOUT_CMD sshpass -p '$SERVER_PASS' ssh -p $SERVER_PORT \"$SERVER_USER@$SERVER_IP\" \"cd $APP_DIR && git pull origin main\""
-    else
-        PULL_CMD="sshpass -p '$SERVER_PASS' ssh -p $SERVER_PORT \"$SERVER_USER@$SERVER_IP\" \"cd $APP_DIR && git pull origin main\""
-    fi
-    
-    if eval $PULL_CMD; then
+    if run_remote_with_timeout "cd $APP_DIR && git pull origin main"; then
         echo -e "${GREEN}✅ 代码同步成功${NC}"
     else
         echo -e "${YELLOW}⚠️  GitHub拉取失败，尝试其他方式同步代码...${NC}"
@@ -127,7 +127,7 @@ if [ "$SERVER_REPO_STATUS" != "ERROR" ]; then
                 --exclude='access.log' \
                 --exclude='stats.json' \
                 ./ "$SERVER_USER@$SERVER_IP:$APP_DIR/" \
-                -e "sshpass -p '$SERVER_PASS' ssh -p $SERVER_PORT -o StrictHostKeyChecking=no"
+                -e "sshpass -p '$SERVER_PASS' ssh -p $SERVER_PORT -o ConnectTimeout=10 -o StrictHostKeyChecking=no"
             echo -e "${GREEN}✅ 代码文件同步完成${NC}"
         else
             echo -e "${RED}❌ rsync不可用，请安装rsync或手动同步代码${NC}"
@@ -135,27 +135,22 @@ if [ "$SERVER_REPO_STATUS" != "ERROR" ]; then
         fi
     fi
 else
-    echo -e "${YELLOW}⚠️  无法检查服务器Git状态，跳过Git操作${NC}"
+    echo -e "${RED}❌ 无法检查服务器Git状态，已中止部署以避免重启旧版本${NC}"
+    exit 1
 fi
 
 # 4. 安装依赖（如果有更新）
 echo "📦 更新依赖包..."
-if [ -n "$TIMEOUT_CMD" ]; then
-    NPM_CMD="$TIMEOUT_CMD sshpass -p '$SERVER_PASS' ssh -p $SERVER_PORT \"$SERVER_USER@$SERVER_IP\" \"cd $APP_DIR && npm install --production\""
-else
-    NPM_CMD="sshpass -p '$SERVER_PASS' ssh -p $SERVER_PORT \"$SERVER_USER@$SERVER_IP\" \"cd $APP_DIR && npm install --production\""
-fi
-
-if ! eval $NPM_CMD; then
+if ! run_remote_with_timeout "cd $APP_DIR && npm install --production"; then
     echo -e "${YELLOW}⚠️  依赖安装失败，但继续部署...${NC}"
 fi
 
 # 5. 重启应用
 echo "🔄 重启应用..."
-if ! sshpass -p "$SERVER_PASS" ssh -p $SERVER_PORT "$SERVER_USER@$SERVER_IP" "cd $APP_DIR && pm2 restart $APP_NAME 2>/dev/null"; then
+if ! run_remote "cd $APP_DIR && pm2 restart $APP_NAME 2>/dev/null"; then
     echo -e "${YELLOW}⚠️  重启失败，尝试删除并重新创建应用...${NC}"
-    sshpass -p "$SERVER_PASS" ssh -p $SERVER_PORT "$SERVER_USER@$SERVER_IP" "cd $APP_DIR && pm2 delete $APP_NAME 2>/dev/null || true"
-    sshpass -p "$SERVER_PASS" ssh -p $SERVER_PORT "$SERVER_USER@$SERVER_IP" "cd $APP_DIR && pm2 start app.js --name $APP_NAME" || {
+    run_remote "cd $APP_DIR && pm2 delete $APP_NAME 2>/dev/null || true"
+    run_remote "cd $APP_DIR && pm2 start app.js --name $APP_NAME" || {
         echo -e "${RED}❌ 应用启动失败，请手动检查${NC}"
         exit 1
     }
@@ -164,17 +159,17 @@ fi
 
 # 保存PM2配置
 echo "💾 保存PM2配置..."
-sshpass -p "$SERVER_PASS" ssh -p $SERVER_PORT "$SERVER_USER@$SERVER_IP" "pm2 save"
+run_remote "pm2 save"
 
 # 6. 检查应用状态
 echo "✅ 检查应用状态..."
-sshpass -p "$SERVER_PASS" ssh -p $SERVER_PORT "$SERVER_USER@$SERVER_IP" "pm2 status | grep $APP_NAME" || {
+run_remote "pm2 status | grep $APP_NAME" || {
     echo -e "${YELLOW}⚠️  无法获取应用状态${NC}"
 }
 
 # 7. 显示应用日志
 echo "📋 最新日志："
-sshpass -p "$SERVER_PASS" ssh -p $SERVER_PORT "$SERVER_USER@$SERVER_IP" "pm2 logs $APP_NAME --lines 5 --nostream" 2>/dev/null || echo -e "${YELLOW}⚠️  无法获取日志${NC}"
+run_remote "pm2 logs $APP_NAME --lines 5 --nostream" 2>/dev/null || echo -e "${YELLOW}⚠️  无法获取日志${NC}"
 
 # 8. 测试网站访问
 echo "🌐 测试网站访问..."
