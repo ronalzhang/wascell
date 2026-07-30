@@ -6,6 +6,11 @@ const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
 const http = require('http');
+const os = require('os');
+const crypto = require('crypto');
+const multer = require('multer');
+const { createAdminAuth } = require('./lib/admin-auth');
+const { createAdvisorStore } = require('./lib/advisor-store');
 
 // 异步文件操作
 const writeFileAsync = promisify(fs.writeFile);
@@ -17,7 +22,39 @@ const renameAsync = promisify(fs.rename);
 
 const app = express();
 const PORT = process.env.PORT || 3003; // 使用3003端口避免与其他应用冲突
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '123abc74531'; // 从环境变量读取管理员密码
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || (IS_PRODUCTION ? '' : 'development-only');
+const ADMIN_SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || crypto.randomBytes(32).toString('hex');
+const PRIVATE_ROOT = path.resolve(__dirname, '..', 'wascell-private');
+const ADVISOR_DATA_DIR = process.env.ADVISOR_DATA_DIR || path.join(PRIVATE_ROOT, 'advisor-data');
+const ADVISOR_UPLOAD_DIR = process.env.ADVISOR_UPLOAD_DIR || path.join(PRIVATE_ROOT, 'advisor-uploads');
+const ADVISOR_TEMP_DIR = process.env.ADVISOR_TEMP_DIR || path.join(os.tmpdir(), 'wascell-advisor-uploads');
+
+fs.mkdirSync(ADVISOR_TEMP_DIR, { recursive: true, mode: 0o700 });
+
+const adminAuth = createAdminAuth({
+    password: ADMIN_PASSWORD,
+    secret: ADMIN_SESSION_SECRET,
+    secureCookie: IS_PRODUCTION,
+});
+const advisorStore = createAdvisorStore({
+    dataDir: ADVISOR_DATA_DIR,
+    uploadDir: ADVISOR_UPLOAD_DIR,
+});
+
+const advisorUpload = multer({
+    dest: ADVISOR_TEMP_DIR,
+    limits: { files: 3, fileSize: 10 * 1024 * 1024, fields: 20 },
+    fileFilter: (req, file, callback) => {
+        const extension = path.extname(file.originalname || '').toLowerCase();
+        const allowed = (
+            (extension === '.pdf' && file.mimetype === 'application/pdf') ||
+            ((extension === '.jpg' || extension === '.jpeg') && file.mimetype === 'image/jpeg') ||
+            (extension === '.png' && file.mimetype === 'image/png')
+        );
+        callback(allowed ? null : new Error(`${path.basename(file.originalname || '附件')} 的文件类型不受支持`), allowed);
+    },
+});
 
 // 访问日志文件路径
 const LOG_FILE = path.join(__dirname, 'access.log');
@@ -539,29 +576,61 @@ app.use(express.static('.', {
     }
 }));
 
-// 后台管理API - 验证密码
-app.post('/api/admin/login', (req, res) => {
-    try {
-        const { password } = req.body;
+// 客户顾问申请：资料与附件一次提交，附件不会进入静态目录。
+app.post('/api/advisor-applications', (req, res) => {
+    advisorUpload.array('attachments', 3)(req, res, async (uploadError) => {
+        const uploadedFiles = req.files || [];
+        const cleanupTemporaryFiles = async () => {
+            await Promise.all(uploadedFiles.map((file) => fs.promises.rm(file.path, { force: true })));
+        };
 
-        // 输入验证
-        if (!password || typeof password !== 'string') {
-            return res.status(400).json({ success: false, message: '密码格式无效' });
+        if (uploadError) {
+            await cleanupTemporaryFiles();
+            const isTooLarge = uploadError.code === 'LIMIT_FILE_SIZE';
+            return res.status(isTooLarge ? 413 : 400).json({
+                success: false,
+                message: isTooLarge ? '单个附件不能超过 10 MB' : uploadError.message,
+            });
         }
 
-        if (password === ADMIN_PASSWORD) {
-            res.json({ success: true, message: '登录成功' });
-        } else {
-            res.status(401).json({ success: false, message: '密码错误' });
+        try {
+            const totalSize = uploadedFiles.reduce((sum, file) => sum + file.size, 0);
+            if (totalSize > 20 * 1024 * 1024) {
+                await cleanupTemporaryFiles();
+                return res.status(413).json({ success: false, message: '附件总大小不能超过 20 MB' });
+            }
+            const result = await advisorStore.createApplication({
+                ...req.body,
+                source: {
+                    page: req.body.sourcePage || req.get('Referer') || '',
+                    device: req.get('User-Agent') || '',
+                },
+            }, uploadedFiles);
+            return res.status(result.created ? 201 : 200).json({
+                success: true,
+                orderId: result.order.id,
+                createdAt: result.order.createdAt,
+                duplicate: !result.created,
+            });
+        } catch (error) {
+            await cleanupTemporaryFiles();
+            const isValidationError = /请填写|缺少提交|附件|文件类型/.test(error.message);
+            console.error('顾问申请写入失败:', isValidationError ? error.message : error);
+            return res.status(isValidationError ? 400 : 500).json({
+                success: false,
+                message: isValidationError ? error.message : '申请提交失败，请稍后重试',
+            });
         }
-    } catch (error) {
-        console.error('登录验证失败:', error);
-        res.status(500).json({ success: false, message: '服务器内部错误' });
-    }
+    });
 });
 
+// 管理后台服务端会话
+app.post('/api/admin/login', adminAuth.login);
+app.post('/api/admin/logout', adminAuth.logout);
+app.get('/api/admin/session', adminAuth.session);
+
 // 获取统计数据API
-app.get('/api/admin/stats', async (req, res) => {
+app.get('/api/admin/stats', adminAuth.requireAdmin, async (req, res) => {
     try {
         const { period = 'day', filter = 'all' } = req.query;
 
@@ -791,7 +860,7 @@ async function getHourlyStatsFromLog() {
 }
 
 // 获取实时数据
-app.get('/api/admin/realtime', (req, res) => {
+app.get('/api/admin/realtime', adminAuth.requireAdmin, (req, res) => {
     try {
         const stats = getStats();
         const today = getToday();
@@ -810,7 +879,7 @@ app.get('/api/admin/realtime', (req, res) => {
 });
 
 // 重新计算恶意请求次数（管理员工具）
-app.post('/api/admin/recalculate', async (req, res) => {
+app.post('/api/admin/recalculate', adminAuth.requireAdmin, async (req, res) => {
     try {
         const maliciousCounts = await recalculateMaliciousCount();
         res.json({ 
@@ -824,7 +893,60 @@ app.post('/api/admin/recalculate', async (req, res) => {
     }
 });
 
-// 管理后台路由
+// 顾问申请后台接口
+app.get('/api/admin/applications', adminAuth.requireAdmin, async (req, res) => {
+    try {
+        const result = await advisorStore.listApplications({
+            status: req.query.status,
+            periodId: req.query.periodId,
+            query: req.query.query,
+            page: req.query.page,
+            pageSize: req.query.pageSize,
+        });
+        res.json(result);
+    } catch (error) {
+        console.error('读取顾问申请失败:', error);
+        res.status(500).json({ message: '订单读取失败' });
+    }
+});
+
+app.get('/api/admin/applications/:id', adminAuth.requireAdmin, async (req, res) => {
+    try {
+        const order = await advisorStore.getApplication(req.params.id);
+        if (!order) return res.status(404).json({ message: '订单不存在' });
+        return res.json(order);
+    } catch (error) {
+        console.error('读取订单详情失败:', error);
+        return res.status(500).json({ message: '订单读取失败' });
+    }
+});
+
+app.patch('/api/admin/applications/:id', adminAuth.requireAdmin, async (req, res) => {
+    try {
+        const order = await advisorStore.updateApplication(req.params.id, {
+            status: req.body.status,
+            adminNote: req.body.adminNote,
+        });
+        if (!order) return res.status(404).json({ message: '订单不存在' });
+        return res.json({ success: true, order });
+    } catch (error) {
+        const isValidationError = error.message === '无效的订单状态';
+        return res.status(isValidationError ? 400 : 500).json({ message: isValidationError ? error.message : '订单更新失败' });
+    }
+});
+
+app.get('/api/admin/applications/:id/attachments/:attachmentId', adminAuth.requireAdmin, async (req, res) => {
+    try {
+        const attachment = await advisorStore.getAttachment(req.params.id, req.params.attachmentId);
+        if (!attachment) return res.status(404).json({ message: '附件不存在' });
+        return res.download(attachment.path, attachment.displayName);
+    } catch (error) {
+        console.error('附件下载失败:', error);
+        return res.status(404).json({ message: '附件不可用' });
+    }
+});
+
+// 管理后台保留非默认入口，减少自动扫描噪声；真正安全性由服务端会话保证。
 app.get('/admin-pro', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin-pro.html'));
 });
