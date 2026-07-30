@@ -14,14 +14,17 @@
     "pm2:restart": "pm2 restart wascell-website"
   },
   "dependencies": {
-    "compression": "^1.7.4",
-    "cors": "^2.8.5",
-    "express": "^4.18.2",
+    "compression": "^1.8.1",
+    "cors": "^2.8.6",
+    "express": "^4.22.2",
     "helmet": "^7.1.0",
     "multer": "^2.2.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
+  },
+  "overrides": {
+    "path-to-regexp": "0.1.13"
   },
   "keywords": [
     "wascell",
