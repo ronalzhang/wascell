@@ -61,17 +61,27 @@ test.after(async () => {
     if (runtimeDir) await fs.rm(runtimeDir, { recursive: true, force: true });
 });
 
-test('/admin stays hidden while /admin-pro serves the ARKSOMA admin', async () => {
-    const hiddenEntry = await fetch(`${baseUrl}/admin`);
-    assert.equal(hiddenEntry.status, 404);
+test('/admin and /admin-pro serve isolated sales and owner workspaces', async () => {
+    const ownerResponse = await fetch(`${baseUrl}/admin-pro`);
+    const ownerHtml = await ownerResponse.text();
+    assert.equal(ownerResponse.status, 200);
+    assert.match(ownerHtml, /ARKSOMA/);
+    assert.match(ownerHtml, /访问统计/);
+    assert.match(ownerHtml, /客户管理/);
+    assert.match(ownerHtml, /销售答疑/);
+    assert.match(ownerHtml, /商业配置/);
+    assert.match(ownerHtml, /团队权限/);
+    assert.doesNotMatch(ownerHtml, /name="username"/);
+    assert.doesNotMatch(ownerHtml, /销售登录/);
 
-    const response = await fetch(`${baseUrl}/admin-pro`);
-    const html = await response.text();
-
-    assert.equal(response.status, 200);
-    assert.match(html, /ARKSOMA/);
-    assert.match(html, /访问统计/);
-    assert.match(html, /顾问申请/);
+    const salesResponse = await fetch(`${baseUrl}/admin`);
+    const salesHtml = await salesResponse.text();
+    assert.equal(salesResponse.status, 200);
+    assert.match(salesHtml, /ARKSOMA/);
+    assert.match(salesHtml, /客户管理/);
+    assert.match(salesHtml, /销售答疑/);
+    assert.match(salesHtml, /name="username"/);
+    assert.doesNotMatch(salesHtml, /访问统计|商业配置|团队权限|管理员入口|admin-pro/);
 });
 
 test('owner data APIs require an owner session', async () => {

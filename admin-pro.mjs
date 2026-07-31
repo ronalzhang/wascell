@@ -1,289 +1,40 @@
-const $ = (selector) => document.querySelector(selector);
-const $$ = (selector) => [...document.querySelectorAll(selector)];
+const $=(s)=>document.querySelector(s), $$=(s)=>[...document.querySelectorAll(s)];
+const state={view:'stats',customers:[],staff:[],knowledge:[],config:null,chart:null};
+const titles={stats:['VISITOR INTELLIGENCE','访问统计'],customers:['CUSTOMER CONTINUITY','客户管理'],knowledge:['SALES PLAYBOOK','销售答疑'],config:['COMMERCIAL CONTROL','商业配置'],staff:['ACCESS CONTROL','团队权限']};
+const esc=(v='')=>String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+const money=(v)=>`¥ ${Number(v||0).toLocaleString('zh-CN')}`;
+const date=(v)=>v?new Intl.DateTimeFormat('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(v)):'未启用';
+let toastTimer;
+function toast(message){$('#adminToast').textContent=message;$('#adminToast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#adminToast').classList.remove('show'),2600)}
+function login(message=''){ $('#adminShell').hidden=true;$('#loginScreen').hidden=false;$('#loginMessage').textContent=message;$('#password').focus() }
+function workspace(){ $('#loginScreen').hidden=true;$('#adminShell').hidden=false }
+async function api(url,options={}){const r=await fetch(url,{credentials:'same-origin',...options,headers:{'content-type':'application/json',...(options.headers||{})}});const b=await r.json().catch(()=>({}));if(r.status===401){login('会话已失效，请重新登录');throw new Error('unauthorized')}if(!r.ok)throw new Error(b.message||'请求失败');return b}
+function stamp(){ $('#lastUpdated').textContent=`更新于 ${new Date().toLocaleTimeString('zh-CN',{hour12:false})}` }
 
-const loginScreen = $('#loginScreen');
-const adminShell = $('#adminShell');
-const toast = $('#adminToast');
-const statusLabels = { new: '新申请', contacted: '已联系', qualified: '待确认', confirmed: '已确认', closed: '已关闭' };
-let currentView = 'stats';
-let currentPeriod = 'day';
-let currentOrder = null;
-let chart = null;
-let toastTimer = null;
+async function handleLogin(e){e.preventDefault();const btn=$('#loginButton');btn.disabled=true;try{await api('/api/owner/login',{method:'POST',body:JSON.stringify({password:$('#password').value})});$('#password').value='';workspace();await loadCurrent()}catch(err){$('#loginMessage').textContent=err.message}finally{btn.disabled=false}}
+async function logout(){await api('/api/session/logout',{method:'POST',body:'{}'}).catch(()=>{});login('已安全退出')}
+function setView(view){state.view=view;$$('.view-panel').forEach(p=>p.hidden=p.id!==`${view}View`);$$('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));[$('#pageEyebrow').textContent,$('#pageTitle').textContent]=titles[view];loadCurrent()}
+async function loadCurrent(){const loaders={stats:loadStats,customers:loadCustomers,knowledge:loadKnowledge,config:loadConfig,staff:loadStaff};await loaders[state.view]();stamp()}
 
-function escapeHtml(value = '') {
-    return String(value).replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character]));
-}
+async function loadStats(){const [live,stats]=await Promise.all([api('/api/owner/realtime'),api('/api/owner/stats?period=day&filter=all')]);$('#todayVisits').textContent=live.todayVisits||0;$('#todayUnique').textContent=live.todayUniqueIPs||0;$('#totalVisits').textContent=live.totalVisits||0;$('#totalIPs').textContent=live.totalIPs||0;if(state.chart)state.chart.destroy();state.chart=new Chart($('#visitsChart'),{type:'line',data:{labels:(stats.periodData||[]).map(x=>x.label||x.date),datasets:[{label:'访问量',data:(stats.periodData||[]).map(x=>x.visits),borderColor:'#b9a27b',backgroundColor:'rgba(185,162,123,.09)',fill:true,tension:.32,pointRadius:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#777b76'}}},scales:{x:{ticks:{color:'#666'},grid:{color:'rgba(221,207,179,.06)'}},y:{ticks:{color:'#666'},grid:{color:'rgba(221,207,179,.06)'}}}}})}
+function memberLabel(c){if(!c.membershipExpiresAt)return '未启用';const days=Math.ceil((new Date(c.membershipExpiresAt)-Date.now())/86400000);if(days<0)return '已到期';if(days<=60)return `${days} 天后到期`;return '有效会员'}
+function salesName(id){return state.staff.find(s=>s.id===id)?.displayName||'待分配'}
+async function ensureStaff(){if(!state.staff.length)state.staff=(await api('/api/owner/staff')).items}
+async function loadCustomers(){await ensureStaff();const q=$('#customerSearch').value.trim();const data=await api(`/api/owner/customers?query=${encodeURIComponent(q)}&pageSize=100`);state.customers=data.items;$('#customerCount').textContent=`${data.total} 位客户`;$('#navNewCount').textContent=data.summary?.new||0;$('#customersBody').innerHTML=data.items.map(c=>`<tr data-customer="${esc(c.id)}" tabindex="0"><td><strong>${esc(c.name)}</strong><small>${esc(c.id)}</small></td><td>${esc(c.contact||c.email||'—')}</td><td>${esc(c.periodLabel||'—')}</td><td>${date(c.membershipExpiresAt)}</td><td>${esc(salesName(c.assignedSalesId))}</td><td><span class="status-pill">${esc(memberLabel(c))}</span></td></tr>`).join('')}
+function openDrawer(title,html,eyebrow='PRIVATE RECORD'){ $('#drawerTitle').textContent=title;$('#drawerEyebrow').textContent=eyebrow;$('#drawerContent').innerHTML=`<div class="drawer-content">${html}</div>`;$('#drawer').hidden=false;document.body.style.overflow='hidden' }
+function closeDrawer(){ $('#drawer').hidden=true;document.body.style.overflow='' }
+async function openCustomer(id){await ensureStaff();const c=await api(`/api/owner/customers/${encodeURIComponent(id)}`);const files=(c.attachments||[]).map(f=>`<a href="/api/owner/applications/${encodeURIComponent(c.id)}/attachments/${encodeURIComponent(f.id)}">${esc(f.displayName)} · 下载</a>`).join('')||'无附件';openDrawer(c.name,`<section class="order-identity"><p>${esc(c.id)}</p><h3>${esc(c.name)}</h3><span class="status-pill">${esc(memberLabel(c))}</span></section><dl class="detail-grid"><div><dt>联系方式</dt><dd>${esc(c.contact||c.email||'—')}</dd></div><div><dt>申请期次</dt><dd>${esc(c.periodLabel||'—')}</dd></div><div><dt>会员到期</dt><dd>${date(c.membershipExpiresAt)}</dd></div><div><dt>资料附件</dt><dd class="download-list">${files}</dd></div></dl><form class="admin-form" id="customerAdminForm"><label>负责销售<select id="assignSales"><option value="">待分配</option>${state.staff.map(s=>`<option value="${esc(s.id)}" ${s.id===c.assignedSalesId?'selected':''}>${esc(s.displayName)}</option>`).join('')}</select></label><button type="button" id="saveAssignment">保存客户归属</button><label>赠送 / 调整会员期限<input id="memberExpiry" type="date" value="${c.membershipExpiresAt?c.membershipExpiresAt.slice(0,10):''}"></label><label>调整原因<textarea id="memberReason" placeholder="必填：赠送原因或调整依据"></textarea></label><button type="button" id="adjustMembership">仅所有者可调整</button>${!c.membershipExpiresAt?'<button type="button" class="secondary-action" id="activateMembership">确认首次方案并启用会员</button>':''}</form>`);$('#saveAssignment').onclick=async()=>{await api(`/api/owner/customers/${encodeURIComponent(id)}/assignment`,{method:'PATCH',body:JSON.stringify({salesId:$('#assignSales').value})});toast('客户归属已保存');await loadCustomers()};$('#adjustMembership').onclick=async()=>{await api(`/api/owner/customers/${encodeURIComponent(id)}/membership`,{method:'POST',body:JSON.stringify({type:'owner_adjusted',expiresAt:$('#memberExpiry').value,reason:$('#memberReason').value})});toast('会员期限已调整并记录原因');closeDrawer();await loadCustomers()};if($('#activateMembership'))$('#activateMembership').onclick=async()=>{await api(`/api/owner/customers/${encodeURIComponent(id)}/membership`,{method:'POST',body:JSON.stringify({type:'plan_confirmed'})});toast('首年会员已启用');closeDrawer();await loadCustomers()}}
 
-function formatDate(value, withTime = true) {
-    if (!value) return '—';
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return '—';
-    return new Intl.DateTimeFormat('zh-CN', {
-        month: '2-digit', day: '2-digit',
-        ...(withTime ? { hour: '2-digit', minute: '2-digit', hour12: false } : {}),
-    }).format(date);
-}
+async function loadKnowledge(){const data=await api('/api/owner/knowledge');state.knowledge=data.items;renderKnowledge()}
+function renderKnowledge(){const q=$('#knowledgeSearch').value.trim().toLowerCase();const items=state.knowledge.filter(i=>`${i.stage}${i.question}${i.shortAnswer}`.toLowerCase().includes(q));$('#knowledgeList').innerHTML=items.map(i=>`<article class="knowledge-card" data-knowledge="${i.id}"><header><span>${esc(i.stage)}</span><b>${i.published?'已发布':'草稿'}</b></header><h3>${esc(i.question)}</h3><p>${esc(i.shortAnswer)}</p><small>${i.talkingPoints.map(esc).join(' · ')}</small></article>`).join('')}
+function knowledgeForm(item={}){openDrawer(item.id?'编辑答疑':'新增答疑',`<form class="admin-form" id="knowledgeForm"><label>客户旅程阶段<select id="kStage">${['品牌与定位','首次沟通','预约规则','会员机制','健康资料','方案与费用','日本准备','抵日接待','医疗服务','在日行程','回国延续','异议与边界'].map(s=>`<option ${s===item.stage?'selected':''}>${s}</option>`).join('')}</select></label><label>客户问题<input id="kQuestion" value="${esc(item.question||'')}"></label><label>简明回答<textarea id="kAnswer">${esc(item.shortAnswer||'')}</textarea></label><label>销售要点（每行一条）<textarea id="kPoints">${esc((item.talkingPoints||[]).join('\n'))}</textarea></label><label>排序<input id="kOrder" type="number" value="${item.order||999}"></label><label class="check-field"><input id="kPublished" type="checkbox" ${item.published===false?'':'checked'}> 对销售发布</label><button type="submit">保存答疑</button></form>`);$('#knowledgeForm').onsubmit=async e=>{e.preventDefault();const body={stage:$('#kStage').value,question:$('#kQuestion').value,shortAnswer:$('#kAnswer').value,talkingPoints:$('#kPoints').value.split('\n').filter(Boolean),sources:item.sources||[],published:$('#kPublished').checked,order:Number($('#kOrder').value)};await api(item.id?`/api/owner/knowledge/${item.id}`:'/api/owner/knowledge',{method:item.id?'PATCH':'POST',body:JSON.stringify(body)});closeDrawer();toast('答疑已保存');await loadKnowledge()}}
 
-function showToast(message) {
-    toast.textContent = message;
-    toast.classList.add('show');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toast.classList.remove('show'), 2800);
-}
+const configLabels={fullPlanPrice:'标准方案价格',membershipFee:'会员年费',membershipMonths:'会员期限（月）',standardCapacity:'标准期内部席位',filialPrice:'敬亲礼遇期价格',filialFamilyGroups:'公开家庭组数',filialMaxGuests:'内部人数上限'};
+async function loadConfig(){state.config=await api('/api/owner/config');$('#configFields').innerHTML=Object.entries(configLabels).map(([key,label])=>`<label><span>${label}</span><input name="${key}" type="number" value="${state.config[key]}"><small>${key.includes('Price')||key==='membershipFee'?money(state.config[key]):'仅内部可见'}</small></label>`).join('')}
+async function saveConfig(e){e.preventDefault();const body={reason:$('#configReason').value};new FormData(e.currentTarget).forEach((v,k)=>{if(k in configLabels)body[k]=Number(v)});await api('/api/owner/config',{method:'PATCH',body:JSON.stringify(body)});$('#configReason').value='';toast('商业配置已保存');await loadConfig()}
 
-function showLogin(message = '') {
-    adminShell.hidden = true;
-    loginScreen.hidden = false;
-    $('#loginMessage').textContent = message;
-    $('#password').focus();
-}
+async function loadStaff(){state.staff=(await api('/api/owner/staff')).items;$('#staffList').innerHTML=state.staff.map(s=>`<article class="staff-card"><div><span>${s.active?'ACTIVE':'DISABLED'}</span><h3>${esc(s.displayName)}</h3><p>${esc(s.username)}</p></div><div><button data-staff-status="${s.id}" data-active="${!s.active}">${s.active?'停用':'启用'}</button><button data-staff-reset="${s.id}">重置密码</button></div></article>`).join('')}
+function newStaff(){openDrawer('新增销售账号',`<form class="admin-form" id="staffForm"><label>销售姓名<input id="sName" required></label><label>登录用户名<input id="sUsername" required></label><label>初始密码<input id="sPassword" type="password" minlength="10" required></label><button type="submit">创建账号</button></form>`);$('#staffForm').onsubmit=async e=>{e.preventDefault();await api('/api/owner/staff',{method:'POST',body:JSON.stringify({displayName:$('#sName').value,username:$('#sUsername').value,password:$('#sPassword').value})});closeDrawer();toast('销售账号已创建');await loadStaff()}}
 
-function showAdmin() {
-    loginScreen.hidden = true;
-    adminShell.hidden = false;
-}
-
-async function api(url, options = {}) {
-    const response = await fetch(url, {
-        credentials: 'same-origin',
-        ...options,
-        headers: { ...(options.body instanceof FormData ? {} : { 'content-type': 'application/json' }), ...(options.headers || {}) },
-    });
-    if (response.status === 401) {
-        showLogin('会话已失效，请重新登录');
-        throw new Error('unauthorized');
-    }
-    const contentType = response.headers.get('content-type') || '';
-    const body = contentType.includes('application/json') ? await response.json() : null;
-    if (!response.ok) throw new Error(body?.message || '请求失败');
-    return body;
-}
-
-async function handleLogin(event) {
-    event.preventDefault();
-    const button = $('#loginButton');
-    button.disabled = true;
-    button.textContent = '正在验证…';
-    $('#loginMessage').textContent = '';
-    try {
-        const response = await fetch('/api/admin/login', {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ password: $('#password').value }),
-        });
-        const body = await response.json();
-        if (!response.ok) throw new Error(body.message || '登录失败');
-        $('#password').value = '';
-        showAdmin();
-        await Promise.all([loadStats(), loadOrders()]);
-    } catch (error) {
-        $('#loginMessage').textContent = error.message;
-    } finally {
-        button.disabled = false;
-        button.textContent = '进入管理中心';
-    }
-}
-
-async function logout() {
-    try { await api('/api/admin/logout', { method: 'POST', body: '{}' }); } catch { /* session may already be gone */ }
-    showLogin('已安全退出');
-}
-
-function setView(view) {
-    currentView = view;
-    $('#statsView').hidden = view !== 'stats';
-    $('#ordersView').hidden = view !== 'orders';
-    $$('[data-view]').forEach((button) => button.classList.toggle('active', button.dataset.view === view));
-    $('#pageTitle').textContent = view === 'stats' ? '访问统计' : '顾问申请';
-    $('#pageEyebrow').textContent = view === 'stats' ? 'VISITOR INTELLIGENCE' : 'PRIVATE ADVISORY ORDERS';
-}
-
-function stampUpdated() {
-    $('#lastUpdated').textContent = `更新于 ${new Intl.DateTimeFormat('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(new Date())}`;
-}
-
-function renderChart(periodData = []) {
-    if (chart) chart.destroy();
-    const canvas = $('#visitsChart');
-    chart = new Chart(canvas, {
-        type: 'line',
-        data: {
-            labels: periodData.map((item) => item.label || item.date),
-            datasets: [
-                { label: '访问量', data: periodData.map((item) => item.visits), borderColor: '#b9a27b', backgroundColor: 'rgba(185,162,123,.1)', borderWidth: 1.5, pointRadius: 1.5, tension: .32, fill: true },
-                { label: '独立访客', data: periodData.map((item) => item.uniqueIPs), borderColor: '#789d88', borderWidth: 1, pointRadius: 1, tension: .32 },
-            ],
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { labels: { color: '#777b76', boxWidth: 12, boxHeight: 1, font: { size: 10 } } } },
-            scales: {
-                x: { grid: { color: 'rgba(221,207,179,.06)' }, ticks: { color: '#5f635f', maxTicksLimit: 10, font: { size: 9 } } },
-                y: { beginAtZero: true, grid: { color: 'rgba(221,207,179,.07)' }, ticks: { color: '#5f635f', precision: 0, font: { size: 9 } } },
-            },
-        },
-    });
-}
-
-function renderIPs(data) {
-    const body = $('#ipBody');
-    const items = data.topIPs || [];
-    body.innerHTML = items.map((item) => `<tr>
-        <td><strong>${escapeHtml(item.ip)}</strong></td>
-        <td>${escapeHtml(item.location || '未知')}</td>
-        <td>${Number(item.count || 0).toLocaleString('zh-CN')}</td>
-        <td>${formatDate(item.firstVisit)}</td>
-        <td>${formatDate(item.lastVisit)}</td>
-        <td><span class="status-pill ${item.isBlacklisted ? 'status-new' : 'status-contacted'}">${item.isBlacklisted ? '风险' : '正常'}</span></td>
-    </tr>`).join('');
-    $('#ipEmpty').hidden = items.length !== 0;
-    $('#ipResultCount').textContent = `${data.pagination?.totalIPs ?? items.length} 条记录`;
-}
-
-async function loadStats() {
-    try {
-        const [realtime, stats] = await Promise.all([
-            api('/api/admin/realtime'),
-            api(`/api/admin/stats?period=${encodeURIComponent(currentPeriod)}&filter=${encodeURIComponent($('#ipFilter').value)}`),
-        ]);
-        $('#todayVisits').textContent = Number(realtime.todayVisits || 0).toLocaleString('zh-CN');
-        $('#todayUnique').textContent = Number(realtime.todayUniqueIPs || 0).toLocaleString('zh-CN');
-        $('#totalVisits').textContent = Number(realtime.totalVisits || 0).toLocaleString('zh-CN');
-        $('#totalIPs').textContent = Number(realtime.totalIPs || 0).toLocaleString('zh-CN');
-        renderChart(stats.periodData || []);
-        renderIPs(stats);
-        stampUpdated();
-    } catch (error) {
-        if (error.message !== 'unauthorized') showToast(`统计读取失败：${error.message}`);
-    }
-}
-
-function renderOrderMetrics(summary = {}) {
-    $('#metricAll').textContent = summary.all ?? 0;
-    $('#metricNew').textContent = summary.new ?? 0;
-    $('#metricContacted').textContent = summary.contacted ?? 0;
-    $('#metricConfirmed').textContent = summary.confirmed ?? 0;
-    $('#navNewCount').textContent = summary.new ?? 0;
-}
-
-function updatePeriodOptions(periods = []) {
-    const select = $('#periodFilter');
-    const selected = select.value;
-    select.innerHTML = '<option value="all">全部期次</option>' + periods.map((period) => `<option value="${escapeHtml(period.id)}">${escapeHtml(period.label)}</option>`).join('');
-    if ([...select.options].some((option) => option.value === selected)) select.value = selected;
-}
-
-function renderOrders(data) {
-    $('#ordersBody').innerHTML = data.items.map((order) => `<tr data-order-id="${escapeHtml(order.id)}" tabindex="0">
-        <td>${formatDate(order.createdAt)}</td>
-        <td><strong>${escapeHtml(order.name)}</strong><small>${escapeHtml(order.id)}</small></td>
-        <td>${escapeHtml(order.contact || order.email || '—')}<small>${escapeHtml(order.company || '')}</small></td>
-        <td>${escapeHtml(order.periodLabel || '—')}</td>
-        <td>${order.attachments?.length || 0}</td>
-        <td><span class="status-pill status-${escapeHtml(order.status)}">${escapeHtml(statusLabels[order.status] || order.status)}</span></td>
-    </tr>`).join('');
-    $('#resultCount').textContent = `${data.total} 条记录`;
-    $('#emptyState').hidden = data.items.length !== 0;
-    renderOrderMetrics(data.summary);
-    updatePeriodOptions(data.periods);
-}
-
-async function loadOrders() {
-    const params = new URLSearchParams({
-        status: $('#statusFilter').value,
-        periodId: $('#periodFilter').value,
-        query: $('#orderSearch').value.trim(),
-        page: '1',
-        pageSize: '100',
-    });
-    try {
-        const data = await api(`/api/admin/applications?${params}`);
-        renderOrders(data);
-        stampUpdated();
-    } catch (error) {
-        if (error.message !== 'unauthorized') showToast(`订单读取失败：${error.message}`);
-    }
-}
-
-function attachmentMarkup(order) {
-    if (!order.attachments?.length) return '<p>客户未上传附件</p>';
-    return `<div class="attachment-list">${order.attachments.map((file) => `<a href="/api/admin/applications/${encodeURIComponent(order.id)}/attachments/${encodeURIComponent(file.id)}" download><span>${escapeHtml(file.displayName)}<small>${(file.size / 1024 / 1024).toFixed(1)} MB</small></span><small>下载</small></a>`).join('')}</div>`;
-}
-
-function renderDrawer(order) {
-    currentOrder = order;
-    $('#drawerContent').innerHTML = `<div class="drawer-content">
-        <section class="order-identity"><p>${escapeHtml(order.id)}</p><h3>${escapeHtml(order.name)}</h3><span class="status-pill status-${escapeHtml(order.status)}">${escapeHtml(statusLabels[order.status])}</span></section>
-        <dl class="detail-grid">
-            <div><dt>提交时间</dt><dd>${escapeHtml(new Date(order.createdAt).toLocaleString('zh-CN'))}</dd></div>
-            <div><dt>申请期次</dt><dd>${escapeHtml(order.periodLabel || '—')}</dd></div>
-            <div><dt>微信 / 手机</dt><dd>${escapeHtml(order.contact || '—')}</dd></div>
-            <div><dt>邮箱</dt><dd>${escapeHtml(order.email || '—')}</dd></div>
-            <div><dt>企业 / 身份</dt><dd>${escapeHtml(order.company || '—')}</dd></div>
-        </dl>
-        <section class="detail-section"><h4>希望优先了解</h4><p>${escapeHtml(order.note || '客户暂未补充')}</p></section>
-        <section class="detail-section"><h4>附件 ${order.attachments?.length || 0}</h4>${attachmentMarkup(order)}</section>
-        <form class="admin-form" id="orderUpdateForm">
-            <label>状态<select id="drawerStatus">${Object.entries(statusLabels).map(([value, label]) => `<option value="${value}" ${order.status === value ? 'selected' : ''}>${label}</option>`).join('')}</select></label>
-            <label>内部备注<textarea id="drawerNote" placeholder="仅后台可见">${escapeHtml(order.adminNote || '')}</textarea></label>
-            <button type="submit">保存处理结果</button>
-        </form>
-    </div>`;
-    $('#orderDrawer').hidden = false;
-    document.body.style.overflow = 'hidden';
-    $('#orderUpdateForm').addEventListener('submit', updateOrder);
-}
-
-async function openOrder(id) {
-    try { renderDrawer(await api(`/api/admin/applications/${encodeURIComponent(id)}`)); }
-    catch (error) { if (error.message !== 'unauthorized') showToast(error.message); }
-}
-
-function closeDrawer() {
-    $('#orderDrawer').hidden = true;
-    document.body.style.overflow = '';
-    currentOrder = null;
-}
-
-async function updateOrder(event) {
-    event.preventDefault();
-    try {
-        const result = await api(`/api/admin/applications/${encodeURIComponent(currentOrder.id)}`, {
-            method: 'PATCH',
-            body: JSON.stringify({ status: $('#drawerStatus').value, adminNote: $('#drawerNote').value.trim() }),
-        });
-        renderDrawer(result.order);
-        await loadOrders();
-        showToast('订单处理结果已保存');
-    } catch (error) {
-        if (error.message !== 'unauthorized') showToast(`保存失败：${error.message}`);
-    }
-}
-
-let searchTimer;
-$('#loginForm').addEventListener('submit', handleLogin);
-$('#logoutButton').addEventListener('click', logout);
-$('#refreshCurrent').addEventListener('click', () => currentView === 'stats' ? loadStats() : loadOrders());
-$$('[data-view]').forEach((button) => button.addEventListener('click', () => { setView(button.dataset.view); if (button.dataset.view === 'orders') loadOrders(); }));
-$$('[data-period]').forEach((button) => button.addEventListener('click', () => {
-    currentPeriod = button.dataset.period;
-    $$('[data-period]').forEach((item) => item.classList.toggle('active', item === button));
-    loadStats();
-}));
-$('#ipFilter').addEventListener('change', loadStats);
-$('#statusFilter').addEventListener('change', loadOrders);
-$('#periodFilter').addEventListener('change', loadOrders);
-$('#orderSearch').addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(loadOrders, 240); });
-$('#ordersBody').addEventListener('click', (event) => { const row = event.target.closest('[data-order-id]'); if (row) openOrder(row.dataset.orderId); });
-$('#ordersBody').addEventListener('keydown', (event) => { const row = event.target.closest('[data-order-id]'); if (row && (event.key === 'Enter' || event.key === ' ')) openOrder(row.dataset.orderId); });
-$$('[data-close-drawer]').forEach((button) => button.addEventListener('click', closeDrawer));
-
-try {
-    await api('/api/admin/session');
-    showAdmin();
-    await Promise.all([loadStats(), loadOrders()]);
-} catch (error) {
-    if (error.message !== 'unauthorized') showLogin('后台连接失败，请稍后重试');
-}
+$('#loginForm').onsubmit=handleLogin;$('#logoutButton').onclick=logout;$('#refreshCurrent').onclick=loadCurrent;$$('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));$('#customerSearch').oninput=()=>setTimeout(loadCustomers,180);$('#customersBody').onclick=e=>{const r=e.target.closest('[data-customer]');if(r)openCustomer(r.dataset.customer)};$('#knowledgeSearch').oninput=renderKnowledge;$('#knowledgeList').onclick=e=>{const c=e.target.closest('[data-knowledge]');if(c)knowledgeForm(state.knowledge.find(i=>i.id===c.dataset.knowledge))};$('#newKnowledge').onclick=()=>knowledgeForm();$('#configForm').onsubmit=saveConfig;$('#newStaff').onclick=newStaff;$('#staffList').onclick=async e=>{const status=e.target.closest('[data-staff-status]');const reset=e.target.closest('[data-staff-reset]');if(status){await api(`/api/owner/staff/${status.dataset.staffStatus}/status`,{method:'PATCH',body:JSON.stringify({active:status.dataset.active==='true'})});toast('账号状态已更新');await loadStaff()}if(reset){const password=prompt('输入新的临时密码（至少 10 位）');if(password){await api(`/api/owner/staff/${reset.dataset.staffReset}/reset-password`,{method:'POST',body:JSON.stringify({password})});toast('密码已重置，旧会话已失效')}}};$$('[data-close-drawer]').forEach(b=>b.onclick=closeDrawer);
+try{const session=await api('/api/session');if(session.principal.role!=='owner')throw new Error('unauthorized');workspace();await loadCurrent()}catch(err){if(err.message!=='unauthorized')login('后台连接失败')}

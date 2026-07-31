@@ -1213,6 +1213,10 @@ app.get('/admin-pro', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin-pro.html'));
 });
 
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
 // 默认路由 - 返回首页
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
