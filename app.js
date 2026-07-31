@@ -14,6 +14,7 @@ const { createAdvisorStore } = require('./lib/advisor-store');
 const { createStaffStore } = require('./lib/staff-store');
 const { createAuditLog } = require('./lib/audit-log');
 const { createBusinessConfigStore } = require('./lib/business-config-store');
+const { createKnowledgeStore } = require('./lib/knowledge-store');
 
 // 异步文件操作
 const writeFileAsync = promisify(fs.writeFile);
@@ -34,12 +35,17 @@ const ADVISOR_UPLOAD_DIR = process.env.ADVISOR_UPLOAD_DIR || path.join(PRIVATE_R
 const ADVISOR_TEMP_DIR = process.env.ADVISOR_TEMP_DIR || path.join(os.tmpdir(), 'wascell-advisor-uploads');
 const STAFF_DATA_DIR = process.env.STAFF_DATA_DIR || path.join(PRIVATE_ROOT, 'staff-data');
 const BUSINESS_DATA_DIR = process.env.BUSINESS_DATA_DIR || path.join(PRIVATE_ROOT, 'business-data');
+const KNOWLEDGE_DATA_DIR = process.env.KNOWLEDGE_DATA_DIR || path.join(PRIVATE_ROOT, 'knowledge-data');
 
 fs.mkdirSync(ADVISOR_TEMP_DIR, { recursive: true, mode: 0o700 });
 
 const staffStore = createStaffStore({ dataDir: STAFF_DATA_DIR });
 const auditLog = createAuditLog({ dataDir: BUSINESS_DATA_DIR });
 const businessConfigStore = createBusinessConfigStore({ dataDir: BUSINESS_DATA_DIR, auditLog });
+const knowledgeStore = createKnowledgeStore({
+    dataDir: KNOWLEDGE_DATA_DIR,
+    seedFile: path.join(__dirname, 'data', 'knowledge-seed.zh-CN.json'),
+});
 const adminAuth = createAdminAuth({
     ownerPassword: ADMIN_PASSWORD,
     secret: ADMIN_SESSION_SECRET,
@@ -672,6 +678,103 @@ app.patch('/api/owner/config', adminAuth.requireOwner, async (req, res) => {
     } catch (error) {
         const validation = /原因|无效|不支持|不能为空/.test(error.message);
         return res.status(validation ? 400 : 500).json({ message: validation ? error.message : '配置保存失败' });
+    }
+});
+
+// 所有者管理销售账号；账号变更会使旧会话失效。
+app.get('/api/owner/staff', adminAuth.requireOwner, async (req, res) => {
+    try {
+        return res.json({ items: await staffStore.listSales() });
+    } catch (error) {
+        console.error('读取销售账号失败:', error);
+        return res.status(500).json({ message: '销售账号读取失败' });
+    }
+});
+
+app.post('/api/owner/staff', adminAuth.requireOwner, async (req, res) => {
+    try {
+        const account = await staffStore.createSales(req.body || {});
+        await auditLog.append({ actorId: req.auth.userId, action: 'staff_created', targetType: 'staff', targetId: account.id });
+        return res.status(201).json({ success: true, account });
+    } catch (error) {
+        const validation = /用户名|密码|姓名|存在/.test(error.message);
+        return res.status(validation ? 400 : 500).json({ message: validation ? error.message : '销售账号创建失败' });
+    }
+});
+
+app.patch('/api/owner/staff/:id/status', adminAuth.requireOwner, async (req, res) => {
+    try {
+        const account = await staffStore.setActive(req.params.id, req.body?.active);
+        if (!account) return res.status(404).json({ message: '销售账号不存在' });
+        await auditLog.append({ actorId: req.auth.userId, action: account.active ? 'staff_enabled' : 'staff_disabled', targetType: 'staff', targetId: account.id });
+        return res.json({ success: true, account });
+    } catch (error) {
+        return res.status(500).json({ message: '账号状态保存失败' });
+    }
+});
+
+app.post('/api/owner/staff/:id/reset-password', adminAuth.requireOwner, async (req, res) => {
+    try {
+        const account = await staffStore.resetPassword(req.params.id, req.body?.password);
+        if (!account) return res.status(404).json({ message: '销售账号不存在' });
+        await auditLog.append({ actorId: req.auth.userId, action: 'staff_password_reset', targetType: 'staff', targetId: account.id });
+        return res.json({ success: true, account });
+    } catch (error) {
+        const validation = /密码/.test(error.message);
+        return res.status(validation ? 400 : 500).json({ message: validation ? error.message : '密码重置失败' });
+    }
+});
+
+app.post('/api/sales/change-password', adminAuth.requireSalesOrOwner, async (req, res) => {
+    if (req.auth.role !== 'sales') return res.status(403).json({ message: '请使用销售账号' });
+    try {
+        await staffStore.changeOwnPassword(req.auth.userId, req.body?.currentPassword, req.body?.nextPassword);
+        await auditLog.append({ actorId: req.auth.userId, action: 'staff_password_changed', targetType: 'staff', targetId: req.auth.userId });
+        return adminAuth.logout(req, res);
+    } catch (error) {
+        const validation = /密码|账号/.test(error.message);
+        return res.status(validation ? 400 : 500).json({ message: validation ? error.message : '密码修改失败' });
+    }
+});
+
+// 答疑库按客户旅程排序：所有者维护，销售只读已发布内容。
+app.get('/api/owner/knowledge', adminAuth.requireOwner, async (req, res) => {
+    try {
+        return res.json({ items: await knowledgeStore.list(), stages: knowledgeStore.stages });
+    } catch (error) {
+        return res.status(500).json({ message: '答疑库读取失败' });
+    }
+});
+
+app.post('/api/owner/knowledge', adminAuth.requireOwner, async (req, res) => {
+    try {
+        const item = await knowledgeStore.create(req.body || {});
+        await auditLog.append({ actorId: req.auth.userId, action: 'knowledge_created', targetType: 'knowledge', targetId: item.id });
+        return res.status(201).json({ success: true, item });
+    } catch (error) {
+        const validation = /答疑|完整|来源|排序/.test(error.message);
+        return res.status(validation ? 400 : 500).json({ message: validation ? error.message : '答疑创建失败' });
+    }
+});
+
+app.patch('/api/owner/knowledge/:id', adminAuth.requireOwner, async (req, res) => {
+    try {
+        const item = await knowledgeStore.update(req.params.id, req.body || {});
+        if (!item) return res.status(404).json({ message: '答疑不存在' });
+        await auditLog.append({ actorId: req.auth.userId, action: 'knowledge_updated', targetType: 'knowledge', targetId: item.id });
+        return res.json({ success: true, item });
+    } catch (error) {
+        const validation = /答疑|完整|来源|排序/.test(error.message);
+        return res.status(validation ? 400 : 500).json({ message: validation ? error.message : '答疑保存失败' });
+    }
+});
+
+app.get('/api/sales/knowledge', adminAuth.requireSalesOrOwner, async (req, res) => {
+    if (req.auth.role !== 'sales') return res.status(403).json({ message: '请使用销售账号' });
+    try {
+        return res.json({ items: await knowledgeStore.list({ publishedOnly: true }), stages: knowledgeStore.stages });
+    } catch (error) {
+        return res.status(500).json({ message: '答疑库读取失败' });
     }
 });
 

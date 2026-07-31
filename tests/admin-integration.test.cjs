@@ -223,3 +223,46 @@ test('sales customer APIs enforce assignment and owner-only membership changes',
     });
     assert.equal(forbiddenGift.status, 403);
 });
+
+test('owner manages staff and knowledge while sales receives only published knowledge', async () => {
+    const ownerLogin = await fetch(`${baseUrl}/api/owner/login`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ password: 'integration-password' }),
+    });
+    const ownerCookie = ownerLogin.headers.get('set-cookie');
+
+    const staff = await fetch(`${baseUrl}/api/owner/staff`, { headers: { cookie: ownerCookie } });
+    assert.equal(staff.status, 200);
+    assert.equal((await staff.json()).items.length, 2);
+
+    const created = await fetch(`${baseUrl}/api/owner/knowledge`, {
+        method: 'POST',
+        headers: { cookie: ownerCookie, 'content-type': 'application/json' },
+        body: JSON.stringify({
+            stage: '首次沟通',
+            question: '集成测试问题',
+            shortAnswer: '仅供测试。',
+            talkingPoints: ['第一点'],
+            sources: [],
+            published: false,
+            order: 99,
+        }),
+    });
+    assert.equal(created.status, 201);
+
+    const salesLogin = await fetch(`${baseUrl}/api/sales/login`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ username: 'sales.integration', password: 'Sales-Integration-2026' }),
+    });
+    const salesCookie = salesLogin.headers.get('set-cookie');
+    const knowledge = await fetch(`${baseUrl}/api/sales/knowledge`, { headers: { cookie: salesCookie } });
+    const salesKnowledge = await knowledge.json();
+    assert.equal(knowledge.status, 200);
+    assert.ok(salesKnowledge.items.length >= 28);
+    assert.equal(salesKnowledge.items.some((item) => item.question === '集成测试问题'), false);
+
+    const forbiddenStaff = await fetch(`${baseUrl}/api/owner/staff`, { headers: { cookie: salesCookie } });
+    assert.equal(forbiddenStaff.status, 403);
+});
