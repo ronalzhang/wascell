@@ -1,5 +1,3 @@
-const ADVISOR_EMAIL = 'vip@wascell.com';
-
 export function validateAdvisorData(data) {
     if (!data.name?.trim()) {
         return { valid: false, field: 'name', message: '请填写您的姓名' };
@@ -14,23 +12,22 @@ export function validateAdvisorData(data) {
     return { valid: true };
 }
 
-export function buildAdvisorMailto(data) {
-    const subject = `ARKSOMA 方舟计划｜${data.period || '待确认期次'}｜私人顾问申请`;
-    const body = [
-        '您好，我希望申请 ARKSOMA 方舟计划私人顾问服务。',
-        '',
-        `期次：${data.period || '待确认'}`,
-        `姓名：${data.name || ''}`,
-        `微信/手机：${data.contact || ''}`,
-        `邮箱：${data.email || ''}`,
-        `企业/身份：${data.company || ''}`,
-        `希望了解：${data.note || ''}`,
-        `附件提示：${data.reportName || '请在邮件客户端添加半年内体检报告（可稍后提供）'}`,
-        '',
-        '此邮件由 ARKSOMA 私人顾问申请页面生成。',
-    ].join('\n');
+export function createSubmissionKey(storage, periodId) {
+    const storageKey = `arksoma-advisor-key-${periodId || 'unknown'}`;
+    const existing = storage?.getItem(storageKey);
+    if (existing) return existing;
+    const nonce = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const value = `arksoma-${periodId || 'unknown'}-${nonce}`;
+    storage?.setItem(storageKey, value);
+    return value;
+}
 
-    return `mailto:${ADVISOR_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+export function buildAdvisorFormData(data, files = [], submissionKey) {
+    const form = new FormData();
+    form.set('submissionKey', submissionKey);
+    ['periodId', 'periodLabel', 'name', 'contact', 'email', 'company', 'note', 'sourcePage'].forEach((key) => form.set(key, data[key] || ''));
+    files.forEach((file) => form.append('attachments', file, file.name));
+    return form;
 }
 
 function setBodyLock(locked) {
@@ -122,11 +119,11 @@ function initAdvisorDialog() {
         if (event.target === dialog) close();
     });
 
-    form.addEventListener('submit', (event) => {
+    form.addEventListener('submit', async (event) => {
         event.preventDefault();
         const values = Object.fromEntries(new FormData(form).entries());
-        const report = form.elements.report?.files?.[0];
-        const data = { ...values, reportName: report?.name || '' };
+        const files = [...(form.elements.attachments?.files || [])];
+        const data = { ...values, sourcePage: window.location.pathname };
         const validation = validateAdvisorData(data);
         if (!validation.valid) {
             status.textContent = validation.message;
@@ -134,9 +131,38 @@ function initAdvisorDialog() {
             return;
         }
 
-        status.textContent = '正在打开邮件客户端，请在发送前确认内容并添加附件。';
-        window.location.href = buildAdvisorMailto(data);
+        const submit = form.querySelector('[type="submit"]');
+        const key = createSubmissionKey(window.sessionStorage, data.periodId);
+        submit.disabled = true;
+        status.textContent = '正在安全提交申请与附件…';
+        try {
+            const response = await fetch('/api/advisor-applications', { method: 'POST', body: buildAdvisorFormData(data, files, key) });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message || '提交失败，请稍后重试');
+            status.textContent = `申请已提交 · ${result.orderId}。私人顾问将与您联系。`;
+            form.reset();
+            window.sessionStorage.removeItem(`arksoma-advisor-key-${data.periodId || 'unknown'}`);
+            submit.textContent = '申请已送达';
+        } catch (error) {
+            status.textContent = error.message;
+            submit.disabled = false;
+        }
     });
+}
+
+async function initPublicCatalog() {
+    try {
+        const response = await fetch('/api/public/catalog');
+        if (!response.ok) return;
+        const catalog = await response.json();
+        const special = document.body.classList.contains('period-special');
+        document.querySelectorAll('[data-catalog-price]').forEach((node) => {
+            node.textContent = `RMB ${Number(special ? catalog.filialPrice : catalog.fullPlanPrice).toLocaleString('en-US')}`;
+        });
+        document.querySelectorAll('[data-membership-fee]').forEach((node) => {
+            node.textContent = `RMB ${Number(catalog.membershipFee).toLocaleString('en-US')} / 年`;
+        });
+    } catch { /* 静态值继续作为可靠回退 */ }
 }
 
 function initRevealMotion() {
@@ -161,6 +187,7 @@ export function initArksomaPage() {
     initOriginMenu();
     initAdvisorDialog();
     initRevealMotion();
+    initPublicCatalog();
 }
 
 if (typeof document !== 'undefined') {

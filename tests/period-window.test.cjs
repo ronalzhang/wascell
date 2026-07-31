@@ -52,7 +52,8 @@ test('renderPeriodPage applies the third-period family edition without changing 
     const html = renderPeriodPage(template, periods[2], periods, periods[0].id);
 
     assert.match(html, /^ARKSOMA · 方舟计划 · 2026·八月三期/);
-    assert.match(html, /限额 6 席/);
+    assert.match(html, /敬亲礼遇期 · 3组家庭席位/);
     assert.match(html, /RMB 560,000/);
-    assert.match(html, /父母长辈特惠/);
+    assert.match(html, /敬亲礼遇/);
+    assert.doesNotMatch(html, /限额 6 席|6人|6 人/);
 });

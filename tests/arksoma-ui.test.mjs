@@ -1,28 +1,33 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { buildAdvisorMailto, validateAdvisorData } from '../arksoma-ui.mjs';
+import { buildAdvisorFormData, createSubmissionKey, validateAdvisorData } from '../arksoma-ui.mjs';
 
-test('buildAdvisorMailto generates a complete private-advisor draft without file contents', () => {
-    const href = buildAdvisorMailto({
-        period: '2026·八月首期',
+test('buildAdvisorFormData creates one backend application with period and attachment', () => {
+    const report = new File(['medical'], 'health-report.pdf', { type: 'application/pdf' });
+    const form = buildAdvisorFormData({
+        periodId: '20260801',
+        periodLabel: '2026·八月首期',
         name: '方舟客户',
         contact: 'wx_arksoma',
         email: 'client@example.com',
         company: '示例控股',
         note: '希望先了解细胞采集流程',
-        reportName: 'health-report.pdf',
-    });
+    }, [report], 'submission-test-001');
+    assert.equal(form.get('submissionKey'), 'submission-test-001');
+    assert.equal(form.get('periodId'), '20260801');
+    assert.equal(form.get('periodLabel'), '2026·八月首期');
+    assert.equal(form.get('name'), '方舟客户');
+    assert.equal(form.getAll('attachments')[0].name, 'health-report.pdf');
+});
 
-    assert.match(href, /^mailto:vip@wascell\.com\?/);
-
-    const decoded = decodeURIComponent(href);
-    assert.match(decoded, /ARKSOMA 方舟计划｜2026·八月首期｜私人顾问申请/);
-    assert.match(decoded, /姓名：方舟客户/);
-    assert.match(decoded, /微信\/手机：wx_arksoma/);
-    assert.match(decoded, /企业\/身份：示例控股/);
-    assert.match(decoded, /附件提示：health-report\.pdf/);
-    assert.doesNotMatch(decoded, /data:application\/pdf/);
+test('createSubmissionKey remains stable in session storage', () => {
+    const memory = new Map();
+    const storage = { getItem: (key) => memory.get(key) || null, setItem: (key, value) => memory.set(key, value) };
+    const first = createSubmissionKey(storage, '20260801');
+    const second = createSubmissionKey(storage, '20260801');
+    assert.equal(first, second);
+    assert.match(first, /^arksoma-20260801-/);
 });
 
 test('validateAdvisorData requires name and a direct contact method', () => {

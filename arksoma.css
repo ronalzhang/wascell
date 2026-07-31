@@ -403,6 +403,18 @@ textarea:focus-visible {
     margin: 34px 0 62px;
 }
 
+.membership-note {
+    margin-top: clamp(34px, 5vw, 72px);
+    padding: clamp(24px, 4vw, 44px);
+    border: 1px solid rgba(222, 207, 179, .22);
+    background: linear-gradient(135deg, rgba(15, 21, 19, .78), rgba(7, 11, 10, .54));
+    backdrop-filter: blur(18px) saturate(112%);
+    -webkit-backdrop-filter: blur(18px) saturate(112%);
+}
+.membership-note h3 { margin:18px 0 12px; color:#e8e1d4; font-family:"Songti SC",STSong,serif; font-size:clamp(22px,3vw,34px); font-weight:300; line-height:1.45; }
+.membership-note > p:not(.eyebrow) { margin:0; max-width:760px; color:#9b9d98; font-size:14px; line-height:2; }
+.membership-note small { display:block; margin-top:20px; color:#b9a27b; font:10px/1.8 "SFMono-Regular",Consolas,monospace; letter-spacing:.08em; }
+
 .protocol-list {
     border-top: 1px solid var(--hairline);
 }

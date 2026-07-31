@@ -58,23 +58,24 @@ function periodMenu(periods, activeId, rootTargetId) {
 }
 
 function valuesForPeriod(period) {
-    const capacity = period.special ? 6 : 5;
+    const capacity = period.special ? 3 : 5;
+    const capacityLabel = period.special ? '敬亲礼遇期 · 3组家庭席位' : '限额 5 席';
     const price = period.special ? 'RMB 560,000' : 'RMB 580,000';
     const applyNote = period.special
-        ? `父母长辈特惠 · 需提供家人信息及半年内体检报告 · 截止 ${period.cutoff}`
+        ? `敬亲礼遇 · 以家庭陪伴为主题 · 可单人申请 · 截止 ${period.cutoff}`
         : `邀请制审核 · 需提供个人信息及半年内体检报告 · 截止 ${period.cutoff}`;
-    return { capacity, price, applyNote };
+    return { capacity, capacityLabel, price, applyNote };
 }
 
 function renderPeriodPage(template, period, periods, rootTargetId) {
-    const { capacity, price, applyNote } = valuesForPeriod(period);
+    const { capacity, capacityLabel, price, applyNote } = valuesForPeriod(period);
     const values = {
         PAGE_TITLE: `ARKSOMA · 方舟计划 · ${period.label}`,
-        META_DESCRIPTION: `ARKSOMA 方舟计划｜生命资产管理｜${period.label}｜限额 ${capacity} 席`,
+        META_DESCRIPTION: `ARKSOMA 方舟计划｜生命资产管理｜${period.label}｜${capacityLabel}`,
         PERIOD_ID: period.id,
         PERIOD_LABEL: period.label,
         PERIOD_MENU: periodMenu(periods, period.id, rootTargetId),
-        CAPACITY: `限额 ${capacity} 席`,
+        CAPACITY: capacityLabel,
         CAPACITY_NUMBER: String(capacity),
         PRICE: price,
         CUTOFF: period.cutoff,
