@@ -2,13 +2,13 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>ARKSOMA · 方舟计划 · 2026·八月首期</title>
+    <title>{{PAGE_TITLE}}</title>
     <meta name="viewport" content="width=1024">
-    <meta name="description" content="ARKSOMA 方舟计划｜生命资产管理｜2026·八月首期｜限额 5 席">
+    <meta name="description" content="{{META_DESCRIPTION}}">
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="stylesheet" href="arksoma.css?v=20260729-1">
 </head>
-<body class="arksoma-page" data-period="2026·八月首期" data-period-id="20260801">
+<body class="arksoma-page{{SPECIAL_CLASS}}" data-period="{{PERIOD_LABEL}}" data-period-id="{{PERIOD_ID}}">
     <a class="skip-link" href="#science">跳至主要内容</a>
 
     <main>
@@ -32,15 +32,15 @@
                 <div class="hero-actions" data-reveal>
                     <div class="period-switcher">
                         <button class="period-trigger" id="periodTrigger" type="button" aria-expanded="false" aria-controls="periodDropdown">
-                            <span>2026·八月首期</span>
+                            <span>{{PERIOD_LABEL}}</span>
                             <small>SELECT</small>
                         </button>
                         <div class="period-dropdown" id="periodDropdown" hidden>
-                            <a href="/" class="period-option" aria-current="page"><span>2026·八月首期</span><small>已满</small></a><a href="20260802" class="period-option"><span>2026·八月二期</span><small>已满</small></a><a href="20260803" class="period-option"><span>2026·八月三期</span><small>可申请</small></a><a href="20260901" class="period-option"><span>2026·九月首期</span><small>可申请</small></a><a href="20260902" class="period-option"><span>2026·九月二期</span><small>可申请</small></a>
+                            {{PERIOD_MENU}}
                         </div>
                     </div>
                     <button class="advisor-trigger" type="button" data-open-advisor>申请私人顾问</button>
-                    <p class="hero-facts"><span>东京 · 京都 · 富士山</span><span>限额 5 席</span></p>
+                    <p class="hero-facts"><span>东京 · 京都 · 富士山</span><span>{{CAPACITY}}</span></p>
                 </div>
                 <p class="scroll-cue" aria-hidden="true">SCROLL TO DISCOVER</p>
             </div>
@@ -131,11 +131,11 @@
 
         <section class="section closing" id="contact" aria-labelledby="closingTitle">
             <div class="closing-content safe-column" data-reveal>
-                <p class="eyebrow">PRIVATE ADVISORY · 2026·八月首期</p>
+                <p class="eyebrow">PRIVATE ADVISORY · {{PERIOD_LABEL}}</p>
                 <h2 class="display-title" id="closingTitle">为生命，预留第二种未来。</h2>
                 <p class="body-copy closing-copy">顾问将根据您的时间、健康资料准备情况与在日偏好，安排一次私密的前期沟通。</p>
                 <button class="advisor-trigger" type="button" data-open-advisor>申请私人顾问</button>
-                <p class="closing-meta">RMB 580,000 · 限额 5 席 · 截止 2026年7月5日</p>
+                <p class="closing-meta">{{PRICE}} · {{CAPACITY}} · 截止 {{CUTOFF}}</p>
             </div>
         </section>
     </main>
@@ -164,7 +164,7 @@
             <h2 class="dialog-title" id="advisorTitle">申请私人顾问</h2>
             <p class="dialog-intro">填写最少必要信息后，我们会生成一封已预填的申请邮件。体检报告不会上传到网页，请在邮件客户端确认后添加附件。</p>
             <form class="advisor-form" id="advisorForm" novalidate>
-                <input type="hidden" name="period" value="2026·八月首期">
+                <input type="hidden" name="period" value="{{PERIOD_LABEL}}">
                 <div class="field"><label for="advisorName">姓名 *</label><input id="advisorName" name="name" autocomplete="name" required></div>
                 <div class="field"><label for="advisorContact">微信 / 手机 *</label><input id="advisorContact" name="contact" autocomplete="tel"></div>
                 <div class="field"><label for="advisorEmail">邮箱</label><input id="advisorEmail" name="email" type="email" autocomplete="email"></div>

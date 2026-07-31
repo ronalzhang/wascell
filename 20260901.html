@@ -1,652 +1,186 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-
 <head>
     <meta charset="UTF-8">
-    <title>WASCELL · 方舟计划 2026·九月首期</title>
+    <title>ARKSOMA · 方舟计划 · 2026·九月首期</title>
     <meta name="viewport" content="width=1024">
+    <meta name="description" content="ARKSOMA 方舟计划｜生命资产管理｜2026·九月首期｜限额 5 席">
     <link rel="icon" type="image/png" href="favicon.png">
-    <meta name="description" content="方舟计划 | 生命资产管理 · 仅限5席 · 日本厚生省认证">
-    <style>
-        :root {
-            --black: #0a0a0a;
-            --dark: #111111;
-            --dark-light: #1a1a1a;
-            --gold: #c9a962;
-            --gold-light: #dfc07a;
-            --white: #ffffff;
-            --gray: #999999;
-            --gray-dark: #666666;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', sans-serif;
-            background: var(--black);
-            color: var(--white);
-            line-height: 1.8;
-            min-width: 1024px;
-        }
-
-        .container {
-            max-width: 960px;
-            margin: 0 auto;
-            padding: 0 40px;
-        }
-
-        /* ===== 顶部栏 ===== */
-        .topbar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-            background: rgba(10, 10, 10, 0.95);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(201, 169, 98, 0.15);
-        }
-
-        .topbar-inner {
-            max-width: 960px;
-            margin: 0 auto;
-            padding: 16px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            font-size: 18px;
-            font-weight: 300;
-            letter-spacing: 6px;
-            color: var(--gold);
-            text-decoration: none;
-        }
-
-        .period-switcher {
-            position: relative;
-        }
-
-        .period-trigger {
-            background: transparent;
-            border: 1px solid rgba(201, 169, 98, 0.5);
-            color: var(--gold);
-            padding: 10px 20px;
-            font-size: 13px;
-            letter-spacing: 1px;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .period-trigger:hover {
-            background: rgba(201, 169, 98, 0.1);
-        }
-
-        .period-trigger .dropdown-icon {
-            font-size: 10px;
-            transition: transform 0.3s;
-        }
-
-        .period-trigger.active .dropdown-icon {
-            transform: rotate(180deg);
-        }
-
-        .period-dropdown {
-            position: absolute;
-            top: calc(100% + 8px);
-            right: 0;
-            background: var(--dark);
-            border: 1px solid rgba(201, 169, 98, 0.2);
-            min-width: 180px;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-8px);
-            transition: all 0.25s;
-        }
-
-        .period-dropdown.show {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-        }
-
-        .period-option {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 14px 18px;
-            color: var(--gray);
-            text-decoration: none;
-            font-size: 13px;
-            transition: all 0.2s;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-        }
-
-        .period-option:last-child {
-            border-bottom: none;
-        }
-
-        .period-option:hover {
-            background: rgba(201, 169, 98, 0.08);
-            color: var(--white);
-        }
-
-        .period-option.active {
-            background: var(--gold);
-            color: var(--black);
-        }
-
-        .period-option .status-indicator {
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            flex-shrink: 0;
-            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 0 10px currentColor;
-        }
-
-        .period-option.available .status-indicator {
-            background: #9adbc8;
-            color: rgba(154, 219, 200, 0.75);
-        }
-
-        .period-option.full .status-indicator {
-            background: var(--gold-light);
-            color: rgba(223, 192, 122, 0.85);
-        }
-
-        .period-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            z-index: 99;
-            display: none;
-        }
-
-        .period-overlay.show {
-            display: block;
-        }
-
-        /* ===== 主视觉 ===== */
-        .hero {
-            min-height: 65vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 140px 40px 80px;
-            background: linear-gradient(180deg, var(--black) 0%, var(--dark) 100%);
-            position: relative;
-        }
-
-        .hero::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 1px;
-            height: 60px;
-            background: linear-gradient(180deg, var(--gold) 0%, transparent 100%);
-        }
-
-        .hero-badge {
-            border: 1px solid var(--gold);
-            color: var(--gold);
-            padding: 12px 36px;
-            font-size: 14px;
-            letter-spacing: 5px;
-            text-transform: uppercase;
-            margin-bottom: 40px;
-        }
-
-        .hero-title {
-            font-size: 64px;
-            font-weight: 200;
-            letter-spacing: 14px;
-            margin-bottom: 20px;
-        }
-
-        .hero-period {
-            font-size: 20px;
-            color: var(--gray);
-            letter-spacing: 4px;
-            margin-bottom: 50px;
-        }
-
-        .hero-price {
-            margin-bottom: 16px;
-        }
-
-        .hero-price .amount {
-            font-size: 54px;
-            font-weight: 200;
-            color: var(--gold);
-            letter-spacing: 3px;
-        }
-
-        .hero-price .unit {
-            font-size: 20px;
-            color: var(--gray);
-            margin-left: 8px;
-        }
-
-        .hero-price-note {
-            font-size: 16px;
-            color: var(--gray-dark);
-            letter-spacing: 1px;
-        }
-
-        .hero-desc {
-            margin-top: 40px;
-            font-size: 18px;
-            color: var(--gray);
-            line-height: 2.2;
-            max-width: 650px;
-        }
-
-        .hero-desc strong {
-            color: var(--gold-light);
-            font-weight: 400;
-        }
-
-        /* ===== 核心价值 ===== */
-        .value-section {
-            padding: 80px 0;
-            background: var(--dark);
-        }
-
-        .section-header {
-            text-align: center;
-            margin-bottom: 60px;
-        }
-
-        .section-tag {
-            font-size: 14px;
-            color: var(--gold);
-            letter-spacing: 5px;
-            text-transform: uppercase;
-            margin-bottom: 16px;
-        }
-
-        .section-title {
-            font-size: 34px;
-            font-weight: 200;
-            letter-spacing: 5px;
-        }
-
-        .value-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1px;
-            background: rgba(201, 169, 98, 0.15);
-        }
-
-        .value-card {
-            background: var(--dark);
-            padding: 50px 28px;
-            text-align: center;
-            transition: all 0.4s;
-        }
-
-        .value-card:hover {
-            background: var(--dark-light);
-        }
-
-        .value-num {
-            font-size: 13px;
-            color: var(--gold);
-            letter-spacing: 3px;
-            margin-bottom: 26px;
-            opacity: 0.6;
-        }
-
-        .value-title {
-            font-size: 18px;
-            color: var(--white);
-            letter-spacing: 2px;
-            margin-bottom: 22px;
-            font-weight: 400;
-        }
-
-        .value-desc {
-            font-size: 15px;
-            color: var(--gray);
-            line-height: 2.0;
-            letter-spacing: 0.3px;
-        }
-
-        /* ===== 申请区 ===== */
-        .apply-section {
-            padding: 70px 0;
-            background: var(--black);
-            text-align: center;
-        }
-
-        .apply-btn {
-            display: inline-block;
-            border: 1px solid var(--gold);
-            color: var(--gold);
-            padding: 20px 70px;
-            font-size: 17px;
-            letter-spacing: 4px;
-            text-decoration: none;
-            transition: all 0.3s;
-            background: transparent;
-            cursor: pointer;
-            font-family: inherit;
-        }
-
-        .apply-btn:hover {
-            background: var(--gold);
-            color: var(--black);
-        }
-
-        .apply-note {
-            margin-top: 24px;
-            font-size: 15px;
-            color: var(--gray-dark);
-            letter-spacing: 1px;
-        }
-
-        /* ===== 行程展示 ===== */
-        .itinerary-section {
-            padding: 100px 0;
-            background: var(--dark);
-        }
-
-        .itinerary-intro {
-            text-align: center;
-            max-width: 600px;
-            margin: 0 auto 60px;
-            font-size: 14px;
-            color: var(--gray);
-            line-height: 2;
-        }
-
-        .place-card {
-            position: relative;
-            margin-bottom: 30px;
-            overflow: hidden;
-            height: 420px;
-        }
-
-        .place-card:hover .place-image {
-            transform: scale(1.03);
-        }
-
-        .place-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.6s ease;
-        }
-
-        .place-content {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 50px;
-            background: linear-gradient(0deg, rgba(10, 10, 10, 0.95) 0%, rgba(10, 10, 10, 0.8) 60%, transparent 100%);
-        }
-
-        .place-day {
-            font-size: 11px;
-            color: var(--gold);
-            letter-spacing: 3px;
-            margin-bottom: 12px;
-        }
-
-        .place-title {
-            font-size: 20px;
-            font-weight: 400;
-            letter-spacing: 2px;
-            margin-bottom: 16px;
-            line-height: 1.5;
-        }
-
-        .place-desc {
-            font-size: 13px;
-            color: var(--gray);
-            line-height: 2;
-            margin-bottom: 20px;
-            max-width: 600px;
-        }
-
-        .place-tags {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .place-tag {
-            font-size: 11px;
-            color: rgba(255, 255, 255, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            padding: 6px 14px;
-            letter-spacing: 1px;
-        }
-
-        /* ===== 底部 ===== */
-        .footer {
-            padding: 60px 0;
-            background: var(--black);
-            text-align: center;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .footer-logo {
-            font-size: 16px;
-            color: var(--gold);
-            letter-spacing: 6px;
-            margin-bottom: 16px;
-        }
-
-        .footer-text {
-            font-size: 12px;
-            color: var(--gray-dark);
-            letter-spacing: 2px;
-        }
-    </style>
+    <link rel="stylesheet" href="arksoma.css?v=20260729-1">
 </head>
+<body class="arksoma-page" data-period="2026·九月首期" data-period-id="20260901">
+    <a class="skip-link" href="#science">跳至主要内容</a>
 
-<body>
-    <!-- 顶部栏 -->
-    <header class="topbar">
-        <div class="topbar-inner">
-            <a href="/" class="logo">WASCELL.com</a>
-            <div class="period-switcher">
-                <button class="period-trigger" id="periodTrigger">
-                    2026·九月首期 <span class="dropdown-icon">▼</span>
+    <main>
+        <section class="section hero" id="home" aria-labelledby="heroTitle">
+            <div class="hero-shell safe-column">
+                <div class="brand-lockup" data-reveal>
+                    <span class="brand-name">ARKSOMA</span>
+                    <span class="brand-cn">方舟计划</span>
+                </div>
+
+                <button class="origin-trigger" id="originTrigger" type="button" aria-controls="originMenu" aria-expanded="false">
+                    <span class="origin-label">ORIGIN · THE STONE OF LONGEVITY</span>
+                    <span class="origin-coordinate">37°32′10″N<br>139°36′20″E</span>
                 </button>
-                <div class="period-dropdown" id="periodDropdown">
-                    <a href="/" class="period-option full">
-                        <span>2026·八月首期</span>
-                        <span class="status-indicator"></span>
-                    </a>
-                    <a href="20260802" class="period-option full">
-                        <span>2026·八月二期</span>
-                        <span class="status-indicator"></span>
-                    </a>
-                    <a href="20260803" class="period-option available">
-                        <span>2026·八月三期</span>
-                        <span class="status-indicator"></span>
-                    </a>
-                    <a href="20260901" class="period-option active available">
-                        <span>2026·九月首期</span>
-                        <span class="status-indicator"></span>
-                    </a>
-                    <a href="20260902" class="period-option available">
-                        <span>2026·九月二期</span>
-                        <span class="status-indicator"></span>
-                    </a>
+
+                <div class="hero-copy" data-reveal>
+                    <h1 class="hero-title" id="heroTitle">生命，是最值得长期管理的资产</h1>
+                    <p class="hero-subtitle">细胞科技 × 日本私享文化</p>
                 </div>
-            </div>
-            <div class="period-overlay" id="periodOverlay"></div>
-        </div>
-    </header>
 
-    <!-- 主视觉 -->
-    <section class="hero">
-        <div class="hero-badge">仅限 5 席 · 预约邀请制</div>
-        <h1 class="hero-title">方舟计划</h1>
-        <p class="hero-period">2026·九月首期 生命资产管理</p>
-        <div class="hero-price">
-            <span class="amount">RMB 580,000</span>
-            <span class="unit">/ 席位</span>
-        </div>
-        <p class="hero-price-note">含在日全部吃住行费用，不含往返机票</p>
-        <p class="hero-desc">
-            <strong>日本自体脂肪干细胞</strong> · 全球领先MSC技术<br>
-            厚生劳动省认证·会员预约制诊所·建立您的私人生物备份库
-        </p>
-    </section>
-
-    <!-- 核心价值 -->
-    <section class="value-section">
-        <div class="container">
-            <div class="section-header">
-                <p class="section-tag">Core Value</p>
-                <h2 class="section-title">三大核心价值</h2>
-            </div>
-            <div class="value-grid">
-                <div class="value-card">
-                    <p class="value-num">— 01 —</p>
-                    <h3 class="value-title">生命资产管理</h3>
-                    <p class="value-desc">日本厚生劳动省认证<br>预约制高端干细胞诊所<br>建立您的私人生物备份库</p>
-                </div>
-                <div class="value-card">
-                    <p class="value-num">— 02 —</p>
-                    <h3 class="value-title">精英圈层准入</h3>
-                    <p class="value-desc">严格筛选的行业掌舵人<br>封闭式私董会深度对话<br>签署保密协议确保质量</p>
-                </div>
-                <div class="value-card">
-                    <p class="value-num">— 03 —</p>
-                    <h3 class="value-title">稀缺文化特权</h3>
-                    <p class="value-desc">非公开寺院与皇室工坊<br>介绍制料亭与私人茶室<br>无法复制的在地体验</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- 申请区 -->
-    <section class="apply-section">
-        <div class="container">
-            <a href="mailto:vip@wascell.com?subject=%E9%A2%84%E5%AE%9A%E5%8F%82%E5%8A%A0WASCELL%E6%96%B9%E8%88%9F%E8%AE%A1%E5%88%922026%C2%B7%E4%B9%9D%E6%9C%88%E9%A6%96%E6%9C%9F"
-                class="apply-btn">
-                确认预定
-            </a>
-            <p class="apply-note">预定需提供企业家信息及半年内体检报告 · 本期截止 2026年8月5日</p>
-        </div>
-    </section>
-
-    <!-- 行程展示 -->
-    <section class="itinerary-section">
-        <div class="container">
-            <div class="section-header">
-                <p class="section-tag">Itinerary</p>
-                <h2 class="section-title">本期行程安排</h2>
-            </div>
-            <p class="itinerary-intro">
-                五日四晚封闭式行程，第一阶段完成细胞采集与文化体验，<br>
-                四周后返回日本进行细胞回输（半日）。以下为本期精选行程。
-            </p>
-
-            <!-- Day 1 -->
-            <div class="place-card">
-                <img src="imgs/kaiseki.jpg" alt="屋形船" class="place-image">
-                <div class="place-content">
-                    <p class="place-day">DAY 1 · 精英汇聚</p>
-                    <h3 class="place-title">白木匠造屋形船 · 东京湾私董会</h3>
-                    <p class="place-desc">东京唯一政府认可的高级屋形船，仅容10席。料理大厨随船准备怀石料理，在东京湾夜景中开启圈层初识。</p>
-                    <div class="place-tags">
-                        <span class="place-tag">政府认可</span>
-                        <span class="place-tag">限定10席</span>
-                        <span class="place-tag">船上怀石</span>
+                <div class="hero-actions" data-reveal>
+                    <div class="period-switcher">
+                        <button class="period-trigger" id="periodTrigger" type="button" aria-expanded="false" aria-controls="periodDropdown">
+                            <span>2026·九月首期</span>
+                            <small>SELECT</small>
+                        </button>
+                        <div class="period-dropdown" id="periodDropdown" hidden>
+                            <a href="/" class="period-option"><span>2026·八月首期</span><small>已满</small></a><a href="20260802" class="period-option"><span>2026·八月二期</span><small>已满</small></a><a href="20260803" class="period-option"><span>2026·八月三期</span><small>可申请</small></a><a href="20260901" class="period-option" aria-current="page"><span>2026·九月首期</span><small>可申请</small></a><a href="20260902" class="period-option"><span>2026·九月二期</span><small>可申请</small></a>
+                        </div>
                     </div>
+                    <button class="advisor-trigger" type="button" data-open-advisor>申请私人顾问</button>
+                    <p class="hero-facts"><span>东京 · 京都 · 富士山</span><span>限额 5 席</span></p>
                 </div>
+                <p class="scroll-cue" aria-hidden="true">SCROLL TO DISCOVER</p>
             </div>
+        </section>
 
-            <!-- Day 2 -->
-            <div class="place-card">
-                <img src="imgs/geisha.jpg" alt="艺伎茶道" class="place-image">
-                <div class="place-content">
-                    <p class="place-day">DAY 2 · 核心医疗</p>
-                    <h3 class="place-title">细胞采集 + 介绍制艺伎茶道</h3>
-                    <p class="place-desc">上午完成脂肪干细胞采集。傍晚前往浅草1950年老字号料亭，介绍制接待，艺伎亲自演绎茶道与舞蹈。</p>
-                    <div class="place-tags">
-                        <span class="place-tag">厚生省认证</span>
-                        <span class="place-tag">介绍制</span>
-                        <span class="place-tag">1950年创立</span>
-                    </div>
+        <section class="section science" id="science" aria-labelledby="scienceTitle">
+            <div class="science-content" data-reveal>
+                <p class="eyebrow">ARKSOMA CELL PROTOCOL · 001</p>
+                <h2 class="display-title" id="scienceTitle">长寿医学，<br>在秩序中，回归本质。</h2>
+                <p class="body-copy science-intro">从自体细胞采集、评估到长期生命档案建立，每一个环节都以审慎、可追溯和私人化为前提。我们管理的不是一次体验，而是面向未来的生命资产。</p>
+                <div class="protocol-list">
+                    <article class="protocol-item">
+                        <span class="protocol-index">A—01</span>
+                        <div><h3 class="protocol-title">自体细胞路径</h3><p class="protocol-copy">围绕个人身体状况建立专属评估与采集计划。</p></div>
+                    </article>
+                    <article class="protocol-item">
+                        <span class="protocol-index">A—02</span>
+                        <div><h3 class="protocol-title">全程私人协调</h3><p class="protocol-copy">顾问、医疗与在日行程形成一条克制而完整的服务链。</p></div>
+                    </article>
+                    <article class="protocol-item">
+                        <span class="protocol-index">A—03</span>
+                        <div><h3 class="protocol-title">长期生命档案</h3><p class="protocol-copy">让每一次重要决策都有历史记录、当下证据与未来方向。</p></div>
+                    </article>
                 </div>
             </div>
+        </section>
 
-            <!-- Day 3 -->
-            <div class="place-card">
-                <img src="imgs/home.jpg" alt="茶人私宅" class="place-image">
-                <div class="place-content">
-                    <p class="place-day">DAY 3 · 茶道传承</p>
-                    <h3 class="place-title">里千家大师私宅 · 茶道体验</h3>
-                    <p class="place-desc">目黑柿木坂，里千家家元关门弟子私人宅邸。三十载茶道研习，亲手为您调制抹茶，感受一期一会。</p>
-                    <div class="place-tags">
-                        <span class="place-tag">家元关门弟子</span>
-                        <span class="place-tag">私人茶室</span>
-                        <span class="place-tag">三十载专精</span>
-                    </div>
+        <section class="section origin" id="origin" aria-labelledby="originTitle">
+            <div class="origin-grid safe-column">
+                <div class="origin-monogram" data-reveal aria-hidden="true">
+                    <strong>石</strong>
+                    <span>37°32′10″N<br>139°36′20″E<br>IWANAGA · NISHIAIZU</span>
+                </div>
+                <div class="origin-story" data-reveal>
+                    <p class="eyebrow">ORIGIN · THE STONE OF LONGEVITY</p>
+                    <h2 class="display-title" id="originTitle">长寿之石</h2>
+                    <blockquote>石头代表生命中需要守住的根基，细胞之光代表可以被科技重新激活的未来。</blockquote>
+                    <p class="body-copy">坐标指向日本西会津山岳文化中的长寿意象。当地信仰中的岩长姬命象征健康与恒久；ARKSOMA从“如岩石般保存生命根基”的古老愿望出发，以现代细胞科技重新理解延续、修复与新生。</p>
+                    <p class="origin-note">文化叙事用于说明品牌灵感，不代表与相关神社或机构存在商业合作或授权关系。</p>
                 </div>
             </div>
+        </section>
 
-            <!-- Day 4 -->
-            <div class="place-card">
-                <img src="imgs/longtemple.jpg" alt="龙安寺" class="place-image">
-                <div class="place-content">
-                    <p class="place-day">DAY 4 · 禅意修行</p>
-                    <h3 class="place-title">世界遗产龙安寺 · 非公开区域</h3>
-                    <p class="place-desc">公元1450年创建的禅宗古寺，联合国世界文化遗产。进入非公开区域，在枯山水庭园中进行团体禅修。</p>
-                    <div class="place-tags">
-                        <span class="place-tag">世界遗产</span>
-                        <span class="place-tag">非公开区域</span>
-                        <span class="place-tag">枯山水</span>
-                    </div>
-                </div>
+        <section class="section journey journey-1" id="passage" aria-labelledby="journey1Title">
+            <div class="journey-content" data-reveal>
+                <p class="journey-day">DAY 01 · TOKYO</p>
+                <h2 class="journey-title" id="journey1Title">东京湾私席，开启一段安静的同行。</h2>
+                <p class="journey-copy">在白木匠造的屋形船中，以怀石料理与城市夜景完成第一次会面。席位克制、交流私密，旅程从彼此信任开始。</p>
+                <p class="journey-meta"><span>PRIVATE TABLE</span><span>LIMITED SEATS</span></p>
             </div>
+        </section>
 
-            <!-- Day 5 -->
-            <div class="place-card">
-                <img src="imgs/caiguoqiang.jpg" alt="皇室工坊" class="place-image">
-                <div class="place-content">
-                    <p class="place-day">DAY 5 · 圈层深化</p>
-                    <h3 class="place-title">皇室御用工坊 · 国宝级工艺</h3>
-                    <p class="place-desc">探访为皇室制作器物的传统工坊，观摩国宝级工艺师现场制作。签署旅行回忆录，建立长期合作关系。</p>
-                    <div class="place-tags">
-                        <span class="place-tag">皇室专用</span>
-                        <span class="place-tag">国宝级</span>
-                        <span class="place-tag">数百年传承</span>
-                    </div>
-                </div>
+        <section class="section journey journey-2" aria-labelledby="journey2Title">
+            <div class="journey-content" data-reveal>
+                <p class="journey-day">DAY 02 · TOKYO</p>
+                <h2 class="journey-title" id="journey2Title">细胞采集之后，进入介绍制的日本。</h2>
+                <p class="journey-copy">医疗安排与文化体验保持清晰边界。完成当天流程后，在传统料亭与艺伎茶道中感受另一种关于时间的技艺。</p>
+                <p class="journey-meta"><span>CELL COLLECTION</span><span>PRIVATE ACCESS</span></p>
             </div>
+        </section>
+
+        <section class="section journey journey-3" aria-labelledby="journey3Title">
+            <div class="journey-content" data-reveal>
+                <p class="journey-day">DAY 03 · TOKYO</p>
+                <h2 class="journey-title" id="journey3Title">一盏茶的时间，重新理解长期主义。</h2>
+                <p class="journey-copy">在茶人私宅中体验一期一会。真正的珍贵不来自喧闹，而来自只为少数人保留的时间与注意力。</p>
+                <p class="journey-meta"><span>TEA CEREMONY</span><span>PRIVATE RESIDENCE</span></p>
+            </div>
+        </section>
+
+        <section class="section journey journey-4" aria-labelledby="journey4Title">
+            <div class="journey-content" data-reveal>
+                <p class="journey-day">DAY 04 · KYOTO</p>
+                <h2 class="journey-title" id="journey4Title">在枯山水中，让复杂重新变得清晰。</h2>
+                <p class="journey-copy">走进京都古寺与庭园，在石、苔与留白之间完成一次内在整理。身体管理之外，仍需要给精神留下空间。</p>
+                <p class="journey-meta"><span>ZEN GARDEN</span><span>QUIET ACCESS</span></p>
+            </div>
+        </section>
+
+        <section class="section journey journey-5" aria-labelledby="journey5Title">
+            <div class="journey-content" data-reveal>
+                <p class="journey-day">DAY 05 · KYOTO</p>
+                <h2 class="journey-title" id="journey5Title">把技艺、记忆与未来带回自己的生活。</h2>
+                <p class="journey-copy">在传统工坊与私人交流中结束首阶段旅程。四周后返回日本完成后续安排，顾问继续负责跨阶段协调。</p>
+                <p class="journey-meta"><span>CRAFT LEGACY</span><span>CONTINUOUS CARE</span></p>
+            </div>
+        </section>
+
+        <section class="section closing" id="contact" aria-labelledby="closingTitle">
+            <div class="closing-content safe-column" data-reveal>
+                <p class="eyebrow">PRIVATE ADVISORY · 2026·九月首期</p>
+                <h2 class="display-title" id="closingTitle">为生命，预留第二种未来。</h2>
+                <p class="body-copy closing-copy">顾问将根据您的时间、健康资料准备情况与在日偏好，安排一次私密的前期沟通。</p>
+                <button class="advisor-trigger" type="button" data-open-advisor>申请私人顾问</button>
+                <p class="closing-meta">RMB 580,000 · 限额 5 席 · 截止 2026年8月5日</p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">ARKSOMA · 方舟计划 · 生命资产管理</footer>
+
+    <aside class="origin-menu" id="originMenu" aria-label="ARKSOMA 导航" hidden>
+        <button class="menu-backdrop" type="button" data-close-menu aria-label="关闭菜单"></button>
+        <div class="menu-panel" role="dialog" aria-modal="true" aria-labelledby="menuTitle">
+            <button class="menu-close" type="button" data-close-menu>关闭</button>
+            <p class="menu-origin" id="menuTitle">THE STONE OF LONGEVITY<br>37°32′10″N · 139°36′20″E</p>
+            <nav class="menu-nav">
+                <a href="#origin" data-menu-link><small>01</small><span>方舟起源</span></a>
+                <a href="#science" data-menu-link><small>02</small><span>生命科学</span></a>
+                <a href="#passage" data-menu-link><small>03</small><span>日本私享</span></a>
+                <a href="#contact" data-menu-link><small>04</small><span>私人顾问</span></a>
+            </nav>
+            <p class="menu-legend">岩石保存根基，细胞重新点亮未来。<br>触碰坐标，进入 ARKSOMA。</p>
         </div>
-    </section>
+    </aside>
 
-    <!-- 底部 -->
-    <footer class="footer">
-        <p class="footer-logo">WASCELL</p>
-        <p class="footer-text">方舟计划 · 生命资产管理 · 精英圈层</p>
-    </footer>
+    <dialog class="advisor-dialog" id="advisorDialog" aria-labelledby="advisorTitle">
+        <div class="advisor-dialog-inner">
+            <button class="dialog-close" type="button" data-close-advisor>关闭</button>
+            <p class="eyebrow">PRIVATE ADVISORY</p>
+            <h2 class="dialog-title" id="advisorTitle">申请私人顾问</h2>
+            <p class="dialog-intro">填写最少必要信息后，我们会生成一封已预填的申请邮件。体检报告不会上传到网页，请在邮件客户端确认后添加附件。</p>
+            <form class="advisor-form" id="advisorForm" novalidate>
+                <input type="hidden" name="period" value="2026·九月首期">
+                <div class="field"><label for="advisorName">姓名 *</label><input id="advisorName" name="name" autocomplete="name" required></div>
+                <div class="field"><label for="advisorContact">微信 / 手机 *</label><input id="advisorContact" name="contact" autocomplete="tel"></div>
+                <div class="field"><label for="advisorEmail">邮箱</label><input id="advisorEmail" name="email" type="email" autocomplete="email"></div>
+                <div class="field"><label for="advisorCompany">企业 / 身份</label><input id="advisorCompany" name="company" autocomplete="organization"></div>
+                <div class="field field-wide"><label for="advisorNote">希望优先了解</label><textarea id="advisorNote" name="note" placeholder="例如：细胞采集流程、在日时间安排、父母同行"></textarea></div>
+                <div class="field field-wide">
+                    <label for="advisorReport">半年内体检报告（可选）</label>
+                    <input id="advisorReport" name="report" type="file" accept=".pdf,.jpg,.jpeg,.png">
+                    <p class="field-hint">网页只读取文件名用于提醒，不读取、不上传文件内容。</p>
+                </div>
+                <p class="form-status" id="advisorStatus" role="status" aria-live="polite"></p>
+                <button class="form-submit" type="submit">生成申请邮件</button>
+            </form>
+        </div>
+    </dialog>
 
-    <script src="period-switcher.js?v=20260603-2"></script>
+    <script type="module" src="arksoma-ui.mjs?v=20260729-1"></script>
 </body>
-
 </html>
