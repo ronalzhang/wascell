@@ -9,14 +9,22 @@ const { createStaffStore } = require('../lib/staff-store');
 let child;
 let baseUrl;
 let runtimeDir;
+let salesOneId;
+let salesTwoId;
 
 test.before(async () => {
     runtimeDir = await fs.mkdtemp(path.join(os.tmpdir(), 'wascell-admin-integration-'));
-    await createStaffStore({ dataDir: path.join(runtimeDir, 'staff') }).createSales({
+    const integrationStaff = createStaffStore({ dataDir: path.join(runtimeDir, 'staff') });
+    salesOneId = (await integrationStaff.createSales({
         username: 'sales.integration',
         displayName: '集成销售',
         password: 'Sales-Integration-2026',
-    });
+    })).id;
+    salesTwoId = (await integrationStaff.createSales({
+        username: 'sales.other',
+        displayName: '其他销售',
+        password: 'Sales-Other-2026',
+    })).id;
     const port = 39000 + (process.pid % 1000);
     baseUrl = `http://127.0.0.1:${port}`;
     child = spawn(process.execPath, ['app.js'], {
@@ -144,4 +152,74 @@ test('public catalog is readable while commercial configuration is owner-only', 
 
     const refreshedPublic = await fetch(`${baseUrl}/api/public/catalog`);
     assert.equal((await refreshedPublic.json()).membershipFee, 21800);
+});
+
+test('sales customer APIs enforce assignment and owner-only membership changes', async () => {
+    const secondForm = new FormData();
+    secondForm.set('submissionKey', 'integration-order-002');
+    secondForm.set('periodId', '20260902');
+    secondForm.set('periodLabel', '2026·九月二期');
+    secondForm.set('name', '其他客户');
+    secondForm.set('contact', 'other_wechat');
+    const secondCreated = await fetch(`${baseUrl}/api/advisor-applications`, { method: 'POST', body: secondForm });
+    const secondId = (await secondCreated.json()).orderId;
+
+    const ownerLogin = await fetch(`${baseUrl}/api/owner/login`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ password: 'integration-password' }),
+    });
+    const ownerCookie = ownerLogin.headers.get('set-cookie');
+    const ownerList = await fetch(`${baseUrl}/api/owner/customers`, { headers: { cookie: ownerCookie } });
+    const ownerCustomers = await ownerList.json();
+    const firstId = ownerCustomers.items.find((item) => item.name === '测试客户').id;
+
+    await fetch(`${baseUrl}/api/owner/customers/${firstId}/assignment`, {
+        method: 'PATCH',
+        headers: { cookie: ownerCookie, 'content-type': 'application/json' },
+        body: JSON.stringify({ salesId: salesOneId }),
+    });
+    await fetch(`${baseUrl}/api/owner/customers/${secondId}/assignment`, {
+        method: 'PATCH',
+        headers: { cookie: ownerCookie, 'content-type': 'application/json' },
+        body: JSON.stringify({ salesId: salesTwoId }),
+    });
+    const activate = await fetch(`${baseUrl}/api/owner/customers/${firstId}/membership`, {
+        method: 'POST',
+        headers: { cookie: ownerCookie, 'content-type': 'application/json' },
+        body: JSON.stringify({ type: 'plan_confirmed' }),
+    });
+    assert.equal(activate.status, 200);
+
+    const salesLogin = await fetch(`${baseUrl}/api/sales/login`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ username: 'sales.integration', password: 'Sales-Integration-2026' }),
+    });
+    const salesCookie = salesLogin.headers.get('set-cookie');
+    const salesList = await fetch(`${baseUrl}/api/sales/customers`, { headers: { cookie: salesCookie } });
+    const salesCustomers = await salesList.json();
+    assert.deepEqual(salesCustomers.items.map((item) => item.name), ['测试客户']);
+
+    const crossSales = await fetch(`${baseUrl}/api/sales/customers/${secondId}`, { headers: { cookie: salesCookie } });
+    assert.equal(crossSales.status, 403);
+
+    const booking = await fetch(`${baseUrl}/api/sales/customers/${firstId}/internal-bookings`, {
+        method: 'POST',
+        headers: { cookie: salesCookie, 'content-type': 'application/json' },
+        body: JSON.stringify({
+            periodId: '20270101',
+            periodLabel: '2027·一月首期',
+            guestCount: 2,
+            relationship: '父母',
+        }),
+    });
+    assert.equal(booking.status, 201);
+
+    const forbiddenGift = await fetch(`${baseUrl}/api/owner/customers/${firstId}/membership`, {
+        method: 'POST',
+        headers: { cookie: salesCookie, 'content-type': 'application/json' },
+        body: JSON.stringify({ type: 'owner_adjusted', expiresAt: '2029-01-01', reason: '越权赠送' }),
+    });
+    assert.equal(forbiddenGift.status, 403);
 });

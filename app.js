@@ -995,6 +995,116 @@ app.get([
     }
 });
 
+// 角色隔离的客户管理接口。
+app.get('/api/owner/customers', adminAuth.requireOwner, async (req, res) => {
+    try {
+        return res.json(await advisorStore.listForPrincipal(req.auth, req.query));
+    } catch (error) {
+        console.error('读取客户列表失败:', error);
+        return res.status(500).json({ message: '客户读取失败' });
+    }
+});
+
+app.get('/api/owner/customers/:id', adminAuth.requireOwner, async (req, res) => {
+    const customer = await advisorStore.getApplication(req.params.id);
+    return customer ? res.json(customer) : res.status(404).json({ message: '客户不存在' });
+});
+
+app.patch('/api/owner/customers/:id/assignment', adminAuth.requireOwner, async (req, res) => {
+    try {
+        const customer = await advisorStore.assignSales(req.params.id, req.body?.salesId);
+        if (!customer) return res.status(404).json({ message: '客户不存在' });
+        await auditLog.append({
+            actorId: req.auth.userId,
+            action: 'customer_assigned',
+            targetType: 'customer',
+            targetId: customer.id,
+            assignedSalesId: customer.assignedSalesId,
+        });
+        return res.json({ success: true, customer });
+    } catch (error) {
+        console.error('分配客户失败:', error);
+        return res.status(500).json({ message: '客户分配失败' });
+    }
+});
+
+app.post('/api/owner/customers/:id/membership', adminAuth.requireOwner, async (req, res) => {
+    try {
+        const config = await businessConfigStore.getPrivate();
+        const type = req.body?.type;
+        let customer;
+        if (type === 'owner_adjusted') {
+            customer = await advisorStore.adjustMembership(req.params.id, {
+                expiresAt: req.body?.expiresAt,
+                reason: req.body?.reason,
+                actorId: req.auth.userId,
+            });
+        } else if (type === 'plan_confirmed' || type === 'fee_renewed') {
+            customer = await advisorStore.recordMembershipEvent(req.params.id, {
+                type,
+                actorId: req.auth.userId,
+                months: config.membershipMonths,
+                priceSnapshot: type === 'plan_confirmed' ? config.fullPlanPrice : config.membershipFee,
+                bookingId: req.body?.bookingId,
+            });
+        } else {
+            return res.status(400).json({ message: '不支持的会员操作' });
+        }
+        if (!customer) return res.status(404).json({ message: '客户不存在' });
+        await auditLog.append({
+            actorId: req.auth.userId,
+            action: `membership_${type}`,
+            targetType: 'customer',
+            targetId: customer.id,
+            membershipExpiresAt: customer.membershipExpiresAt,
+            reason: req.body?.reason || '',
+        });
+        return res.json({ success: true, customer });
+    } catch (error) {
+        const validation = /会员|到期|原因|日期|价格|不支持|缺少/.test(error.message);
+        return res.status(validation ? 400 : 500).json({ message: validation ? error.message : '会员操作失败' });
+    }
+});
+
+app.get('/api/sales/customers', adminAuth.requireSalesOrOwner, async (req, res) => {
+    if (req.auth.role !== 'sales') return res.status(403).json({ message: '请使用销售账号' });
+    try {
+        return res.json(await advisorStore.listForPrincipal(req.auth, req.query));
+    } catch (error) {
+        console.error('读取销售客户失败:', error);
+        return res.status(500).json({ message: '客户读取失败' });
+    }
+});
+
+app.get('/api/sales/customers/:id', adminAuth.requireSalesOrOwner, async (req, res) => {
+    if (req.auth.role !== 'sales') return res.status(403).json({ message: '请使用销售账号' });
+    const customer = await advisorStore.getApplication(req.params.id);
+    if (!customer) return res.status(404).json({ message: '客户不存在' });
+    if (customer.assignedSalesId !== req.auth.userId) return res.status(403).json({ message: '无权访问该客户' });
+    return res.json(customer);
+});
+
+app.post('/api/sales/customers/:id/internal-bookings', adminAuth.requireSalesOrOwner, async (req, res) => {
+    if (req.auth.role !== 'sales') return res.status(403).json({ message: '请使用销售账号' });
+    try {
+        const customer = await advisorStore.getApplication(req.params.id);
+        if (!customer) return res.status(404).json({ message: '客户不存在' });
+        if (customer.assignedSalesId !== req.auth.userId) return res.status(403).json({ message: '无权访问该客户' });
+        const booking = await advisorStore.createInternalBooking(req.params.id, req.body || {}, req.auth);
+        await auditLog.append({
+            actorId: req.auth.userId,
+            action: 'internal_booking_created',
+            targetType: 'customer',
+            targetId: customer.id,
+            bookingId: booking.id,
+        });
+        return res.status(201).json({ success: true, booking });
+    } catch (error) {
+        const validation = /会员|期次|人数|无权/.test(error.message);
+        return res.status(validation ? 400 : 500).json({ message: validation ? error.message : '后续预约创建失败' });
+    }
+});
+
 // 管理后台保留非默认入口，减少自动扫描噪声；真正安全性由服务端会话保证。
 app.get('/admin-pro', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin-pro.html'));
