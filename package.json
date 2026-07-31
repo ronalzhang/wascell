@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
+    "test": "node --test tests/*.test.cjs tests/*.test.mjs",
     "periods:update": "node scripts/update-period-window.js",
     "periods:dry-run": "node scripts/update-period-window.js --dry-run",
     "pm2:start": "pm2 start app.js --name wascell-website",
