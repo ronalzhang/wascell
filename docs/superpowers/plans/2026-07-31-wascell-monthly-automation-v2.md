@@ -1,0 +1,190 @@
+# WASCELL Monthly Automation V2 Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Update the monthly WASCELL automation so it safely generates and validates the ARKSOMA membership frontend, filial third periods, separate owner/sales entrances, and the current production deployment contract.
+
+**Architecture:** Keep the schedule at 09:00 on the 15th of each month and keep one long-lived automation memory. Strengthen the prompt and local scripts so unexpected Git changes, failed tests, production test orders, or incomplete remote synchronization stop deployment. Use local temporary private storage for mutation tests and read-only checks in production.
+
+**Tech Stack:** Codex cron automation TOML, Node generation scripts/tests, shell risk checks, Express/PM2 production verification.
+
+## Global Constraints
+
+- Schedule remains `FREQ=MONTHLY;BYMONTHDAY=15;BYHOUR=9;BYMINUTE=0;BYSECOND=0` in Asia/Shanghai project context.
+- Read `/Users/godfather/.codex/automations/wascell/memory.md` before every run and append net-new evidence after the run.
+- Generate next month three periods plus the following month two periods.
+- Every monthly third period is `敬亲礼遇期` with public three-family-group wording.
+- Never create a production customer, upload, sales account, or configuration mutation during automation verification.
+- Stop on unexpected worktree changes, test failures, DNS/browser blockers, dirty remote Git, or remote revision mismatch.
+- Deploy only the WASCELL service and do not restart unrelated PM2 processes.
+
+---
+
+### Task 1: Encode the new monthly generation contract
+
+**Files:**
+- Modify: `tests/period-window.test.cjs`
+- Modify: `scripts/update-period-window.js`
+- Modify: `scripts/arksoma-periods.cjs`
+
+**Interfaces:**
+- `buildPeriods(defaultStart, 5)` returns slots 1, 2, 3 for next month and slots 1, 2 for the following month.
+- Slot 3 always has `type:'filial'` and public label `敬亲礼遇期`.
+
+- [ ] **Step 1: Add a date-boundary failing test**
+
+```js
+test('December automation rolls filial third period across year boundary', () => {
+  const periods = buildPeriods({ year: 2026, month: 12 }, 5);
+  assert.deepEqual(periods.map(p => [p.id, p.type]), [
+    ['20261201','standard'], ['20261202','standard'], ['20261203','filial'],
+    ['20270101','standard'], ['20270102','standard'],
+  ]);
+});
+```
+
+- [ ] **Step 2: Run and confirm RED if the new type contract is missing**
+
+Run: `node --test tests/period-window.test.cjs`
+
+- [ ] **Step 3: Implement deterministic reporting**
+
+Dry-run output must list exactly the five target period files plus `index.html`, print the first/last labels, and identify the filial period. It must not write files.
+
+- [ ] **Step 4: Run tests and commit**
+
+Run: `npm run periods:dry-run -- --start=2026-12 --count=5 && npm test`
+
+```bash
+git add scripts/update-period-window.js scripts/arksoma-periods.cjs tests/period-window.test.cjs
+git commit -m "test: enforce ARKSOMA monthly period contract"
+```
+
+### Task 2: Extend deployment risk checks
+
+**Files:**
+- Modify: `tests/verify-risk-fixes.sh`
+- Modify: `deploy.sh`
+
+**Interfaces:**
+- The deployment gate receives the intended generated-file allowlist and rejects all unrelated changes.
+- Deployment succeeds only if remote HEAD equals pushed `origin/main` after pull.
+
+- [ ] **Step 1: Add failing shell assertions**
+
+Assert that deployment stops before `git add`, `npm ci`, or `pm2 restart` when:
+
+```text
+git status contains files outside index.html and the five generated period pages
+remote git status cannot be read
+remote repository is dirty
+remote HEAD after pull differs from the pushed revision
+```
+
+- [ ] **Step 2: Run and confirm RED**
+
+Run: `bash tests/verify-risk-fixes.sh`
+
+- [ ] **Step 3: Implement an explicit monthly allowlist mode**
+
+Add `./deploy.sh --monthly` that accepts only `index.html` and IDs emitted by the current dry-run manifest. Normal human-triggered deployment retains its existing behavior but still hard-fails on remote status/sync errors. Never use `git reset --hard` on the local worktree.
+
+- [ ] **Step 4: Run risk tests and commit**
+
+Run: `bash tests/verify-risk-fixes.sh`
+
+```bash
+git add deploy.sh tests/verify-risk-fixes.sh
+git commit -m "fix: gate monthly WASCELL deployments"
+```
+
+### Task 3: Update the Codex automation prompt
+
+**Files:**
+- Modify: `/Users/godfather/.codex/automations/wascell/automation.toml`
+
+**Interfaces:**
+- Keeps the existing automation ID and schedule.
+- Replaces the old WASCELL dropdown and `/all`-only checks with ARKSOMA V2 checks.
+
+- [ ] **Step 1: Preserve the current automation metadata**
+
+Keep `id="wascell"`, `status="ACTIVE"`, the existing project target, cwd, timezone context, and monthly recurrence. Change only the prompt and `updated_at` value generated by the automation system if required.
+
+- [ ] **Step 2: Write the complete new prompt**
+
+The prompt must instruct the run to:
+
+```text
+read the latest automation memory first;
+inspect local and production Git/service state read-only;
+stop if unrelated local changes exist;
+run npm test, verify-risk-fixes, and periods:dry-run;
+generate the five-page window and verify the third period is filial;
+run local Express with temporary advisor/config/staff directories;
+test period sheet, coordinate menu, itinerary, public catalog fallback, and application upload locally;
+check 390, 768, 1024, and 1366 widths;
+verify /admin sales copy and /admin-pro owner copy do not leak each other;
+never submit a production order or change production config/users;
+deploy with ./deploy.sh --monthly only after all gates pass;
+verify live homepage, five periods, public catalog, both login entrances, API 401/403 behavior, PM2, Git HEAD, and error log;
+append new evidence, blockers, actions, and next focus to the same memory.
+```
+
+- [ ] **Step 3: Validate TOML and schedule**
+
+Run a TOML parser or the automation CLI read command, then verify the recurrence string is unchanged.
+
+- [ ] **Step 4: Record the configuration change**
+
+Do not create a new automation. Confirm the existing `wascell` automation remains ACTIVE and has one schedule.
+
+### Task 4: Dry rehearsal without production mutation
+
+**Files:**
+- Modify: `/Users/godfather/.codex/automations/wascell/memory.md` only with rehearsal evidence
+
+**Interfaces:**
+- Consumes the final automation prompt and repository build.
+- Produces a documented no-deploy rehearsal result.
+
+- [ ] **Step 1: Run the automation workflow manually through the pre-deploy gate**
+
+Use a clean temporary worktree or the final clean feature branch. Set temporary `ADVISOR_DATA_DIR`, `ADVISOR_UPLOAD_DIR`, `ADVISOR_TEMP_DIR`, staff, knowledge, and config paths. Do not invoke the production deployment step.
+
+- [ ] **Step 2: Verify local mutation paths**
+
+Create one local customer order, assign it to a local sales user, verify cross-sales 403, create an internal member booking, exercise an owner membership gift, and delete only the temporary runtime directory after the server stops.
+
+- [ ] **Step 3: Verify read-only live checks**
+
+Check live public URLs and PM2/Git status without login mutations, uploads, config writes, staff creation, or service restart.
+
+- [ ] **Step 4: Append rehearsal evidence to automation memory**
+
+Record the absolute time window, prior conclusion, new evidence, cleared/remaining blockers, no-deploy status, and next focus. Do not overwrite previous memory sections.
+
+### Task 5: Final integrated deployment gate
+
+**Files:**
+- No new files unless a verified defect requires a scoped fix.
+
+**Interfaces:**
+- Consumes the backoffice, frontend, and automation plans.
+- Produces one controlled production release.
+
+- [ ] **Step 1: Confirm a clean intended diff**
+
+Verify all changes are committed, temporary screenshots/PPT inspection files are excluded, the original user files are preserved, and `origin/main` is the expected base.
+
+- [ ] **Step 2: Run the full gate fresh**
+
+Run: `npm test && bash tests/verify-risk-fixes.sh && npm audit --omit=dev --audit-level=low --registry=https://registry.npmjs.org && git diff --check`
+
+- [ ] **Step 3: Deploy the integrated release**
+
+Push the reviewed branch to main only if it is a fast-forward or reviewed merge. On VPS run `npm ci --omit=dev`, source the existing private environment, restart only `wascell-website --update-env`, and save PM2 state.
+
+- [ ] **Step 4: Verify production and rollback readiness**
+
+Verify public pages 200, `/admin` 200 sales-only, `/admin-pro` 200 owner-only, unauthenticated API 401, owner login 200, production audit zero, PM2 online, Git clean at expected commit, error log zero, and no production test records. Preserve the prior commit hash as the rollback point.
