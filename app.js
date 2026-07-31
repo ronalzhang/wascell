@@ -12,6 +12,8 @@ const multer = require('multer');
 const { createAdminAuth } = require('./lib/admin-auth');
 const { createAdvisorStore } = require('./lib/advisor-store');
 const { createStaffStore } = require('./lib/staff-store');
+const { createAuditLog } = require('./lib/audit-log');
+const { createBusinessConfigStore } = require('./lib/business-config-store');
 
 // 异步文件操作
 const writeFileAsync = promisify(fs.writeFile);
@@ -31,10 +33,13 @@ const ADVISOR_DATA_DIR = process.env.ADVISOR_DATA_DIR || path.join(PRIVATE_ROOT,
 const ADVISOR_UPLOAD_DIR = process.env.ADVISOR_UPLOAD_DIR || path.join(PRIVATE_ROOT, 'advisor-uploads');
 const ADVISOR_TEMP_DIR = process.env.ADVISOR_TEMP_DIR || path.join(os.tmpdir(), 'wascell-advisor-uploads');
 const STAFF_DATA_DIR = process.env.STAFF_DATA_DIR || path.join(PRIVATE_ROOT, 'staff-data');
+const BUSINESS_DATA_DIR = process.env.BUSINESS_DATA_DIR || path.join(PRIVATE_ROOT, 'business-data');
 
 fs.mkdirSync(ADVISOR_TEMP_DIR, { recursive: true, mode: 0o700 });
 
 const staffStore = createStaffStore({ dataDir: STAFF_DATA_DIR });
+const auditLog = createAuditLog({ dataDir: BUSINESS_DATA_DIR });
+const businessConfigStore = createBusinessConfigStore({ dataDir: BUSINESS_DATA_DIR, auditLog });
 const adminAuth = createAdminAuth({
     ownerPassword: ADMIN_PASSWORD,
     secret: ADMIN_SESSION_SECRET,
@@ -636,6 +641,39 @@ app.get('/api/session', adminAuth.session);
 app.post('/api/admin/login', adminAuth.ownerLogin);
 app.post('/api/admin/logout', adminAuth.logout);
 app.get('/api/admin/session', adminAuth.session);
+
+// 公开商业信息只返回前端展示白名单；内部容量和提醒规则保持私有。
+app.get('/api/public/catalog', async (req, res) => {
+    try {
+        return res.json(await businessConfigStore.getPublic());
+    } catch (error) {
+        console.error('读取公开商业配置失败:', error);
+        return res.status(500).json({ message: '配置暂不可用' });
+    }
+});
+
+app.get('/api/owner/config', adminAuth.requireOwner, async (req, res) => {
+    try {
+        return res.json(await businessConfigStore.getPrivate());
+    } catch (error) {
+        console.error('读取商业配置失败:', error);
+        return res.status(500).json({ message: '配置读取失败' });
+    }
+});
+
+app.patch('/api/owner/config', adminAuth.requireOwner, async (req, res) => {
+    try {
+        const { reason, ...changes } = req.body || {};
+        const config = await businessConfigStore.update(changes, {
+            actorId: req.auth.userId,
+            reason,
+        });
+        return res.json({ success: true, config });
+    } catch (error) {
+        const validation = /原因|无效|不支持|不能为空/.test(error.message);
+        return res.status(validation ? 400 : 500).json({ message: validation ? error.message : '配置保存失败' });
+    }
+});
 
 // 获取统计数据API
 app.get(['/api/admin/stats', '/api/owner/stats'], adminAuth.requireOwner, async (req, res) => {

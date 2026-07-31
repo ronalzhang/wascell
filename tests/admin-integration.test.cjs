@@ -4,6 +4,7 @@ const { spawn } = require('node:child_process');
 const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
+const { createStaffStore } = require('../lib/staff-store');
 
 let child;
 let baseUrl;
@@ -11,6 +12,11 @@ let runtimeDir;
 
 test.before(async () => {
     runtimeDir = await fs.mkdtemp(path.join(os.tmpdir(), 'wascell-admin-integration-'));
+    await createStaffStore({ dataDir: path.join(runtimeDir, 'staff') }).createSales({
+        username: 'sales.integration',
+        displayName: '集成销售',
+        password: 'Sales-Integration-2026',
+    });
     const port = 39000 + (process.pid % 1000);
     baseUrl = `http://127.0.0.1:${port}`;
     child = spawn(process.execPath, ['app.js'], {
@@ -24,6 +30,7 @@ test.before(async () => {
             ADVISOR_DATA_DIR: path.join(runtimeDir, 'data'),
             ADVISOR_UPLOAD_DIR: path.join(runtimeDir, 'uploads'),
             STAFF_DATA_DIR: path.join(runtimeDir, 'staff'),
+            BUSINESS_DATA_DIR: path.join(runtimeDir, 'business'),
         },
         stdio: ['ignore', 'pipe', 'pipe'],
     });
@@ -101,4 +108,40 @@ test('a customer application becomes an authenticated admin order', async () => 
     assert.equal(orders.status, 200);
     assert.equal(body.total, 1);
     assert.equal(body.items[0].name, '测试客户');
+});
+
+test('public catalog is readable while commercial configuration is owner-only', async () => {
+    const publicResponse = await fetch(`${baseUrl}/api/public/catalog`);
+    const publicCatalog = await publicResponse.json();
+    assert.equal(publicResponse.status, 200);
+    assert.equal(publicCatalog.fullPlanPrice, 580000);
+    assert.equal('standardCapacity' in publicCatalog, false);
+
+    const salesLogin = await fetch(`${baseUrl}/api/sales/login`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ username: 'sales.integration', password: 'Sales-Integration-2026' }),
+    });
+    const salesCookie = salesLogin.headers.get('set-cookie');
+    const salesConfig = await fetch(`${baseUrl}/api/owner/config`, { headers: { cookie: salesCookie } });
+    assert.equal(salesConfig.status, 403);
+
+    const ownerLogin = await fetch(`${baseUrl}/api/owner/login`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ password: 'integration-password' }),
+    });
+    const ownerCookie = ownerLogin.headers.get('set-cookie');
+    const ownerConfig = await fetch(`${baseUrl}/api/owner/config`, { headers: { cookie: ownerCookie } });
+    assert.equal(ownerConfig.status, 200);
+
+    const update = await fetch(`${baseUrl}/api/owner/config`, {
+        method: 'PATCH',
+        headers: { cookie: ownerCookie, 'content-type': 'application/json' },
+        body: JSON.stringify({ membershipFee: 21800, reason: '集成测试调整' }),
+    });
+    assert.equal(update.status, 200);
+
+    const refreshedPublic = await fetch(`${baseUrl}/api/public/catalog`);
+    assert.equal((await refreshedPublic.json()).membershipFee, 21800);
 });
