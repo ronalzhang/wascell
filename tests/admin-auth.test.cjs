@@ -14,18 +14,18 @@ function createResponse() {
     };
 }
 
-test('login rejects an incorrect password without setting a cookie', () => {
+test('login rejects an incorrect password without setting a cookie', async () => {
     const auth = createAdminAuth({ password: 'correct horse', secret: 'test-secret' });
     const res = createResponse();
 
-    auth.login({ body: { password: 'wrong' } }, res);
+    await auth.ownerLogin({ body: { password: 'wrong' } }, res);
 
     assert.equal(res.statusCode, 401);
     assert.equal(res.headers['set-cookie'], undefined);
     assert.deepEqual(res.body, { success: false, message: '密码错误' });
 });
 
-test('login issues an HttpOnly strict cookie that the session endpoint accepts', () => {
+test('login issues an HttpOnly strict cookie that the session endpoint accepts', async () => {
     const auth = createAdminAuth({
         password: 'correct horse',
         secret: 'test-secret',
@@ -35,7 +35,7 @@ test('login issues an HttpOnly strict cookie that the session endpoint accepts',
     });
     const loginRes = createResponse();
 
-    auth.login({ body: { password: 'correct horse' } }, loginRes);
+    await auth.ownerLogin({ body: { password: 'correct horse' } }, loginRes);
 
     assert.equal(loginRes.statusCode, 200);
     assert.match(loginRes.headers['set-cookie'], /^wascell_admin_session=/);
@@ -45,23 +45,24 @@ test('login issues an HttpOnly strict cookie that the session endpoint accepts',
 
     const cookie = loginRes.headers['set-cookie'].split(';')[0];
     const sessionRes = createResponse();
-    auth.session({ headers: { cookie } }, sessionRes);
+    await auth.session({ headers: { cookie } }, sessionRes);
 
     assert.equal(sessionRes.statusCode, 200);
-    assert.deepEqual(sessionRes.body, { authenticated: true });
+    assert.equal(sessionRes.body.authenticated, true);
+    assert.equal(sessionRes.body.principal.role, 'owner');
 });
 
-test('requireAdmin rejects a missing or tampered session cookie', () => {
+test('requireOwner rejects a missing or tampered session cookie', async () => {
     const auth = createAdminAuth({ password: 'correct horse', secret: 'test-secret' });
     const missingRes = createResponse();
     let nextCalled = false;
 
-    auth.requireAdmin({ headers: {} }, missingRes, () => { nextCalled = true; });
+    await auth.requireOwner({ headers: {} }, missingRes, () => { nextCalled = true; });
     assert.equal(missingRes.statusCode, 401);
     assert.equal(nextCalled, false);
 
     const tamperedRes = createResponse();
-    auth.requireAdmin(
+    await auth.requireOwner(
         { headers: { cookie: 'wascell_admin_session=invalid.payload' } },
         tamperedRes,
         () => { nextCalled = true; },

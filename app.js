@@ -11,6 +11,7 @@ const crypto = require('crypto');
 const multer = require('multer');
 const { createAdminAuth } = require('./lib/admin-auth');
 const { createAdvisorStore } = require('./lib/advisor-store');
+const { createStaffStore } = require('./lib/staff-store');
 
 // 异步文件操作
 const writeFileAsync = promisify(fs.writeFile);
@@ -29,12 +30,15 @@ const PRIVATE_ROOT = path.resolve(__dirname, '..', 'wascell-private');
 const ADVISOR_DATA_DIR = process.env.ADVISOR_DATA_DIR || path.join(PRIVATE_ROOT, 'advisor-data');
 const ADVISOR_UPLOAD_DIR = process.env.ADVISOR_UPLOAD_DIR || path.join(PRIVATE_ROOT, 'advisor-uploads');
 const ADVISOR_TEMP_DIR = process.env.ADVISOR_TEMP_DIR || path.join(os.tmpdir(), 'wascell-advisor-uploads');
+const STAFF_DATA_DIR = process.env.STAFF_DATA_DIR || path.join(PRIVATE_ROOT, 'staff-data');
 
 fs.mkdirSync(ADVISOR_TEMP_DIR, { recursive: true, mode: 0o700 });
 
+const staffStore = createStaffStore({ dataDir: STAFF_DATA_DIR });
 const adminAuth = createAdminAuth({
-    password: ADMIN_PASSWORD,
+    ownerPassword: ADMIN_PASSWORD,
     secret: ADMIN_SESSION_SECRET,
+    staffStore,
     secureCookie: IS_PRODUCTION,
 });
 const advisorStore = createAdvisorStore({
@@ -624,13 +628,17 @@ app.post('/api/advisor-applications', (req, res) => {
     });
 });
 
-// 管理后台服务端会话
-app.post('/api/admin/login', adminAuth.login);
+// 所有者与销售使用独立登录入口；旧 owner API 暂留给现有后台界面迁移。
+app.post('/api/owner/login', adminAuth.ownerLogin);
+app.post('/api/sales/login', adminAuth.salesLogin);
+app.post('/api/session/logout', adminAuth.logout);
+app.get('/api/session', adminAuth.session);
+app.post('/api/admin/login', adminAuth.ownerLogin);
 app.post('/api/admin/logout', adminAuth.logout);
 app.get('/api/admin/session', adminAuth.session);
 
 // 获取统计数据API
-app.get('/api/admin/stats', adminAuth.requireAdmin, async (req, res) => {
+app.get(['/api/admin/stats', '/api/owner/stats'], adminAuth.requireOwner, async (req, res) => {
     try {
         const { period = 'day', filter = 'all' } = req.query;
 
@@ -860,7 +868,7 @@ async function getHourlyStatsFromLog() {
 }
 
 // 获取实时数据
-app.get('/api/admin/realtime', adminAuth.requireAdmin, (req, res) => {
+app.get(['/api/admin/realtime', '/api/owner/realtime'], adminAuth.requireOwner, (req, res) => {
     try {
         const stats = getStats();
         const today = getToday();
@@ -879,7 +887,7 @@ app.get('/api/admin/realtime', adminAuth.requireAdmin, (req, res) => {
 });
 
 // 重新计算恶意请求次数（管理员工具）
-app.post('/api/admin/recalculate', adminAuth.requireAdmin, async (req, res) => {
+app.post(['/api/admin/recalculate', '/api/owner/recalculate'], adminAuth.requireOwner, async (req, res) => {
     try {
         const maliciousCounts = await recalculateMaliciousCount();
         res.json({ 
@@ -894,7 +902,7 @@ app.post('/api/admin/recalculate', adminAuth.requireAdmin, async (req, res) => {
 });
 
 // 顾问申请后台接口
-app.get('/api/admin/applications', adminAuth.requireAdmin, async (req, res) => {
+app.get(['/api/admin/applications', '/api/owner/applications'], adminAuth.requireOwner, async (req, res) => {
     try {
         const result = await advisorStore.listApplications({
             status: req.query.status,
@@ -910,7 +918,7 @@ app.get('/api/admin/applications', adminAuth.requireAdmin, async (req, res) => {
     }
 });
 
-app.get('/api/admin/applications/:id', adminAuth.requireAdmin, async (req, res) => {
+app.get(['/api/admin/applications/:id', '/api/owner/applications/:id'], adminAuth.requireOwner, async (req, res) => {
     try {
         const order = await advisorStore.getApplication(req.params.id);
         if (!order) return res.status(404).json({ message: '订单不存在' });
@@ -921,7 +929,7 @@ app.get('/api/admin/applications/:id', adminAuth.requireAdmin, async (req, res) 
     }
 });
 
-app.patch('/api/admin/applications/:id', adminAuth.requireAdmin, async (req, res) => {
+app.patch(['/api/admin/applications/:id', '/api/owner/applications/:id'], adminAuth.requireOwner, async (req, res) => {
     try {
         const order = await advisorStore.updateApplication(req.params.id, {
             status: req.body.status,
@@ -935,7 +943,10 @@ app.patch('/api/admin/applications/:id', adminAuth.requireAdmin, async (req, res
     }
 });
 
-app.get('/api/admin/applications/:id/attachments/:attachmentId', adminAuth.requireAdmin, async (req, res) => {
+app.get([
+    '/api/admin/applications/:id/attachments/:attachmentId',
+    '/api/owner/applications/:id/attachments/:attachmentId',
+], adminAuth.requireOwner, async (req, res) => {
     try {
         const attachment = await advisorStore.getAttachment(req.params.id, req.params.attachmentId);
         if (!attachment) return res.status(404).json({ message: '附件不存在' });

@@ -23,6 +23,7 @@ test.before(async () => {
             ADMIN_SESSION_SECRET: 'integration-session-secret',
             ADVISOR_DATA_DIR: path.join(runtimeDir, 'data'),
             ADVISOR_UPLOAD_DIR: path.join(runtimeDir, 'uploads'),
+            STAFF_DATA_DIR: path.join(runtimeDir, 'staff'),
         },
         stdio: ['ignore', 'pipe', 'pipe'],
     });
@@ -58,11 +59,11 @@ test('/admin stays hidden while /admin-pro serves the ARKSOMA admin', async () =
     assert.match(html, /顾问申请/);
 });
 
-test('admin data APIs require a server-authenticated session', async () => {
-    const unauthenticated = await fetch(`${baseUrl}/api/admin/realtime`);
+test('owner data APIs require an owner session', async () => {
+    const unauthenticated = await fetch(`${baseUrl}/api/owner/realtime`);
     assert.equal(unauthenticated.status, 401);
 
-    const login = await fetch(`${baseUrl}/api/admin/login`, {
+    const login = await fetch(`${baseUrl}/api/owner/login`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ password: 'integration-password' }),
@@ -71,7 +72,7 @@ test('admin data APIs require a server-authenticated session', async () => {
     assert.equal(login.status, 200);
     assert.match(cookie, /HttpOnly/);
 
-    const authenticated = await fetch(`${baseUrl}/api/admin/realtime`, { headers: { cookie } });
+    const authenticated = await fetch(`${baseUrl}/api/owner/realtime`, { headers: { cookie } });
     assert.equal(authenticated.status, 200);
 });
 
@@ -88,13 +89,13 @@ test('a customer application becomes an authenticated admin order', async () => 
     assert.equal(created.status, 201);
     assert.match(createdBody.orderId, /^ARK-/);
 
-    const login = await fetch(`${baseUrl}/api/admin/login`, {
+    const login = await fetch(`${baseUrl}/api/owner/login`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ password: 'integration-password' }),
     });
     const cookie = login.headers.get('set-cookie');
-    const orders = await fetch(`${baseUrl}/api/admin/applications?query=测试客户`, { headers: { cookie } });
+    const orders = await fetch(`${baseUrl}/api/owner/applications?query=测试客户`, { headers: { cookie } });
     const body = await orders.json();
 
     assert.equal(orders.status, 200);
