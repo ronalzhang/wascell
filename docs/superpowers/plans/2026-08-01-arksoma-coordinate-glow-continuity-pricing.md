@@ -265,6 +265,6 @@ Require:
 
 - `/`, `/admin`, `/admin-pro`, `/session-state.mjs`, and `/api/public/catalog` return `200`.
 - Unauthenticated owner and sales APIs return `401`.
-- Production HTML contains `单次细胞服务` and public catalog contains `三次起可制定连续方案` but neither contains `560000`, `560,000`, `折扣`, or `立省`.
+- Production HTML contains `单次细胞服务` and public catalog contains `三次起可制定连续方案`; standard-period public copy contains no `RMB 560,000/次`, `折扣`, `立省`, savings amount, or package total. The existing filial-period configured price may legitimately remain `560000` in the catalog and is not a continuity discount.
 - In-app browser at 390px shows no coordinate underline, one-line price hierarchy, zero console errors, zero horizontal overflow, and a price-free success view.
 - Remote Git HEAD equals the pushed commit, worktree is clean, and PM2 reports `wascell-website: online` with zero unstable restarts.

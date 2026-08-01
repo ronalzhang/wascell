@@ -66,6 +66,14 @@
    - Coordinate light trace runs once on touch/coarse-pointer devices (and narrow QA viewports), returns to its resting bronze state, and is disabled by reduced-motion preferences.
    - Advisor form shows selected period, configured price and included annual seat before submission; the success view intentionally contains no price because it confirms receipt, not purchase or medical acceptance.
    - Evidence: `.codex-tmp/arksoma-polish-audit/closing-390-after.png`, `.codex-tmp/arksoma-polish-audit/closing-ipad-after.png`, `.codex-tmp/arksoma-polish-audit/closing-desktop-after.png`, `.codex-tmp/arksoma-polish-audit/advisor-price-mobile.png`.
+4. **Coordinate glyph glow and continuity framing — passed (2026-08-01)**
+   - The old coordinate underline, external trace and `ENTER` hint are absent. On a fresh 390px entry, the warm highlight is clipped to the coordinate glyphs, runs once for `0.9s` after the entry delay and returns to bronze. The story panel still opens, closes and restores focus to the coordinate trigger.
+   - The advisor context now reads `单次细胞服务 · 九月首期 / RMB 580,000` followed by `三次起可制定连续方案 · 首年方舟席位已含`. The success state remains price-free.
+   - At 390, 768, 1024 and 1440px, the document has zero horizontal overflow. The closing price and continuity copy also have `scrollWidth === clientWidth` at 390 and 1024px.
+   - The 390px before/after coordinate and advisor captures were inspected together. The accepted result removes the visual line and adds the continuity message inside the existing information hierarchy rather than adding a promotional module.
+   - Console log after the local interaction and responsive run: empty.
+   - Accepted evidence: `.codex-tmp/arksoma-continuity-qa/06-coordinate-final-mid-390.png`, `.codex-tmp/arksoma-continuity-qa/07-advisor-final-390.png`, `.codex-tmp/arksoma-continuity-qa/08-advisor-final-768.png`, `.codex-tmp/arksoma-continuity-qa/09-advisor-final-1440.png`.
+   - Commercial verification distinguishes the existing filial-period configured price from a continuity discount: public copy does not expose `RMB 560,000/次`, a discount percentage, savings amount, multi-service total or six-service tier.
 
 ## Residual P3 notes
 
