@@ -5,7 +5,7 @@ const os = require('node:os');
 const path = require('node:path');
 
 const { createAuditLog } = require('../lib/audit-log');
-const { createBusinessConfigStore } = require('../lib/business-config-store');
+const { createBusinessConfigStore, DEFAULT_CONFIG } = require('../lib/business-config-store');
 
 async function withStores(run) {
     const dataDir = await fs.mkdtemp(path.join(os.tmpdir(), 'wascell-config-'));
@@ -13,7 +13,7 @@ async function withStores(run) {
     try {
         const auditLog = createAuditLog({ dataDir, now });
         const store = createBusinessConfigStore({ dataDir, now, auditLog });
-        return await run({ store, auditLog });
+        return await run({ store, auditLog, dataDir });
     } finally {
         await fs.rm(dataDir, { recursive: true, force: true });
     }
@@ -34,6 +34,24 @@ test('public catalog exposes prices and copy but not internal capacity', async (
         assert.equal('standardCapacity' in catalog, false);
         assert.equal('filialMaxGuests' in catalog.filialPeriod, false);
         assert.equal('reminderDays' in catalog, false);
+    });
+});
+
+test('continuity copy upgrades only the former default and preserves owner-authored copy', async () => {
+    assert.equal(DEFAULT_CONFIG.publicMembershipCopy, '三次起可制定连续方案 · 首年方舟席位已含');
+
+    await withStores(async ({ store, dataDir }) => {
+        await fs.writeFile(path.join(dataDir, 'business-config.json'), JSON.stringify({
+            ...DEFAULT_CONFIG,
+            publicMembershipCopy: '已包含首个 12 个月方舟年度席位',
+        }));
+        assert.equal((await store.getPublic()).publicMembershipCopy, '三次起可制定连续方案 · 首年方舟席位已含');
+
+        await fs.writeFile(path.join(dataDir, 'business-config.json'), JSON.stringify({
+            ...DEFAULT_CONFIG,
+            publicMembershipCopy: '管理员自定义公开说明',
+        }));
+        assert.equal((await store.getPublic()).publicMembershipCopy, '管理员自定义公开说明');
     });
 });
 
