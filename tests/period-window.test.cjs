@@ -78,6 +78,7 @@ test('production template preserves the approved responsive ARKSOMA structure', 
     assert.match(html, /id="advisorSuccess"/);
     assert.match(html, /id="fileList"/);
     assert.match(html, /class="advisor-context"/);
+    assert.doesNotMatch(html, /资料与附件一次提交并直接生成私密申请订单/);
     assert.match(html, /data-service-period>单次细胞服务 · 2026·八月首期/);
     assert.match(html, /data-catalog-price>RMB 580,000/);
     assert.match(html, /class="closing-price"><span>单次细胞服务<\/span> · <span data-catalog-price>RMB 580,000<\/span> · 截止/);
@@ -86,10 +87,11 @@ test('production template preserves the approved responsive ARKSOMA structure', 
     assert.doesNotMatch(html, /id="advisorSuccess"[\s\S]*data-catalog-price/);
 });
 
-test('production styles keep the closing promise on one line and use glyph-only coordinate motion', () => {
+test('production styles keep native scrolling, one-shot image settling and glyph-only coordinate motion', () => {
     const css = fs.readFileSync(path.join(__dirname, '..', 'arksoma.css'), 'utf8');
 
-    assert.match(css, /scroll-snap-type:\s*y proximity/);
+    assert.doesNotMatch(css, /scroll-snap-type|scroll-snap-align/);
+    assert.doesNotMatch(css, /animation-timeline:\s*view\(\)/);
     assert.match(css, /\.closing h2\s*\{[^}]*white-space:\s*nowrap/s);
     assert.match(css, /@media\s*\(hover:\s*none\)\s*and\s*\(pointer:\s*coarse\),\s*\(max-width:\s*899px\)/);
     assert.doesNotMatch(css, /\.coordinate-trigger::before/);
@@ -97,7 +99,10 @@ test('production styles keep the closing promise on one line and use glyph-only 
     assert.doesNotMatch(css, /coordinate-trace/);
     assert.match(css, /@keyframes\s+coordinate-glyph-sweep/);
     assert.match(css, /(?:-webkit-)?background-clip:\s*text/);
-    assert.match(css, /animation:[^;]*coordinate-glyph-sweep[^;]*1\s+both/);
+    assert.match(css, /animation:[^;]*coordinate-glyph-sweep\s+1\.02s[^;]*1\.1s\s+1\s+both/);
+    assert.match(css, /\[data-reveal\]\s*\{[^}]*translateY\(12px\)/s);
+    assert.match(css, /\.journey-card\.is-in-view\s+img\s*\{[^}]*scale\(1\)/s);
+    assert.match(css, /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*\.journey-card\s+img\s*\{[^}]*transform:\s*none/s);
     assert.doesNotMatch(css, /@media\s*\(max-width:\s*599px\)[\s\S]*\.closing h2\s*\{[^}]*font-size:\s*40px/);
 });
 
