@@ -67,7 +67,8 @@ test('production template preserves the approved responsive ARKSOMA structure', 
 
     assert.match(html, /name="viewport" content="width=device-width, initial-scale=1"/);
     assert.match(html, /PRIVATE ACCESS · BY APPOINTMENT/);
-    assert.match(html, /三次起可制定连续方案 · 首年方舟席位已含/);
+    assert.equal((html.match(/三次起可制定连续方案 · 首年方舟席位已含/g) || []).length, 1);
+    assert.doesNotMatch(html, /class="closing-price"[\s\S]{0,260}data-membership-copy/);
     assert.match(html, /未经提前沟通与专业评估[^<]*可能无法接收/);
     assert.match(html, /id="coordinateTrigger"[^>]*>\s*37°32′10″N<br>139°36′20″E/);
     assert.doesNotMatch(html, /id="coordinateTrigger"[\s\S]{0,180}ORIGIN · THE STONE OF LONGEVITY/);
@@ -85,6 +86,27 @@ test('production template preserves the approved responsive ARKSOMA structure', 
     assert.doesNotMatch(html, /class="closing-price"[^>]*>[\s\S]{0,180}限额 5 席/);
     assert.doesNotMatch(html, /RMB 560,000\/次|折扣|立省|六次套餐/);
     assert.doesNotMatch(html, /id="advisorSuccess"[\s\S]*data-catalog-price/);
+});
+
+test('production hero preserves stone detail and serves compact modern artwork', () => {
+    const template = fs.readFileSync(path.join(__dirname, '..', 'templates', 'arksoma-period.html'), 'utf8');
+    const css = fs.readFileSync(path.join(__dirname, '..', 'arksoma.css'), 'utf8');
+    const heroWebp = path.join(__dirname, '..', 'imgs', 'arksoma', 'hero-longevity-stone.webp');
+    const scienceWebp = path.join(__dirname, '..', 'imgs', 'arksoma', 'cellular-stone-field.webp');
+
+    assert.match(template, /rel="preload" as="image" href="imgs\/arksoma\/hero-longevity-stone\.webp" type="image\/webp" fetchpriority="high"/);
+    assert.match(css, /\.hero\s*\{[^}]*hero-longevity-stone\.webp/s);
+    assert.match(css, /\.hero-shade\s*\{[^}]*rgba\(1,\s*4,\s*5,\s*\.06\)/s);
+    assert.match(css, /\.thesis-image\s*\{[^}]*cellular-stone-field\.webp[^}]*opacity:\s*\.88/s);
+    assert.match(css, /\.closing-shade\s*\{[^}]*rgba\(1,\s*4,\s*5,\s*\.52\)/s);
+
+    for (const asset of [heroWebp, scienceWebp]) {
+        assert.equal(fs.existsSync(asset), true, `${path.basename(asset)} should exist`);
+        assert.ok(fs.statSync(asset).size < 300 * 1024, `${path.basename(asset)} should stay below 300 KB`);
+        const signature = fs.readFileSync(asset).subarray(0, 12);
+        assert.equal(signature.subarray(0, 4).toString(), 'RIFF');
+        assert.equal(signature.subarray(8, 12).toString(), 'WEBP');
+    }
 });
 
 test('production styles keep native scrolling, one-shot image settling and glyph-only coordinate motion', () => {
