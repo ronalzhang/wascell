@@ -39,6 +39,7 @@ test.before(async () => {
             ADVISOR_UPLOAD_DIR: path.join(runtimeDir, 'uploads'),
             STAFF_DATA_DIR: path.join(runtimeDir, 'staff'),
             BUSINESS_DATA_DIR: path.join(runtimeDir, 'business'),
+            KNOWLEDGE_DATA_DIR: path.join(runtimeDir, 'knowledge'),
         },
         stdio: ['ignore', 'pipe', 'pipe'],
     });
