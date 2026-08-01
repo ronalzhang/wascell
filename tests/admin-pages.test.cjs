@@ -12,6 +12,7 @@ test('owner script authenticates only through owner endpoints and exposes five v
     for (const route of ['/api/owner/customers', '/api/owner/knowledge', '/api/owner/config', '/api/owner/staff']) {
         assert.match(script, new RegExp(route.replaceAll('/', '\\/')));
     }
+    assert.match(script, /autocomplete="new-password"/);
 });
 
 test('sales script authenticates through sales endpoint and has no owner API route', async () => {
