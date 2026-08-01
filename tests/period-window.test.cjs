@@ -67,7 +67,7 @@ test('production template preserves the approved responsive ARKSOMA structure', 
 
     assert.match(html, /name="viewport" content="width=device-width, initial-scale=1"/);
     assert.match(html, /PRIVATE ACCESS · BY APPOINTMENT/);
-    assert.match(html, /已包含首个 12 个月方舟年度席位/);
+    assert.match(html, /三次起可制定连续方案 · 首年方舟席位已含/);
     assert.match(html, /未经提前沟通与专业评估[^<]*可能无法接收/);
     assert.match(html, /id="coordinateTrigger"[^>]*>\s*37°32′10″N<br>139°36′20″E/);
     assert.doesNotMatch(html, /id="coordinateTrigger"[\s\S]{0,180}ORIGIN · THE STONE OF LONGEVITY/);
@@ -78,7 +78,11 @@ test('production template preserves the approved responsive ARKSOMA structure', 
     assert.match(html, /id="advisorSuccess"/);
     assert.match(html, /id="fileList"/);
     assert.match(html, /class="advisor-context"/);
+    assert.match(html, /data-service-period>单次细胞服务 · 2026·八月首期/);
     assert.match(html, /data-catalog-price>RMB 580,000/);
+    assert.match(html, /class="closing-price"><span>单次细胞服务<\/span> · <span data-catalog-price>RMB 580,000<\/span> · 截止/);
+    assert.doesNotMatch(html, /class="closing-price"[^>]*>[\s\S]{0,180}限额 5 席/);
+    assert.doesNotMatch(html, /RMB 560,000\/次|折扣|立省|六次套餐/);
     assert.doesNotMatch(html, /id="advisorSuccess"[\s\S]*data-catalog-price/);
 });
 

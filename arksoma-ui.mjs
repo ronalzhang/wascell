@@ -73,7 +73,11 @@ function priceLabel(value) {
     return `RMB ${Number(value).toLocaleString('en-US')}`;
 }
 
-export function applyPublicCatalog(root, catalog, periodType = 'standard') {
+export function servicePeriodLabel(periodLabel = '') {
+    return `单次细胞服务 · ${String(periodLabel).replace(/^\d{4}·/, '')}`;
+}
+
+export function applyPublicCatalog(root, catalog, periodType = 'standard', periodLabel = '') {
     if (!catalog) return;
     const filial = periodType === 'filial';
     const price = filial ? catalog.filialPeriod.price : catalog.fullPlanPrice;
@@ -84,6 +88,11 @@ export function applyPublicCatalog(root, catalog, periodType = 'standard') {
     root.querySelectorAll('[data-membership-fee]').forEach((node) => {
         node.textContent = `${priceLabel(catalog.membershipFee)} / 年`;
     });
+    if (periodLabel) {
+        root.querySelectorAll('[data-service-period]').forEach((node) => {
+            node.textContent = servicePeriodLabel(periodLabel);
+        });
+    }
     if (catalog.publicMembershipCopy) {
         root.querySelectorAll('[data-membership-copy]').forEach((node) => {
             node.textContent = catalog.publicMembershipCopy;
@@ -214,7 +223,7 @@ async function initPublicCatalog() {
         const response = await fetch('/api/public/catalog', { credentials: 'same-origin' });
         if (!response.ok) return;
         const catalog = normalizePublicCatalog(await response.json());
-        applyPublicCatalog(document, catalog, document.body.dataset.periodType);
+        applyPublicCatalog(document, catalog, document.body.dataset.periodType, document.body.dataset.period);
     } catch { /* 静态值作为可靠回退 */ }
 }
 
@@ -238,6 +247,9 @@ export function initArksomaPage() {
     const origin = initOverlay({ triggerSelector: '#coordinateTrigger', overlaySelector: '#originMenu', closeSelector: '[data-close-origin]' });
     const periods = initOverlay({ triggerSelector: '#periodTrigger', overlaySelector: '#periodSheet', closeSelector: '[data-close-period]' });
     initAdvisorDialog();
+    document.querySelectorAll('[data-service-period]').forEach((node) => {
+        node.textContent = servicePeriodLabel(document.body.dataset.period);
+    });
     initRevealMotion();
     initPublicCatalog();
     document.addEventListener('keydown', (event) => {

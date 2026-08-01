@@ -5,9 +5,15 @@ import {
     buildAdvisorFormData,
     createSubmissionKey,
     normalizePublicCatalog,
+    servicePeriodLabel,
     validateAdvisorData,
     validateAdvisorFiles,
 } from '../arksoma-ui.mjs';
+
+test('servicePeriodLabel frames the selected period as one cell service', () => {
+    assert.equal(servicePeriodLabel('2026·九月首期'), '单次细胞服务 · 九月首期');
+    assert.equal(servicePeriodLabel('九月二期'), '单次细胞服务 · 九月二期');
+});
 
 test('buildAdvisorFormData creates one backend application with period and attachment', () => {
     const report = new File(['medical'], 'health-report.pdf', { type: 'application/pdf' });
