@@ -59,6 +59,13 @@
 2. **Post-fix pass — passed**
    - At 1366 × 1024, itinerary heading and card opacity are `1`; the first two alternating cards match the source composition, image crop and text hierarchy.
    - At all six viewports, `documentElement.scrollWidth === innerWidth`.
+3. **Responsive and motion polish — passed (2026-08-01)**
+   - Initial anonymous visits to `/admin` and `/admin-pro` now show a quiet login state; the expiry message is reserved for a session that was previously authenticated.
+   - The closing promise stays on one line from 375px phone width through 1440px desktop width; 390, 768, 1024 and 1440px all report zero public-page overflow.
+   - Major sections use proximity scroll snapping, while long itinerary content remains freely scrollable. Journey images receive a restrained view-entry focus animation where supported.
+   - Coordinate light trace runs once on touch/coarse-pointer devices (and narrow QA viewports), returns to its resting bronze state, and is disabled by reduced-motion preferences.
+   - Advisor form shows selected period, configured price and included annual seat before submission; the success view intentionally contains no price because it confirms receipt, not purchase or medical acceptance.
+   - Evidence: `.codex-tmp/arksoma-polish-audit/closing-390-after.png`, `.codex-tmp/arksoma-polish-audit/closing-ipad-after.png`, `.codex-tmp/arksoma-polish-audit/closing-desktop-after.png`, `.codex-tmp/arksoma-polish-audit/advisor-price-mobile.png`.
 
 ## Residual P3 notes
 

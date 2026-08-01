@@ -77,6 +77,19 @@ test('production template preserves the approved responsive ARKSOMA structure', 
     assert.doesNotMatch(html, /class="itinerary-head safe-column" data-reveal/);
     assert.match(html, /id="advisorSuccess"/);
     assert.match(html, /id="fileList"/);
+    assert.match(html, /class="advisor-context"/);
+    assert.match(html, /data-catalog-price>RMB 580,000/);
+    assert.doesNotMatch(html, /id="advisorSuccess"[\s\S]*data-catalog-price/);
+});
+
+test('production styles keep the closing promise on one line and add restrained chapter motion', () => {
+    const css = fs.readFileSync(path.join(__dirname, '..', 'arksoma.css'), 'utf8');
+
+    assert.match(css, /scroll-snap-type:\s*y proximity/);
+    assert.match(css, /\.closing h2\s*\{[^}]*white-space:\s*nowrap/s);
+    assert.match(css, /@media\s*\(hover:\s*none\)\s*and\s*\(pointer:\s*coarse\),\s*\(max-width:\s*899px\)/);
+    assert.match(css, /coordinate-trace/);
+    assert.doesNotMatch(css, /@media\s*\(max-width:\s*599px\)[\s\S]*\.closing h2\s*\{[^}]*font-size:\s*40px/);
 });
 
 test('period menu renders links inside the fixed sheet and keeps the active period', () => {

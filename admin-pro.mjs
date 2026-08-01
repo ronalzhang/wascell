@@ -1,18 +1,20 @@
+import { sessionLoginMessage } from './session-state.mjs';
+
 const $=(s)=>document.querySelector(s), $$=(s)=>[...document.querySelectorAll(s)];
 const state={view:'stats',customers:[],staff:[],knowledge:[],config:null,chart:null};
 const titles={stats:['VISITOR INTELLIGENCE','访问统计'],customers:['CUSTOMER CONTINUITY','客户管理'],knowledge:['SALES PLAYBOOK','销售答疑'],config:['COMMERCIAL CONTROL','商业配置'],staff:['ACCESS CONTROL','团队权限']};
 const esc=(v='')=>String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const money=(v)=>`¥ ${Number(v||0).toLocaleString('zh-CN')}`;
 const date=(v)=>v?new Intl.DateTimeFormat('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(v)):'未启用';
-let toastTimer;
+let toastTimer,sessionEstablished=false;
 function toast(message){$('#adminToast').textContent=message;$('#adminToast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#adminToast').classList.remove('show'),2600)}
 function login(message=''){ $('#adminShell').hidden=true;$('#loginScreen').hidden=false;$('#loginMessage').textContent=message;$('#password').focus() }
 function workspace(){ $('#loginScreen').hidden=true;$('#adminShell').hidden=false }
-async function api(url,options={}){const r=await fetch(url,{credentials:'same-origin',...options,headers:{'content-type':'application/json',...(options.headers||{})}});const b=await r.json().catch(()=>({}));if(r.status===401){login('会话已失效，请重新登录');throw new Error('unauthorized')}if(!r.ok)throw new Error(b.message||'请求失败');return b}
+async function api(url,options={}){const r=await fetch(url,{credentials:'same-origin',...options,headers:{'content-type':'application/json',...(options.headers||{})}});const b=await r.json().catch(()=>({}));if(r.status===401){login(sessionLoginMessage(sessionEstablished));throw new Error(b.message||'unauthorized')}if(!r.ok)throw new Error(b.message||'请求失败');return b}
 function stamp(){ $('#lastUpdated').textContent=`更新于 ${new Date().toLocaleTimeString('zh-CN',{hour12:false})}` }
 
-async function handleLogin(e){e.preventDefault();const btn=$('#loginButton');btn.disabled=true;try{await api('/api/owner/login',{method:'POST',body:JSON.stringify({password:$('#password').value})});$('#password').value='';workspace();await loadCurrent()}catch(err){$('#loginMessage').textContent=err.message}finally{btn.disabled=false}}
-async function logout(){await api('/api/session/logout',{method:'POST',body:'{}'}).catch(()=>{});login('已安全退出')}
+async function handleLogin(e){e.preventDefault();const btn=$('#loginButton');btn.disabled=true;try{await api('/api/owner/login',{method:'POST',body:JSON.stringify({password:$('#password').value})});$('#password').value='';sessionEstablished=true;workspace();await loadCurrent()}catch(err){$('#loginMessage').textContent=err.message==='unauthorized'?'':err.message}finally{btn.disabled=false}}
+async function logout(){await api('/api/session/logout',{method:'POST',body:'{}'}).catch(()=>{});sessionEstablished=false;login('已安全退出')}
 function setView(view){state.view=view;$$('.view-panel').forEach(p=>p.hidden=p.id!==`${view}View`);$$('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));[$('#pageEyebrow').textContent,$('#pageTitle').textContent]=titles[view];loadCurrent()}
 async function loadCurrent(){const loaders={stats:loadStats,customers:loadCustomers,knowledge:loadKnowledge,config:loadConfig,staff:loadStaff};await loaders[state.view]();stamp()}
 
@@ -37,4 +39,4 @@ async function loadStaff(){state.staff=(await api('/api/owner/staff')).items;$('
 function newStaff(){openDrawer('新增销售账号',`<form class="admin-form" id="staffForm" autocomplete="off"><label>销售姓名<input id="sName" autocomplete="name" required></label><label>登录用户名<input id="sUsername" autocomplete="off" required></label><label>初始密码<input id="sPassword" type="password" autocomplete="new-password" minlength="10" required></label><button type="submit">创建账号</button></form>`);$('#staffForm').onsubmit=async e=>{e.preventDefault();await api('/api/owner/staff',{method:'POST',body:JSON.stringify({displayName:$('#sName').value,username:$('#sUsername').value,password:$('#sPassword').value})});closeDrawer();toast('销售账号已创建');await loadStaff()}}
 
 $('#loginForm').onsubmit=handleLogin;$('#logoutButton').onclick=logout;$('#refreshCurrent').onclick=loadCurrent;$$('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));$('#customerSearch').oninput=()=>setTimeout(loadCustomers,180);$('#customersBody').onclick=e=>{const r=e.target.closest('[data-customer]');if(r)openCustomer(r.dataset.customer)};$('#knowledgeSearch').oninput=renderKnowledge;$('#knowledgeList').onclick=e=>{const c=e.target.closest('[data-knowledge]');if(c)knowledgeForm(state.knowledge.find(i=>i.id===c.dataset.knowledge))};$('#newKnowledge').onclick=()=>knowledgeForm();$('#configForm').onsubmit=saveConfig;$('#newStaff').onclick=newStaff;$('#staffList').onclick=async e=>{const status=e.target.closest('[data-staff-status]');const reset=e.target.closest('[data-staff-reset]');if(status){await api(`/api/owner/staff/${status.dataset.staffStatus}/status`,{method:'PATCH',body:JSON.stringify({active:status.dataset.active==='true'})});toast('账号状态已更新');await loadStaff()}if(reset){const password=prompt('输入新的临时密码（至少 10 位）');if(password){await api(`/api/owner/staff/${reset.dataset.staffReset}/reset-password`,{method:'POST',body:JSON.stringify({password})});toast('密码已重置，旧会话已失效')}}};$$('[data-close-drawer]').forEach(b=>b.onclick=closeDrawer);
-try{const session=await api('/api/session');if(session.principal.role!=='owner')throw new Error('unauthorized');workspace();await loadCurrent()}catch(err){if(err.message!=='unauthorized')login('后台连接失败')}
+try{const session=await api('/api/session');if(session.principal.role!=='owner')throw new Error('unauthorized');sessionEstablished=true;workspace();await loadCurrent()}catch(err){if(err.message!=='unauthorized')login('后台连接失败')}

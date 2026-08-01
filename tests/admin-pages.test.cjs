@@ -22,3 +22,16 @@ test('sales script authenticates through sales endpoint and has no owner API rou
     assert.match(script, /\/api\/sales\/knowledge/);
     assert.doesNotMatch(script, /\/api\/owner\//);
 });
+
+test('initial anonymous visit stays quiet while a lost authenticated session is explained', async () => {
+    const { sessionLoginMessage } = await import('../session-state.mjs');
+
+    assert.equal(sessionLoginMessage(false), '');
+    assert.equal(sessionLoginMessage(true), '会话已失效，请重新登录');
+
+    for (const file of ['admin.mjs', 'admin-pro.mjs']) {
+        const script = await fs.readFile(path.join(root, file), 'utf8');
+        assert.match(script, /sessionEstablished/);
+        assert.match(script, /sessionLoginMessage\(sessionEstablished\)/);
+    }
+});
