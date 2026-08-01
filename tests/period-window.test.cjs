@@ -1,5 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const {
     buildPeriods,
@@ -56,4 +58,33 @@ test('renderPeriodPage applies the third-period family edition without changing 
     assert.match(html, /RMB 560,000/);
     assert.match(html, /敬亲礼遇/);
     assert.doesNotMatch(html, /限额 6 席|6人|6 人/);
+});
+
+test('production template preserves the approved responsive ARKSOMA structure', () => {
+    const template = fs.readFileSync(path.join(__dirname, '..', 'templates', 'arksoma-period.html'), 'utf8');
+    const periods = buildPeriods({ year: 2026, month: 8 }, 5);
+    const html = renderPeriodPage(template, periods[0], periods, periods[0].id);
+
+    assert.match(html, /name="viewport" content="width=device-width, initial-scale=1"/);
+    assert.match(html, /PRIVATE ACCESS · BY APPOINTMENT/);
+    assert.match(html, /已包含首个 12 个月方舟年度席位/);
+    assert.match(html, /未经提前沟通与专业评估[^<]*可能无法接收/);
+    assert.match(html, /id="coordinateTrigger"[^>]*>\s*37°32′10″N<br>139°36′20″E/);
+    assert.doesNotMatch(html, /id="coordinateTrigger"[\s\S]{0,180}ORIGIN · THE STONE OF LONGEVITY/);
+    assert.match(html, /id="periodSheet"/);
+    assert.equal((html.match(/class="journey-card/g) || []).length, 5);
+    assert.doesNotMatch(html, /class="journey-card[^"]*" data-reveal/);
+    assert.doesNotMatch(html, /class="itinerary-head safe-column" data-reveal/);
+    assert.match(html, /id="advisorSuccess"/);
+    assert.match(html, /id="fileList"/);
+});
+
+test('period menu renders links inside the fixed sheet and keeps the active period', () => {
+    const periods = buildPeriods({ year: 2026, month: 8 }, 5);
+    const template = '<aside id="periodSheet">{{PERIOD_MENU}}</aside>';
+    const html = renderPeriodPage(template, periods[3], periods, periods[0].id);
+
+    assert.match(html, /<a href="20260901"[^>]*aria-current="page"/);
+    assert.match(html, /敬亲礼遇期/);
+    assert.doesNotMatch(html, /父母长辈特惠/);
 });

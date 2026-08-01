@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - Match the approved `prototype/arksoma-v2` black-stone/cellular visual target.
-- Keep the 1024px portrait artboard behavior and support iPhone, large phones, iPad, tri-fold, and 1366px wide screens.
+- Preserve the approved 1024px portrait composition at iPad scale, but use a real fluid viewport below 1024px; 390px and 430px phones must never render a 1024px document or create horizontal overflow.
 - Visible primary actions remain period selection and private-advisor application.
 - Hero membership copy is restrained: `PRIVATE ACCESS · BY APPOINTMENT`.
 - Standard price fallback is RMB 580,000 and includes the first 12 months of annual access.
@@ -232,3 +232,29 @@ Set `final result: passed` only after console error/warn logs are empty and all 
 git add design-qa.md
 git commit -m "test: verify ARKSOMA production frontend"
 ```
+
+### Task 6: Scoped production deployment and live verification
+
+**Files:**
+- Modify only when required by verified deployment behavior: `deploy.sh`
+- Deploy the exact committed frontend/generator/test files from Tasks 1–5.
+
+**Interfaces:**
+- Consumes the locally verified commit and existing VPS data directories.
+- Produces a healthy `wascell-website` PM2 process while preserving private order, attachment, staff, knowledge, configuration, and audit data.
+
+- [ ] **Step 1: Run read-only remote preflight**
+
+Verify the configured host, `$APP_DIR`, remote Git branch/status, PM2 process, data-directory environment and current public/admin HTTP status. Do not print secrets.
+
+- [ ] **Step 2: Commit only scoped files**
+
+Use explicit `git add <paths>`; do not run `git add .`. Confirm the staged diff excludes `.codex-tmp`, PPT files, prototype-only artifacts, private runtime data and credentials.
+
+- [ ] **Step 3: Deploy and restart only the website process**
+
+Sync the verified commit to the configured WASCELL app directory, install production dependencies only if the lockfile changed, then restart only `wascell-website` and save PM2 state.
+
+- [ ] **Step 4: Verify production**
+
+Check `/`, a generated filial-period route, `/api/public/catalog`, `/admin`, `/admin-pro`, PM2 state and recent application logs. Re-run 390px and 1024px browser checks against `https://wascell.com`; require no horizontal overflow and no console errors before reporting completion.
