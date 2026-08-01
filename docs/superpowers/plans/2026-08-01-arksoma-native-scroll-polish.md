@@ -74,9 +74,13 @@ html { width: 100%; scroll-behavior: smooth; background: var(--ink); }
 [data-reveal].is-visible { opacity: 1; transform: none; }
 
 .journey-card img {
+    transform: none;
+    filter: saturate(.72) contrast(1.03) brightness(1);
+    transition: transform .9s cubic-bezier(.22,.7,.24,1), filter .9s ease;
+}
+.journey-card.is-motion-pending img {
     transform: scale(1.018);
     filter: saturate(.72) contrast(1.03) brightness(.88);
-    transition: transform .9s cubic-bezier(.22,.7,.24,1), filter .9s ease;
 }
 .journey-card.is-in-view img {
     transform: scale(1);
@@ -125,8 +129,12 @@ Import `initRevealMotion` and use small real class-list fakes:
 
 ```js
 test('initRevealMotion reveals content and journey cards once', () => {
-    const content = { classList: new Set() };
-    const card = { classList: new Set() };
+    const classList = () => {
+        const values = new Set();
+        return { add: (...names) => names.forEach((name) => values.add(name)), remove: (...names) => names.forEach((name) => values.delete(name)), has: (name) => values.has(name) };
+    };
+    const content = { classList: classList() };
+    const card = { classList: classList() };
     const observed = [];
     const unobserved = [];
     let callback;
@@ -143,15 +151,21 @@ test('initRevealMotion reveals content and journey cards once', () => {
 
     initRevealMotion({ root, reducedMotion: false, Observer });
     assert.deepEqual(observed, [content, card]);
+    assert.equal(card.classList.has('is-motion-pending'), true);
     callback([{ target: content, isIntersecting: true }, { target: card, isIntersecting: true }]);
     assert.equal(content.classList.has('is-visible'), true);
     assert.equal(card.classList.has('is-in-view'), true);
+    assert.equal(card.classList.has('is-motion-pending'), false);
     assert.deepEqual(unobserved, [content, card]);
 });
 
 test('initRevealMotion immediately reveals every target without motion support', () => {
-    const content = { classList: new Set() };
-    const card = { classList: new Set() };
+    const classList = () => {
+        const values = new Set();
+        return { add: (...names) => names.forEach((name) => values.add(name)), remove: (...names) => names.forEach((name) => values.delete(name)), has: (name) => values.has(name) };
+    };
+    const content = { classList: classList() };
+    const card = { classList: classList() };
     const root = { querySelectorAll: (selector) => selector === '[data-reveal]' ? [content] : [card] };
     assert.equal(initRevealMotion({ root, reducedMotion: true, Observer: null }), null);
     assert.equal(content.classList.has('is-visible'), true);
@@ -178,13 +192,16 @@ export function initRevealMotion({
     const contentTargets = [...root.querySelectorAll('[data-reveal]')];
     const journeyTargets = [...root.querySelectorAll('.journey-card')];
     const targets = [...contentTargets, ...journeyTargets];
-    const reveal = (target) => target.classList.add(
-        journeyTargets.includes(target) ? 'is-in-view' : 'is-visible',
-    );
+    const reveal = (target) => {
+        const journey = journeyTargets.includes(target);
+        target.classList.add(journey ? 'is-in-view' : 'is-visible');
+        if (journey) target.classList.remove('is-motion-pending');
+    };
     if (reducedMotion || typeof Observer !== 'function') {
         targets.forEach(reveal);
         return null;
     }
+    journeyTargets.forEach((target) => target.classList.add('is-motion-pending'));
     const observer = new Observer((entries) => {
         entries.forEach((entry) => {
             if (!entry.isIntersecting) return;
