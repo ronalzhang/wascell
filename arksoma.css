@@ -35,9 +35,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .brand-name { display: block; padding-left: .24em; font-family: "Bodoni 72", Didot, "Times New Roman", serif; font-size: clamp(46px, 7vw, 72px); letter-spacing: .24em; line-height: 1; }
 .brand-cn { display: block; margin-top: 20px; padding-left: .3em; font-family: "Songti SC", STSong, serif; font-size: clamp(18px, 2.3vw, 23px); letter-spacing: .3em; }
 .private-access { display: block; margin-top: 18px; color: rgba(238,228,210,.58); font-size: 8px; letter-spacing: .28em; }
-.coordinate-trigger { position: absolute; top: 28%; left: clamp(0px, 9vw, 98px); padding: 12px 0; border: 0; background: transparent; color: rgba(185,154,112,.88); font-family: "SFMono-Regular", Consolas, monospace; font-size: 10px; line-height: 1.65; letter-spacing: .12em; text-align: left; cursor: pointer; }
-.coordinate-trigger::after { content: "ENTER"; display: block; margin-top: 7px; color: var(--emerald); font-size: 8px; letter-spacing: .24em; opacity: 0; transition: opacity .25s ease; }
-.coordinate-trigger:hover::after, .coordinate-trigger:focus-visible::after { opacity: 1; }
+.coordinate-trigger { position: absolute; top: 28%; left: clamp(0px, 9vw, 98px); padding: 12px 0; border: 0; background: transparent; color: rgba(185,154,112,.88); font-family: "SFMono-Regular", Consolas, monospace; font-size: 10px; line-height: 1.65; letter-spacing: .12em; text-align: left; cursor: pointer; transition: color .3s ease, text-shadow .3s ease; }
+.coordinate-trigger:hover, .coordinate-trigger:focus-visible { color: rgba(238,228,210,.94); text-shadow: 0 0 7px rgba(238,228,210,.18); }
 .hero-message { margin-top: clamp(245px, 31vh, 470px); text-align: center; text-shadow: 0 3px 34px #000; }
 .hero-message h1 { margin: 0; font-family: "Songti SC", STSong, serif; font-size: clamp(44px, 6.1vw, 62px); font-weight: 300; line-height: 1.34; letter-spacing: .045em; }
 .hero-message p { margin: 20px 0 0; font-size: clamp(13px, 1.7vw, 17px); letter-spacing: .18em; }
@@ -163,11 +162,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
     @keyframes journey-focus { from { opacity: .72; transform: scale(1.035); } to { opacity: 1; transform: scale(1); } }
 }
 
-@media (hover: none) and (pointer: coarse), (max-width: 899px) {
-    .coordinate-trigger { animation: coordinate-pulse 1.45s cubic-bezier(.2,.7,.2,1) 1.05s 1 both; }
-    .coordinate-trigger::before { content: ""; position: absolute; left: -5px; right: -2px; top: 50%; border-top: 1px solid rgba(238,228,210,.72); opacity: 0; transform: scaleX(0); transform-origin: left center; animation: coordinate-trace 1.05s cubic-bezier(.2,.72,.2,1) 1.12s 1 both; }
-    @keyframes coordinate-pulse { 0%, 100% { color: rgba(185,154,112,.88); text-shadow: none; } 46% { color: rgba(255,249,237,.96); text-shadow: 0 0 10px rgba(238,228,210,.5); } }
-    @keyframes coordinate-trace { 0% { opacity: 0; transform: scaleX(0); } 35% { opacity: .78; } 72% { opacity: .18; transform: scaleX(1); } 100% { opacity: 0; transform: scaleX(1); } }
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+    @media (hover: none) and (pointer: coarse), (max-width: 899px) {
+        .coordinate-trigger { background-image: linear-gradient(102deg, rgba(185,154,112,.88) 0%, rgba(185,154,112,.88) 38%, rgba(255,249,237,.98) 49%, rgba(185,154,112,.88) 60%, rgba(185,154,112,.88) 100%); background-position: 100% 50%; background-size: 240% 100%; background-repeat: no-repeat; -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; animation: coordinate-glyph-sweep .9s cubic-bezier(.3,.68,.24,1) 1.1s 1 both; }
+        @keyframes coordinate-glyph-sweep { 0% { background-position: 100% 50%; text-shadow: none; } 50% { text-shadow: 0 0 7px rgba(238,228,210,.24); } 100% { background-position: 0% 50%; text-shadow: none; } }
+    }
 }
 
 @media (min-width: 1200px) {
@@ -241,5 +240,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
     *, *::before, *::after { animation: none !important; transition-duration: .01ms !important; }
+    .coordinate-trigger { background: none !important; color: rgba(185,154,112,.88); -webkit-text-fill-color: currentColor; text-shadow: none; }
     [data-reveal] { opacity: 1; transform: none; }
 }

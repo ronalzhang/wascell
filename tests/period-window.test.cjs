@@ -86,13 +86,18 @@ test('production template preserves the approved responsive ARKSOMA structure', 
     assert.doesNotMatch(html, /id="advisorSuccess"[\s\S]*data-catalog-price/);
 });
 
-test('production styles keep the closing promise on one line and add restrained chapter motion', () => {
+test('production styles keep the closing promise on one line and use glyph-only coordinate motion', () => {
     const css = fs.readFileSync(path.join(__dirname, '..', 'arksoma.css'), 'utf8');
 
     assert.match(css, /scroll-snap-type:\s*y proximity/);
     assert.match(css, /\.closing h2\s*\{[^}]*white-space:\s*nowrap/s);
     assert.match(css, /@media\s*\(hover:\s*none\)\s*and\s*\(pointer:\s*coarse\),\s*\(max-width:\s*899px\)/);
-    assert.match(css, /coordinate-trace/);
+    assert.doesNotMatch(css, /\.coordinate-trigger::before/);
+    assert.doesNotMatch(css, /content:\s*["']ENTER["']/);
+    assert.doesNotMatch(css, /coordinate-trace/);
+    assert.match(css, /@keyframes\s+coordinate-glyph-sweep/);
+    assert.match(css, /(?:-webkit-)?background-clip:\s*text/);
+    assert.match(css, /animation:[^;]*coordinate-glyph-sweep[^;]*1\s+both/);
     assert.doesNotMatch(css, /@media\s*\(max-width:\s*599px\)[\s\S]*\.closing h2\s*\{[^}]*font-size:\s*40px/);
 });
 
