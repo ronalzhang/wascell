@@ -227,20 +227,33 @@ async function initPublicCatalog() {
     } catch { /* 静态值作为可靠回退 */ }
 }
 
-function initRevealMotion() {
-    const targets = [...document.querySelectorAll('[data-reveal]')];
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) {
-        targets.forEach((target) => target.classList.add('is-visible'));
-        return;
+export function initRevealMotion({
+    root = document,
+    reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    Observer = globalThis.IntersectionObserver,
+} = {}) {
+    const contentTargets = [...root.querySelectorAll('[data-reveal]')];
+    const journeyTargets = [...root.querySelectorAll('.journey-card')];
+    const targets = [...contentTargets, ...journeyTargets];
+    const reveal = (target) => {
+        const journey = journeyTargets.includes(target);
+        target.classList.add(journey ? 'is-in-view' : 'is-visible');
+        if (journey) target.classList.remove('is-motion-pending');
+    };
+    if (reducedMotion || typeof Observer !== 'function') {
+        targets.forEach(reveal);
+        return null;
     }
-    const observer = new IntersectionObserver((entries) => {
+    journeyTargets.forEach((target) => target.classList.add('is-motion-pending'));
+    const observer = new Observer((entries) => {
         entries.forEach((entry) => {
             if (!entry.isIntersecting) return;
-            entry.target.classList.add('is-visible');
+            reveal(entry.target);
             observer.unobserve(entry.target);
         });
-    }, { threshold: 0.12 });
+    }, { threshold: 0.1, rootMargin: '0px 0px -8% 0px' });
     targets.forEach((target) => observer.observe(target));
+    return observer;
 }
 
 export function initArksomaPage() {

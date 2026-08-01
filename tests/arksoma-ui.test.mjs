@@ -4,11 +4,21 @@ import assert from 'node:assert/strict';
 import {
     buildAdvisorFormData,
     createSubmissionKey,
+    initRevealMotion,
     normalizePublicCatalog,
     servicePeriodLabel,
     validateAdvisorData,
     validateAdvisorFiles,
 } from '../arksoma-ui.mjs';
+
+function createClassList() {
+    const values = new Set();
+    return {
+        add: (...names) => names.forEach((name) => values.add(name)),
+        remove: (...names) => names.forEach((name) => values.delete(name)),
+        has: (name) => values.has(name),
+    };
+}
 
 test('servicePeriodLabel frames the selected period as one cell service', () => {
     assert.equal(servicePeriodLabel('2026·九月首期'), '单次细胞服务 · 九月首期');
@@ -88,4 +98,45 @@ test('normalizePublicCatalog keeps only public commercial fields', () => {
         publicMembershipCopy: '首个十二个月已包含',
         filialPeriod: { price: 570000, familyGroups: 3, publicCopy: '三组家庭席位' },
     });
+});
+
+test('initRevealMotion reveals content and journey cards once', () => {
+    const content = { classList: createClassList() };
+    const card = { classList: createClassList() };
+    const observed = [];
+    const unobserved = [];
+    let callback;
+    class Observer {
+        constructor(handler) { callback = handler; }
+        observe(target) { observed.push(target); }
+        unobserve(target) { unobserved.push(target); }
+    }
+    const root = {
+        querySelectorAll(selector) {
+            return selector === '[data-reveal]' ? [content] : [card];
+        },
+    };
+
+    initRevealMotion({ root, reducedMotion: false, Observer });
+
+    assert.deepEqual(observed, [content, card]);
+    assert.equal(card.classList.has('is-motion-pending'), true);
+    callback([{ target: content, isIntersecting: true }, { target: card, isIntersecting: true }]);
+    assert.equal(content.classList.has('is-visible'), true);
+    assert.equal(card.classList.has('is-in-view'), true);
+    assert.equal(card.classList.has('is-motion-pending'), false);
+    assert.deepEqual(unobserved, [content, card]);
+});
+
+test('initRevealMotion immediately reveals every target without motion support', () => {
+    const content = { classList: createClassList() };
+    const card = { classList: createClassList() };
+    const root = {
+        querySelectorAll: (selector) => selector === '[data-reveal]' ? [content] : [card],
+    };
+
+    assert.equal(initRevealMotion({ root, reducedMotion: true, Observer: null }), null);
+    assert.equal(content.classList.has('is-visible'), true);
+    assert.equal(card.classList.has('is-in-view'), true);
+    assert.equal(card.classList.has('is-motion-pending'), false);
 });
