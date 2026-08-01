@@ -74,6 +74,14 @@
    - Console log after the local interaction and responsive run: empty.
    - Accepted evidence: `.codex-tmp/arksoma-continuity-qa/06-coordinate-final-mid-390.png`, `.codex-tmp/arksoma-continuity-qa/07-advisor-final-390.png`, `.codex-tmp/arksoma-continuity-qa/08-advisor-final-768.png`, `.codex-tmp/arksoma-continuity-qa/09-advisor-final-1440.png`.
    - Commercial verification distinguishes the existing filial-period configured price from a continuity discount: public copy does not expose `RMB 560,000/次`, a discount percentage, savings amount, multi-service total or six-service tier.
+5. **Native scrolling and restrained entry motion — passed (2026-08-01)**
+   - Root cause reproduced before the change: `scroll-snap-type: y proximity` pulled a gesture ending near the first boundary to `775px`, while gestures farther from a boundary did not snap. This explained the reported intermittent behavior. The continuous `animation-timeline: view()` transform also kept large itinerary images coupled to scrolling.
+   - Accepted implementation uses native scrolling with computed `scrollSnapType: none`. A 390px `720px` gesture settled at `720px` without a later section pull; journey image computed `animationTimeline` is `auto`.
+   - Main content retains a one-shot `12px` reveal. Journey cards remain readable at all times; each pending image settles once from `scale(1.018)` and `brightness(.88)` to `scale(1)` and `brightness(1)`, then stops being observed.
+   - The advisor dialog no longer shows the internal order-generation sentence. Mobile focus uses `preventScroll`, keeping `申请私人顾问` visible at dialog open while still focusing the name field.
+   - Coordinate glyph sweep is `1.02s` with the existing `1.1s` delay and one iteration. Origin story open/close and focus return remain intact.
+   - At 390, 768, 1024 and 1440px, computed page overflow is zero and scroll snapping is `none`; local console errors and warnings are empty.
+   - The previous production mobile advisor capture and accepted local result were inspected together. Accepted evidence: `.codex-tmp/arksoma-native-scroll-qa/01-journey-mobile-390.png`, `.codex-tmp/arksoma-native-scroll-qa/03-advisor-768.png`, `.codex-tmp/arksoma-native-scroll-qa/04-advisor-1440.png`, `.codex-tmp/arksoma-native-scroll-qa/06-advisor-mobile-title-check.png`. The earlier `02-advisor-mobile-390.png` capture was rejected because focus scrolling hid the title.
 
 ## Residual P3 notes
 

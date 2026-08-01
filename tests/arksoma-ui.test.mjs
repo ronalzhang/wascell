@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
     buildAdvisorFormData,
     createSubmissionKey,
+    focusWithoutScroll,
     initRevealMotion,
     normalizePublicCatalog,
     servicePeriodLabel,
@@ -23,6 +24,12 @@ function createClassList() {
 test('servicePeriodLabel frames the selected period as one cell service', () => {
     assert.equal(servicePeriodLabel('2026·九月首期'), '单次细胞服务 · 九月首期');
     assert.equal(servicePeriodLabel('九月二期'), '单次细胞服务 · 九月二期');
+});
+
+test('focusWithoutScroll keeps the advisor heading in view on open', () => {
+    let options;
+    focusWithoutScroll({ focus: (value) => { options = value; } });
+    assert.deepEqual(options, { preventScroll: true });
 });
 
 test('buildAdvisorFormData creates one backend application with period and attachment', () => {

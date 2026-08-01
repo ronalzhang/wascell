@@ -77,6 +77,10 @@ export function servicePeriodLabel(periodLabel = '') {
     return `单次细胞服务 · ${String(periodLabel).replace(/^\d{4}·/, '')}`;
 }
 
+export function focusWithoutScroll(element) {
+    element?.focus({ preventScroll: true });
+}
+
 export function applyPublicCatalog(root, catalog, periodType = 'standard', periodLabel = '') {
     if (!catalog) return;
     const filial = periodType === 'filial';
@@ -164,7 +168,7 @@ function initAdvisorDialog() {
         status.textContent = '';
         if (typeof dialog.showModal === 'function') dialog.showModal();
         else dialog.setAttribute('open', '');
-        form.elements.name?.focus();
+        focusWithoutScroll(form.elements.name);
     };
     document.querySelectorAll('[data-open-advisor]').forEach((button) => button.addEventListener('click', open));
     dialog.querySelectorAll('[data-close-advisor], [data-close-success]').forEach((button) => button.addEventListener('click', close));
