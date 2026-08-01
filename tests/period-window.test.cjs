@@ -96,9 +96,9 @@ test('production hero preserves stone detail and serves compact modern artwork',
 
     assert.match(template, /rel="preload" as="image" href="imgs\/arksoma\/hero-longevity-stone\.webp" type="image\/webp" fetchpriority="high"/);
     assert.match(css, /\.hero\s*\{[^}]*hero-longevity-stone\.webp/s);
-    assert.match(css, /\.hero-shade\s*\{[^}]*rgba\(1,\s*4,\s*5,\s*\.06\)/s);
-    assert.match(css, /\.thesis-image\s*\{[^}]*cellular-stone-field\.webp[^}]*opacity:\s*\.88/s);
-    assert.match(css, /\.closing-shade\s*\{[^}]*rgba\(1,\s*4,\s*5,\s*\.52\)/s);
+    assert.match(css, /\.hero-shade\s*\{[^}]*rgba\(238,\s*228,\s*210,\s*\.07\)[^}]*mix-blend-mode:\s*screen/s);
+    assert.match(css, /\.thesis-image\s*\{[^}]*cellular-stone-field\.webp[^}]*opacity:\s*1[^}]*brightness\(1\.08\)/s);
+    assert.match(css, /\.closing-shade\s*\{[^}]*rgba\(1,\s*4,\s*5,\s*\.36\)/s);
 
     for (const asset of [heroWebp, scienceWebp]) {
         assert.equal(fs.existsSync(asset), true, `${path.basename(asset)} should exist`);
@@ -107,6 +107,19 @@ test('production hero preserves stone detail and serves compact modern artwork',
         assert.equal(signature.subarray(0, 4).toString(), 'RIFF');
         assert.equal(signature.subarray(8, 12).toString(), 'WEBP');
     }
+});
+
+test('origin story uses translucent glass and balanced two-line copy', () => {
+    const template = fs.readFileSync(path.join(__dirname, '..', 'templates', 'arksoma-period.html'), 'utf8');
+    const css = fs.readFileSync(path.join(__dirname, '..', 'arksoma.css'), 'utf8');
+
+    assert.match(template, /<blockquote><span>石头守住生命根基。<\/span><span>细胞之光重新点亮未来。<\/span><\/blockquote>/);
+    assert.match(template, /class="origin-story">本坐标指向日本西会津山岳文化中的长寿意象/);
+    assert.match(template, /如岩石般守护生命根基/);
+    assert.doesNotMatch(template, /class="origin-story">坐标指向|如岩石般保存生命根基/);
+    assert.match(css, /\.origin-menu\s+\.overlay-backdrop\s*\{[^}]*rgba\(1,\s*4,\s*5,\s*\.06\)[^}]*blur\(3px\)/s);
+    assert.match(css, /\.origin-panel\s*\{[^}]*linear-gradient[^}]*rgba\(8,\s*15,\s*14,\s*\.46\)[^}]*rgba\(4,\s*8,\s*8,\s*\.34\)[^}]*blur\(18px\)/s);
+    assert.match(css, /\.origin-panel blockquote span\s*\{[^}]*display:\s*block[^}]*white-space:\s*nowrap/s);
 });
 
 test('production styles keep native scrolling, one-shot image settling and glyph-only coordinate motion', () => {
