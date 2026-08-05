@@ -60,6 +60,7 @@ export function normalizePublicCatalog(raw = {}) {
         membershipFee,
         membershipMonths,
         showPrice: raw.showPrice !== false,
+        showPrivateJournal: raw.showPrivateJournal === true,
         publicMembershipCopy: String(raw.publicMembershipCopy || ''),
         filialPeriod: {
             price: filialPrice,
@@ -92,6 +93,9 @@ export function applyPublicCatalog(root, catalog, periodType = 'standard', perio
     root.querySelectorAll('[data-membership-fee]').forEach((node) => {
         node.textContent = `${priceLabel(catalog.membershipFee)} / 年`;
     });
+    root.querySelectorAll('[data-private-journal]').forEach((node) => {
+        node.hidden = !catalog.showPrivateJournal;
+    });
     if (periodLabel) {
         root.querySelectorAll('[data-service-period]').forEach((node) => {
             node.textContent = servicePeriodLabel(periodLabel);
@@ -102,6 +106,61 @@ export function applyPublicCatalog(root, catalog, periodType = 'standard', perio
             node.textContent = catalog.publicMembershipCopy;
         });
     }
+}
+
+async function revealJourneyImage(image) {
+    try {
+        await image.decode?.();
+    } catch { /* decode failure still falls through to naturalWidth */ }
+    if (!image.naturalWidth) return;
+    image.classList.remove('is-image-pending', 'is-image-error');
+    image.classList.add('is-image-ready');
+}
+
+async function warmJourneyImages(images, ImageCtor) {
+    if (typeof ImageCtor !== 'function') return;
+    for (const image of images) {
+        if (image.complete && image.naturalWidth) continue;
+        const source = image.currentSrc || image.src;
+        if (!source) continue;
+        const loader = new ImageCtor();
+        loader.decoding = 'async';
+        loader.src = source;
+        try {
+            if (typeof loader.decode === 'function') await loader.decode();
+            else await new Promise((resolve) => {
+                loader.onload = resolve;
+                loader.onerror = resolve;
+            });
+        } catch { /* visible image keeps its branded placeholder */ }
+    }
+}
+
+export function initJourneyImages({
+    root = document,
+    windowTarget = window,
+    connection = globalThis.navigator?.connection,
+    ImageCtor = globalThis.Image,
+    scheduleIdle = globalThis.requestIdleCallback
+        ? (callback) => globalThis.requestIdleCallback(callback, { timeout: 1600 })
+        : (callback) => globalThis.setTimeout(callback, 120),
+} = {}) {
+    const images = [...root.querySelectorAll('[data-journey-image]')];
+    images.forEach((image) => {
+        if (image.complete && image.naturalWidth) {
+            image.classList.add('is-image-ready');
+            return;
+        }
+        image.classList.add('is-image-pending');
+        image.addEventListener('load', () => revealJourneyImage(image), { once: true });
+        image.addEventListener('error', () => image.classList.add('is-image-error'), { once: true });
+    });
+    if (!connection?.saveData && typeof windowTarget?.addEventListener === 'function') {
+        windowTarget.addEventListener('load', () => {
+            scheduleIdle(() => warmJourneyImages(images, ImageCtor));
+        }, { once: true });
+    }
+    return images;
 }
 
 function setBodyLock(locked) {
@@ -264,6 +323,7 @@ export function initArksomaPage() {
     const origin = initOverlay({ triggerSelector: '#coordinateTrigger', overlaySelector: '#originMenu', closeSelector: '[data-close-origin]' });
     const periods = initOverlay({ triggerSelector: '#periodTrigger', overlaySelector: '#periodSheet', closeSelector: '[data-close-period]' });
     initAdvisorDialog();
+    initJourneyImages();
     document.querySelectorAll('[data-service-period]').forEach((node) => {
         node.textContent = servicePeriodLabel(document.body.dataset.period);
     });

@@ -38,7 +38,7 @@ test('renderPeriodPage preserves ARKSOMA content and fills first-period commerci
 
     const html = renderPeriodPage(template, periods[0], periods, periods[0].id);
 
-    assert.match(html, /ARKSOMA · 方舟计划 · 2026·八月首期/);
+    assert.match(html, /ARKSOMA 方舟计划｜2026·八月首期 · 日本细胞科技与生命资产管理/);
     assert.match(html, /2026·八月首期/);
     assert.match(html, /限额 5 席/);
     assert.match(html, /RMB 580,000/);
@@ -53,7 +53,7 @@ test('renderPeriodPage applies the third-period family edition without changing 
     const template = '{{PAGE_TITLE}}|{{PERIOD_LABEL}}|{{CAPACITY}}|{{PRICE}}|{{APPLY_NOTE}}|{{PERIOD_MENU}}';
     const html = renderPeriodPage(template, periods[2], periods, periods[0].id);
 
-    assert.match(html, /^ARKSOMA · 方舟计划 · 2026·八月三期/);
+    assert.match(html, /^ARKSOMA 方舟计划｜2026·八月三期 · 日本细胞科技与生命资产管理/);
     assert.match(html, /敬亲礼遇期 · 3组家庭席位/);
     assert.match(html, /RMB 560,000/);
     assert.match(html, /敬亲礼遇/);
@@ -74,6 +74,9 @@ test('production template preserves the approved responsive ARKSOMA structure', 
     assert.doesNotMatch(html, /id="coordinateTrigger"[\s\S]{0,180}ORIGIN · THE STONE OF LONGEVITY/);
     assert.match(html, /id="periodSheet"/);
     assert.equal((html.match(/class="journey-card/g) || []).length, 5);
+    assert.equal((html.match(/data-journey-image/g) || []).length, 5);
+    assert.equal((html.match(/decoding="async"/g) || []).length, 8);
+    assert.match(html, /data-journey-image[^>]*width="2062"[^>]*height="1148"/);
     assert.doesNotMatch(html, /class="journey-card[^"]*" data-reveal/);
     assert.doesNotMatch(html, /class="itinerary-head safe-column" data-reveal/);
     assert.match(html, /id="advisorSuccess"/);
@@ -86,6 +89,45 @@ test('production template preserves the approved responsive ARKSOMA structure', 
     assert.doesNotMatch(html, /class="closing-price"[^>]*>[\s\S]{0,180}限额 5 席/);
     assert.doesNotMatch(html, /RMB 560,000\/次|折扣|立省|六次套餐/);
     assert.doesNotMatch(html, /id="advisorSuccess"[\s\S]*data-catalog-price/);
+});
+
+test('production template exposes dynamic SEO and the approved protocol-to-journal story', () => {
+    const template = fs.readFileSync(path.join(__dirname, '..', 'templates', 'arksoma-period.html'), 'utf8');
+    const css = fs.readFileSync(path.join(__dirname, '..', 'arksoma.css'), 'utf8');
+    const periods = buildPeriods({ year: 2026, month: 8 }, 5);
+    const html = renderPeriodPage(template, periods[0], periods, periods[0].id);
+
+    assert.match(html, /<link rel="canonical" href="https:\/\/arksoma\.com\/">/);
+    assert.match(html, /<meta property="og:title" content="ARKSOMA 方舟计划｜2026·八月首期 · 日本细胞科技与生命资产管理">/);
+    assert.match(html, /<meta property="og:url" content="https:\/\/arksoma\.com\/">/);
+    assert.match(html, /"@type":"WebSite"/);
+    assert.match(html, /"name":"ARKSOMA"/);
+    assert.match(html, /"alternateName":"方舟计划"/);
+
+    const access = html.indexOf('id="access"');
+    const protocol = html.indexOf('id="journey-protocol"');
+    const itinerary = html.indexOf('id="itinerary"');
+    const journal = html.indexOf('id="private-journal"');
+    const contact = html.indexOf('id="contact"');
+    assert.ok(access < protocol && protocol < itinerary && itinerary < journal && journal < contact);
+
+    assert.match(html, /一次完整方案 · 两次赴日完成/);
+    assert.match(html, /首次赴日[^<]*约 5 日/);
+    assert.match(html, /细胞制备[^<]*不少于 4 周/);
+    assert.match(html, /第二次赴日[^<]*约 1 日/);
+    assert.match(html, /以一组关键指标建立长期健康管理的个人起点/);
+    assert.doesNotMatch(html, /后续回输不自动重复包含/);
+    assert.match(html, /序 · 启 · 行 · 观 · 境 · 遇 · 识 · 容 · 和 · 同 · 照 · 澄 · 守 · 臻 · 恒/);
+
+    const journalSection = html.match(/<section class="private-journal"[\s\S]*?<\/section>/)?.[0] || '';
+    assert.match(journalSection, /hidden data-private-journal/);
+    assert.doesNotMatch(journalSection, /VOL\.|01–15|I{2,}|插卡|照片袋|可替换照片页/);
+    assert.match(journalSection, /整本统一送印、锁线与上壳/);
+    assert.match(css, /\.protocol-rail/);
+    assert.match(css, /\.protocol-rail article\s*\{[^}]*grid-template-rows/s);
+    assert.match(css, /\.journal-gallery/);
+    assert.match(css, /@media\s*\(max-width:\s*599px\)[\s\S]*\.protocol-rail/s);
+    assert.match(css, /\.private-journal\s*\{[^}]*background:[^}]*#07100f/s);
 });
 
 test('production hero preserves stone detail and serves compact modern artwork', () => {

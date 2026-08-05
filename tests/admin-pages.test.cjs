@@ -13,6 +13,8 @@ test('owner script authenticates only through owner endpoints and exposes five v
         assert.match(script, new RegExp(route.replaceAll('/', '\\/')));
     }
     assert.match(script, /autocomplete="new-password"/);
+    assert.match(script, /showPrivateJournal/);
+    assert.match(script, /type="checkbox"/);
 });
 
 test('sales script authenticates through sales endpoint and has no owner API route', async () => {

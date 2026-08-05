@@ -3,8 +3,10 @@ import assert from 'node:assert/strict';
 
 import {
     buildAdvisorFormData,
+    applyPublicCatalog,
     createSubmissionKey,
     focusWithoutScroll,
+    initJourneyImages,
     initRevealMotion,
     normalizePublicCatalog,
     servicePeriodLabel,
@@ -94,6 +96,7 @@ test('normalizePublicCatalog keeps only public commercial fields', () => {
         membershipFee: 21800,
         membershipMonths: 12,
         showPrice: true,
+        showPrivateJournal: true,
         publicMembershipCopy: '首个十二个月已包含',
         standardCapacity: 99,
         filialPeriod: { price: 570000, familyGroups: 3, publicCopy: '三组家庭席位' },
@@ -102,9 +105,78 @@ test('normalizePublicCatalog keeps only public commercial fields', () => {
         membershipFee: 21800,
         membershipMonths: 12,
         showPrice: true,
+        showPrivateJournal: true,
         publicMembershipCopy: '首个十二个月已包含',
         filialPeriod: { price: 570000, familyGroups: 3, publicCopy: '三组家庭席位' },
     });
+});
+
+test('applyPublicCatalog reveals the private journal only when the public switch is enabled', () => {
+    const journal = { hidden: true };
+    const root = {
+        querySelectorAll(selector) {
+            if (selector === '[data-private-journal]') return [journal];
+            return [];
+        },
+    };
+    const catalog = {
+        fullPlanPrice: 580000,
+        membershipFee: 19800,
+        membershipMonths: 12,
+        showPrice: true,
+        showPrivateJournal: false,
+        publicMembershipCopy: '',
+        filialPeriod: { price: 560000, familyGroups: 3, publicCopy: '' },
+    };
+
+    applyPublicCatalog(root, catalog);
+    assert.equal(journal.hidden, true);
+
+    applyPublicCatalog(root, { ...catalog, showPrivateJournal: true });
+    assert.equal(journal.hidden, false);
+});
+
+test('initJourneyImages hides an unsettled image then reveals it after decoding', async () => {
+    const image = {
+        complete: false,
+        naturalWidth: 0,
+        src: '/imgs/kaiseki.jpg',
+        currentSrc: '',
+        classList: createClassList(),
+        listeners: {},
+        addEventListener(name, listener) { this.listeners[name] = listener; },
+        decode: async () => undefined,
+    };
+    const root = { querySelectorAll: () => [image] };
+    const windowTarget = { addEventListener() {} };
+
+    initJourneyImages({ root, windowTarget, connection: { saveData: true } });
+    assert.equal(image.classList.has('is-image-pending'), true);
+
+    image.complete = true;
+    image.naturalWidth = 1200;
+    await image.listeners.load();
+    assert.equal(image.classList.has('is-image-pending'), false);
+    assert.equal(image.classList.has('is-image-ready'), true);
+});
+
+test('initJourneyImages keeps a failed image on the branded placeholder', () => {
+    const image = {
+        complete: false,
+        naturalWidth: 0,
+        src: '/imgs/geisha.jpg',
+        classList: createClassList(),
+        listeners: {},
+        addEventListener(name, listener) { this.listeners[name] = listener; },
+    };
+    const root = { querySelectorAll: () => [image] };
+
+    initJourneyImages({ root, windowTarget: { addEventListener() {} }, connection: { saveData: true } });
+    image.listeners.error();
+
+    assert.equal(image.classList.has('is-image-pending'), true);
+    assert.equal(image.classList.has('is-image-error'), true);
+    assert.equal(image.classList.has('is-image-ready'), false);
 });
 
 test('initRevealMotion reveals content and journey cards once', () => {

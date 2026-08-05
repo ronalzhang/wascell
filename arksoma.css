@@ -71,6 +71,24 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .access-benefits dd { margin: 0; }
 .access-renewal { color: var(--bronze); font-size: 10px; letter-spacing: .08em; }
 
+.journey-protocol { padding: 132px 0 142px; background: #09100f; }
+.protocol-heading h2, .journal-heading h2 { margin: 24px 0 0; font-family: "Songti SC", STSong, serif; font-size: clamp(42px, 5.4vw, 58px); font-weight: 300; line-height: 1.42; letter-spacing: .05em; }
+.protocol-heading > p:not(.eyebrow), .journal-heading > p:not(.eyebrow) { width: min(590px, 100%); margin: 28px 0 0; color: var(--muted); font-size: 14px; line-height: 2; }
+.protocol-rail { position: relative; display: grid; grid-template-columns: 1.08fr .84fr 1fr; gap: 0; margin-top: 76px; border-top: 1px solid var(--bronze-line); border-bottom: 1px solid var(--hairline); }
+.protocol-rail::before { content: ""; position: absolute; top: -4px; left: 0; right: 0; height: 7px; background: radial-gradient(circle at 0 50%, var(--bronze) 0 3px, transparent 4px), radial-gradient(circle at 50% 50%, var(--bronze) 0 3px, transparent 4px), radial-gradient(circle at 100% 50%, var(--bronze) 0 3px, transparent 4px); }
+.protocol-rail article { min-width: 0; display: grid; grid-template-rows: auto minmax(82px, auto) 1fr auto; align-content: start; padding: 38px 30px 36px; border-right: 1px solid var(--hairline); }
+.protocol-rail article:first-child { padding-left: 0; }
+.protocol-rail article:last-child { padding-right: 0; border-right: 0; }
+.protocol-stage { margin: 0; color: var(--bronze); font: 10px "SFMono-Regular", Consolas, monospace; letter-spacing: .14em; }
+.protocol-rail h3 { margin: 22px 0 0; font-family: "Songti SC", STSong, serif; font-size: 25px; font-weight: 300; line-height: 1.5; }
+.protocol-rail article > p:not(.protocol-stage) { margin: 19px 0 0; color: var(--muted); font-size: 12px; line-height: 1.9; }
+.protocol-rail ul { display: flex; flex-wrap: wrap; gap: 8px; margin: 26px 0 0; padding: 0; list-style: none; }
+.protocol-rail li { padding: 7px 9px; border: 1px solid var(--bronze-line); color: rgba(238,228,210,.7); font-size: 8px; letter-spacing: .08em; }
+.protocol-note { margin-top: 42px; padding-left: 24px; border-left: 1px solid var(--bronze); }
+.protocol-note strong { font-family: "Songti SC", STSong, serif; font-size: 20px; font-weight: 300; letter-spacing: .08em; }
+.protocol-note p { margin: 14px 0 0; color: var(--muted); font-size: 12px; line-height: 1.9; }
+.protocol-note small { display: block; margin-top: 14px; color: rgba(238,228,210,.4); font-size: 9px; line-height: 1.8; }
+
 .itinerary { padding: 130px 0 150px; background: #060909; }
 .itinerary-head { display: grid; grid-template-columns: 1fr 300px; gap: 80px; align-items: end; }
 .itinerary-head h2 { font-size: clamp(46px, 5.3vw, 54px); white-space: nowrap; }
@@ -79,8 +97,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .journey-card { min-height: 390px; display: grid; grid-template-columns: 1.14fr .86fr; overflow: hidden; border: 1px solid var(--hairline); background: #0a0e0e; box-shadow: 0 30px 90px rgba(0,0,0,.3); }
 .journey-card.reverse { grid-template-columns: .86fr 1.14fr; }
 .journey-card.reverse figure { order: 2; }
-.journey-card figure { min-width: 0; min-height: 390px; margin: 0; overflow: hidden; }
-.journey-card img { width: 100%; height: 100%; display: block; object-fit: cover; transform: none; filter: saturate(.72) contrast(1.03) brightness(1); transition: transform .9s cubic-bezier(.22,.7,.24,1), filter .9s ease; }
+.journey-card figure { min-width: 0; min-height: 390px; margin: 0; overflow: hidden; background: radial-gradient(circle at 72% 28%, rgba(114,174,157,.09), transparent 38%), linear-gradient(145deg, #0c1413, #060909 68%); }
+.journey-card img { width: 100%; height: 100%; display: block; color: transparent; font-size: 0; object-fit: cover; opacity: 1; transform: none; filter: saturate(.72) contrast(1.03) brightness(1); transition: opacity .58s ease, transform .9s cubic-bezier(.22,.7,.24,1), filter .9s ease; }
+.journey-card img.is-image-pending { opacity: 0; }
+.journey-card img.is-image-ready { opacity: 1; }
 .journey-card.is-motion-pending img { transform: scale(1.018); filter: saturate(.72) contrast(1.03) brightness(.88); }
 .journey-card.is-in-view img { transform: scale(1); filter: saturate(.72) contrast(1.03) brightness(1); }
 .journey-copy { padding: 48px 42px 38px; }
@@ -90,6 +110,20 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .journey-copy > p:not(.journey-index) { margin: 22px 0 0; color: var(--muted); font-size: 13px; line-height: 1.9; }
 .journey-copy ul { display: flex; flex-wrap: wrap; gap: 8px; margin: 28px 0 0; padding: 0; list-style: none; }
 .journey-copy li { padding: 8px 10px; border: 1px solid var(--bronze-line); color: rgba(238,228,210,.72); font-size: 9px; letter-spacing: .1em; }
+
+.private-journal { padding: 136px 0 150px; overflow: hidden; background: radial-gradient(circle at 76% 18%, rgba(114,174,157,.055), transparent 35%), linear-gradient(180deg, #07100f, #040707); color: var(--ivory); }
+.private-journal .eyebrow { color: var(--bronze); }
+.journal-heading > p:not(.eyebrow) { color: var(--muted); }
+.journal-gallery { display: grid; grid-template-columns: 1.08fr .92fr; gap: 18px; margin-top: 70px; }
+.journal-gallery figure { position: relative; min-width: 0; margin: 0; overflow: hidden; border: 1px solid rgba(185,154,112,.18); background: #0a0f0e; box-shadow: 0 28px 90px rgba(0,0,0,.28); }
+.journal-gallery .journal-collection { grid-column: 1 / -1; }
+.journal-gallery img { width: 100%; height: 100%; min-height: 360px; display: block; object-fit: cover; filter: saturate(.78) contrast(1.03) brightness(.96); }
+.journal-gallery .journal-collection img { min-height: 0; aspect-ratio: 16 / 9; }
+.journal-gallery figcaption { position: absolute; left: 20px; bottom: 18px; padding: 8px 10px; background: rgba(8,10,9,.74); color: rgba(255,249,237,.82); font-size: 9px; letter-spacing: .12em; backdrop-filter: blur(10px); }
+.journal-copy { padding-top: 56px; text-align: center; }
+.journal-sequence { margin: 0; color: var(--bronze); font-family: "Songti SC", STSong, serif; font-size: clamp(17px, 2.4vw, 25px); line-height: 1.8; letter-spacing: .12em; }
+.journal-copy > p:not(.journal-sequence) { width: min(600px, 100%); margin: 26px auto 0; color: var(--muted); font-size: 13px; line-height: 2; }
+.journal-copy blockquote { margin: 36px 0 0; color: var(--ivory); font-family: "Songti SC", STSong, serif; font-size: clamp(23px, 3.8vw, 34px); font-weight: 300; letter-spacing: .08em; }
 
 .closing { position: relative; min-height: 92svh; display: grid; place-items: center; overflow: hidden; background: #06100f url("imgs/arksoma/hero-longevity-stone.webp") center 68% / cover no-repeat; text-align: center; }
 .closing-shade { background: rgba(1,4,5,.36); }
@@ -178,6 +212,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
     .access-shell { grid-template-columns: 1fr; gap: 38px; }
     .itinerary-head { grid-template-columns: 1fr; gap: 28px; }
     .itinerary-head h2 { white-space: normal; }
+    .protocol-rail { grid-template-columns: 1fr; }
+    .protocol-rail::before { background: radial-gradient(circle at 0 50%, var(--bronze) 0 3px, transparent 4px); }
+    .protocol-rail article, .protocol-rail article:first-child, .protocol-rail article:last-child { display: block; padding: 34px 0; border-right: 0; border-bottom: 1px solid var(--hairline); }
+    .protocol-rail article:last-child { border-bottom: 0; }
     .journey-card, .journey-card.reverse { grid-template-columns: 1fr; }
     .journey-card figure, .journey-card.reverse figure { order: 0; min-height: 0; aspect-ratio: 16 / 10; }
 }
@@ -204,6 +242,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
     .protocol-grid div { grid-template-columns: 64px 1fr; }
     .protocol-grid dd { font-size: 17px; }
     .access-section { padding: 74px 0; }
+    .journey-protocol { padding: 86px 0 94px; }
+    .protocol-heading h2, .journal-heading h2 { font-size: 39px; }
+    .protocol-rail { margin-top: 48px; }
+    .protocol-rail h3 { font-size: 23px; }
+    .protocol-note { margin-top: 32px; }
     .access-shell { padding: 36px 24px; }
     .access-heading h2 { font-size: 38px; }
     .access-lead { font-size: 16px; }
@@ -212,6 +255,14 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
     .journey-list { gap: 22px; margin-top: 48px; }
     .journey-copy { padding: 32px 24px 28px; }
     .journey-copy h3 { font-size: 25px; }
+    .private-journal { padding: 88px 0 98px; }
+    .journal-gallery { grid-template-columns: 1fr; gap: 12px; margin-top: 48px; }
+    .journal-gallery .journal-collection { grid-column: auto; }
+    .journal-gallery img, .journal-gallery .journal-collection img { min-height: 0; aspect-ratio: 4 / 3; }
+    .journal-gallery .journal-collection img { object-fit: cover; object-position: center; }
+    .journal-copy { padding-top: 38px; }
+    .journal-sequence { font-size: 17px; letter-spacing: .06em; }
+    .journal-copy blockquote { font-size: 24px; line-height: 1.7; }
     .closing-inner { padding: 90px 0; }
     .origin-panel { padding: 72px 28px 40px; }
     .origin-panel h2 { font-size: 44px; }

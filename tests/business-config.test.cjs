@@ -26,6 +26,7 @@ test('public catalog exposes prices and copy but not internal capacity', async (
         assert.equal(catalog.fullPlanPrice, 580000);
         assert.equal(catalog.membershipFee, 19800);
         assert.equal(catalog.membershipMonths, 12);
+        assert.equal(catalog.showPrivateJournal, false);
         assert.deepEqual(catalog.filialPeriod, {
             price: 560000,
             familyGroups: 3,
@@ -34,6 +35,22 @@ test('public catalog exposes prices and copy but not internal capacity', async (
         assert.equal('standardCapacity' in catalog, false);
         assert.equal('filialMaxGuests' in catalog.filialPeriod, false);
         assert.equal('reminderDays' in catalog, false);
+    });
+});
+
+test('private journal stays hidden by default and owner changes are audited', async () => {
+    await withStores(async ({ store, auditLog }) => {
+        assert.equal((await store.getPrivate()).showPrivateJournal, false);
+
+        const updated = await store.update(
+            { showPrivateJournal: true },
+            { actorId: 'owner', reason: '实体纪行已具备交付条件' },
+        );
+        const events = await auditLog.list();
+
+        assert.equal(updated.showPrivateJournal, true);
+        assert.equal((await store.getPublic()).showPrivateJournal, true);
+        assert.deepEqual(events[0].changes.showPrivateJournal, { before: false, after: true });
     });
 });
 

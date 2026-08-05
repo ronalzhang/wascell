@@ -134,6 +134,7 @@ test('public catalog is readable while commercial configuration is owner-only', 
     const publicCatalog = await publicResponse.json();
     assert.equal(publicResponse.status, 200);
     assert.equal(publicCatalog.fullPlanPrice, 580000);
+    assert.equal(publicCatalog.showPrivateJournal, false);
     assert.equal('standardCapacity' in publicCatalog, false);
 
     const salesLogin = await fetch(`${baseUrl}/api/sales/login`, {
@@ -157,12 +158,14 @@ test('public catalog is readable while commercial configuration is owner-only', 
     const update = await fetch(`${baseUrl}/api/owner/config`, {
         method: 'PATCH',
         headers: { cookie: ownerCookie, 'content-type': 'application/json' },
-        body: JSON.stringify({ membershipFee: 21800, reason: '集成测试调整' }),
+        body: JSON.stringify({ membershipFee: 21800, showPrivateJournal: true, reason: '集成测试调整' }),
     });
     assert.equal(update.status, 200);
 
     const refreshedPublic = await fetch(`${baseUrl}/api/public/catalog`);
-    assert.equal((await refreshedPublic.json()).membershipFee, 21800);
+    const refreshedCatalog = await refreshedPublic.json();
+    assert.equal(refreshedCatalog.membershipFee, 21800);
+    assert.equal(refreshedCatalog.showPrivateJournal, true);
 });
 
 test('sales customer APIs enforce assignment and owner-only membership changes', async () => {

@@ -5,9 +5,17 @@
     <title>{{PAGE_TITLE}}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="{{META_DESCRIPTION}}">
+    <link rel="canonical" href="{{PAGE_URL}}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="ARKSOMA">
+    <meta property="og:title" content="{{OG_TITLE}}">
+    <meta property="og:description" content="{{META_DESCRIPTION}}">
+    <meta property="og:url" content="{{PAGE_URL}}">
+    <meta property="og:image" content="https://arksoma.com/imgs/arksoma/hero-longevity-stone.webp">
+    <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"ARKSOMA","alternateName":"方舟计划","url":"https://arksoma.com/"},{"@type":"Organization","name":"ARKSOMA","alternateName":"方舟计划","url":"https://arksoma.com/","logo":"https://arksoma.com/favicon.png"}]}</script>
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="preload" as="image" href="imgs/arksoma/hero-longevity-stone.webp" type="image/webp" fetchpriority="high">
-    <link rel="stylesheet" href="arksoma.css?v=20260802-2">
+    <link rel="stylesheet" href="arksoma.css?v=20260806-2">
 </head>
 <body class="arksoma-page{{SPECIAL_CLASS}}" data-period="{{PERIOD_LABEL}}" data-period-id="{{PERIOD_ID}}" data-period-type="{{PERIOD_TYPE}}">
     <a class="skip-link" href="#science">跳至主要内容</a>
@@ -74,12 +82,62 @@
             </div>
         </section>
 
+        <section class="journey-protocol" id="journey-protocol" aria-labelledby="journeyProtocolTitle">
+            <header class="protocol-heading safe-column" data-reveal>
+                <p class="eyebrow">ARKSOMA CELL JOURNEY</p>
+                <h2 id="journeyProtocolTitle">一次完整方案 · 两次赴日完成</h2>
+                <p>首次赴日完成评估与采集，经过专业机构的医学周期后，再按确认时间赴日完成回输与观察。</p>
+            </header>
+            <div class="protocol-rail safe-wide" data-reveal>
+                <article>
+                    <p class="protocol-stage">首次赴日 · 约 5 日</p>
+                    <h3>评估、采集与私享行程</h3>
+                    <p>日本医疗团队按预约完成必要样本采集与安全指标说明，并根据个人情况完成自体组织采集。状态确认后，继续本期私人文化行程。</p>
+                    <ul><li>酒店上门采样</li><li>年度基线评估</li><li>自体组织采集</li></ul>
+                </article>
+                <article>
+                    <p class="protocol-stage">细胞制备 · 不少于 4 周</p>
+                    <h3>医学周期与持续协调</h3>
+                    <p>采集完成后，日本医疗机构按照个人方案进入细胞制备与管理阶段，私人医疗秘书持续协调资料、机构档期与第二次赴日时间。</p>
+                    <ul><li>专业机构管理</li><li>持续私人协调</li></ul>
+                </article>
+                <article>
+                    <p class="protocol-stage">第二次赴日 · 约 1 日</p>
+                    <h3>回输与医学观察</h3>
+                    <p>按照日本医疗机构最终确认的日期和时间完成回输及必要医学观察。日期确认后原则上不可自由变更。</p>
+                    <ul><li>约 30 分钟回输</li><li>约 30 分钟观察</li><li>一日在日安排</li></ul>
+                </article>
+            </div>
+            <div class="protocol-note safe-column" data-reveal>
+                <strong>年度综合基线评估</strong>
+                <p>首次完整方案包含年度综合基线评估，以一组关键指标建立长期健康管理的个人起点，并为后续方案衔接提供参考。</p>
+            </div>
+        </section>
+
         <section class="itinerary" id="itinerary" aria-labelledby="itineraryTitle">
             <header class="itinerary-head safe-column">
                 <div><p class="eyebrow">PRIVATE PASSAGE · FIVE DAYS</p><h2 id="itineraryTitle">五日私享行程</h2></div>
                 <p>医疗安排与文化体验保持清晰边界。以下为本期建议路径，并根据身体状态、同行成员与季节进行定制。</p>
             </header>
             <div class="journey-list safe-wide">{{JOURNEY_CARDS}}</div>
+        </section>
+
+        <section class="private-journal" id="private-journal" aria-labelledby="journalTitle" hidden data-private-journal>
+            <header class="journal-heading safe-column" data-reveal>
+                <p class="eyebrow">ARKSOMA PRIVATE JOURNAL</p>
+                <h2 id="journalTitle">方舟生命纪行</h2>
+                <p>把一次私人日本生命管理之旅，转化为愿意长期陈列的个人艺术档案。单册独立成章，十五册形成一段由外向内的长期生命叙事。</p>
+            </header>
+            <div class="journal-gallery safe-wide">
+                <figure class="journal-collection" data-reveal><img src="imgs/arksoma/journal-collection.webp" alt="十五册方舟生命纪行依次陈列" loading="lazy" decoding="async" width="1600" height="914"><figcaption>十五册 · 三段色彩递进</figcaption></figure>
+                <figure data-reveal><img src="imgs/arksoma/journal-single.webp" alt="方舟生命纪行序章单册" loading="lazy" decoding="async" width="900" height="1200"><figcaption>单册 · 一个章节字与实际年月</figcaption></figure>
+                <figure data-reveal><img src="imgs/arksoma/journal-pages.webp" alt="客户影像直接印刷在方舟生命纪行内页" loading="lazy" decoding="async" width="1600" height="900"><figcaption>客户影像 · 与正文同质印刷</figcaption></figure>
+            </div>
+            <div class="journal-copy safe-column" data-reveal>
+                <p class="journal-sequence">序 · 启 · 行 · 观 · 境 · 遇 · 识 · 容 · 和 · 同 · 照 · 澄 · 守 · 臻 · 恒</p>
+                <p>固定内容在行程前完成设计与校对；客户影像完成后，与固定内容合并为完整文件，整本统一送印、锁线与上壳。照片不是后加附件，也不会暴露医疗资料。</p>
+                <blockquote>见天地而敬，见众生而和，见自己而明。</blockquote>
+            </div>
         </section>
 
         <section class="closing" id="contact" aria-labelledby="closingTitle">
@@ -150,6 +208,6 @@
         </div>
     </dialog>
 
-    <script type="module" src="arksoma-ui.mjs?v=20260802-2"></script>
+    <script type="module" src="arksoma-ui.mjs?v=20260806-1"></script>
 </body>
 </html>

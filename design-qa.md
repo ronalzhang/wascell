@@ -82,6 +82,19 @@
    - Coordinate glyph sweep is `1.02s` with the existing `1.1s` delay and one iteration. Origin story open/close and focus return remain intact.
    - At 390, 768, 1024 and 1440px, computed page overflow is zero and scroll snapping is `none`; local console errors and warnings are empty.
    - The previous production mobile advisor capture and accepted local result were inspected together. Accepted evidence: `.codex-tmp/arksoma-native-scroll-qa/01-journey-mobile-390.png`, `.codex-tmp/arksoma-native-scroll-qa/03-advisor-768.png`, `.codex-tmp/arksoma-native-scroll-qa/04-advisor-1440.png`, `.codex-tmp/arksoma-native-scroll-qa/06-advisor-mobile-title-check.png`. The earlier `02-advisor-mobile-390.png` capture was rejected because focus scrolling hid the title.
+6. **Two-visit protocol and Private Journal — passed (2026-08-06)**
+   - The public narrative order is `private access → two-visit protocol → five-day itinerary → Private Journal → advisory`.
+   - At 1440px, the protocol is a three-column rail and the journal gallery is a two-column composition. All three optimized WebP journal assets load at their expected natural dimensions.
+   - At 390px, the protocol cards and journal gallery resolve to a single 358px column; `documentElement.scrollWidth === documentElement.clientWidth`.
+   - The journal sequence contains exactly 15 chapter characters in the approved order. There are no volume numbers or Roman numerals, and the production copy states that client images are merged before unified printing, thread sewing and casing-in.
+   - Advisor dialog open/close remains functional. Browser console errors and warnings are empty.
+7. **Journey loading and controlled Journal release — passed (2026-08-06)**
+   - The owner commercial configuration now contains a dedicated `公开展示方舟生命纪行` checkbox. It is off by default, saves through the owner-only configuration API and records a required reason; the public page remains fail-closed when the catalog cannot enable it.
+   - The enabled Journal state was inspected at 1440px and 390px. Its section background, typography, captions and gallery framing now use the same black, muted emerald, ivory and bronze language as the rest of ARKSOMA; both viewports report `documentElement.scrollWidth === clientWidth`.
+   - Protocol desktop cards share the same bottom edge and all three tag rows resolve to the exact same top and bottom coordinates. At 834px and 390px they return to a natural single-column sequence with no overflow.
+   - Every itinerary image now has intrinsic dimensions, asynchronous decoding and a stable landscape slot. With all five JPEG requests intentionally blocked, the card retained its dark branded surface with image opacity `0`; no broken-image icon, alt-text flash or layout shift appeared. With networking restored, all five images reached their expected natural dimensions and `is-image-ready` state.
+   - The hero remains the only high-priority preloaded image. After window load, itinerary images are prepared sequentially only when data-saver is not enabled.
+   - Before/after comparisons were inspected together at the same 1440 × 1000 viewport. Accepted evidence: `.codex-tmp/arksoma-aug6-final/compare-protocol-1440.png`, `.codex-tmp/arksoma-aug6-final/compare-journal-1440.png`, `.codex-tmp/arksoma-aug6-final/journey-390.png`, `.codex-tmp/arksoma-aug6-final/journey-failure-placeholder.png`, `.codex-tmp/arksoma-aug6-final/protocol-834.png`, `.codex-tmp/arksoma-aug6-final/protocol-390.png`.
 
 ## Residual P3 notes
 

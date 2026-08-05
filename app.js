@@ -15,6 +15,7 @@ const { createStaffStore } = require('./lib/staff-store');
 const { createAuditLog } = require('./lib/audit-log');
 const { createBusinessConfigStore } = require('./lib/business-config-store');
 const { createKnowledgeStore } = require('./lib/knowledge-store');
+const { createServiceCaseStore } = require('./lib/service-case-store');
 
 // 异步文件操作
 const writeFileAsync = promisify(fs.writeFile);
@@ -36,6 +37,7 @@ const ADVISOR_TEMP_DIR = process.env.ADVISOR_TEMP_DIR || path.join(os.tmpdir(), 
 const STAFF_DATA_DIR = process.env.STAFF_DATA_DIR || path.join(PRIVATE_ROOT, 'staff-data');
 const BUSINESS_DATA_DIR = process.env.BUSINESS_DATA_DIR || path.join(PRIVATE_ROOT, 'business-data');
 const KNOWLEDGE_DATA_DIR = process.env.KNOWLEDGE_DATA_DIR || path.join(PRIVATE_ROOT, 'knowledge-data');
+const SERVICE_CASE_DATA_DIR = process.env.SERVICE_CASE_DATA_DIR || path.join(PRIVATE_ROOT, 'service-case-data');
 
 fs.mkdirSync(ADVISOR_TEMP_DIR, { recursive: true, mode: 0o700 });
 
@@ -56,6 +58,7 @@ const advisorStore = createAdvisorStore({
     dataDir: ADVISOR_DATA_DIR,
     uploadDir: ADVISOR_UPLOAD_DIR,
 });
+const serviceCaseStore = createServiceCaseStore({ dataDir: SERVICE_CASE_DATA_DIR, auditLog });
 
 const advisorUpload = multer({
     dest: ADVISOR_TEMP_DIR,
@@ -1205,6 +1208,94 @@ app.post('/api/sales/customers/:id/internal-bookings', adminAuth.requireSalesOrO
     } catch (error) {
         const validation = /会员|期次|人数|无权/.test(error.message);
         return res.status(validation ? 400 : 500).json({ message: validation ? error.message : '后续预约创建失败' });
+    }
+});
+
+function serviceCaseErrorResponse(res, error, fallback) {
+    if (/无权|仅所有者/.test(error.message)) return res.status(403).json({ message: error.message });
+    if (/不存在/.test(error.message)) return res.status(404).json({ message: error.message });
+    if (/不能为空|不支持|无效|不完整|十五章/.test(error.message)) return res.status(400).json({ message: error.message });
+    console.error(`${fallback}:`, error);
+    return res.status(500).json({ message: fallback });
+}
+
+app.get('/api/owner/service-cases', adminAuth.requireOwner, async (req, res) => {
+    try {
+        return res.json({ items: await serviceCaseStore.listForPrincipal(req.auth) });
+    } catch (error) {
+        return serviceCaseErrorResponse(res, error, '服务案例读取失败');
+    }
+});
+
+app.post('/api/owner/customers/:id/service-cases', adminAuth.requireOwner, async (req, res) => {
+    try {
+        const customer = await advisorStore.getApplication(req.params.id);
+        if (!customer) return res.status(404).json({ message: '客户不存在' });
+        const serviceCase = await serviceCaseStore.createCase({
+            customerId: customer.id,
+            periodId: req.body?.periodId,
+            periodLabel: req.body?.periodLabel,
+            assignedSalesId: req.body?.assignedSalesId || customer.assignedSalesId,
+        }, req.auth);
+        return res.status(201).json({ success: true, serviceCase });
+    } catch (error) {
+        return serviceCaseErrorResponse(res, error, '服务案例创建失败');
+    }
+});
+
+app.patch('/api/owner/service-cases/:id/payment', adminAuth.requireOwner, async (req, res) => {
+    try {
+        const serviceCase = await serviceCaseStore.confirmPayment(req.params.id, req.body || {}, req.auth);
+        return res.json({ success: true, serviceCase });
+    } catch (error) {
+        return serviceCaseErrorResponse(res, error, '付款确认失败');
+    }
+});
+
+app.patch('/api/owner/service-cases/:id/progress', adminAuth.requireOwner, async (req, res) => {
+    try {
+        const serviceCase = await serviceCaseStore.updateProgress(req.params.id, req.body?.status, req.auth);
+        return res.json({ success: true, serviceCase });
+    } catch (error) {
+        return serviceCaseErrorResponse(res, error, '服务进度更新失败');
+    }
+});
+
+app.patch('/api/owner/service-cases/:id/journal', adminAuth.requireOwner, async (req, res) => {
+    try {
+        const serviceCase = await serviceCaseStore.updateJournal(req.params.id, req.body || {}, req.auth);
+        return res.json({ success: true, serviceCase });
+    } catch (error) {
+        return serviceCaseErrorResponse(res, error, '生命纪行状态更新失败');
+    }
+});
+
+app.get('/api/sales/service-cases', adminAuth.requireSalesOrOwner, async (req, res) => {
+    if (req.auth.role !== 'sales') return res.status(403).json({ message: '请使用销售账号' });
+    try {
+        return res.json({ items: await serviceCaseStore.listForPrincipal(req.auth) });
+    } catch (error) {
+        return serviceCaseErrorResponse(res, error, '服务案例读取失败');
+    }
+});
+
+app.patch('/api/sales/service-cases/:id/progress', adminAuth.requireSalesOrOwner, async (req, res) => {
+    if (req.auth.role !== 'sales') return res.status(403).json({ message: '请使用销售账号' });
+    try {
+        const serviceCase = await serviceCaseStore.updateProgress(req.params.id, req.body?.status, req.auth);
+        return res.json({ success: true, serviceCase });
+    } catch (error) {
+        return serviceCaseErrorResponse(res, error, '服务进度更新失败');
+    }
+});
+
+app.patch('/api/sales/service-cases/:id/journal', adminAuth.requireSalesOrOwner, async (req, res) => {
+    if (req.auth.role !== 'sales') return res.status(403).json({ message: '请使用销售账号' });
+    try {
+        const serviceCase = await serviceCaseStore.updateJournal(req.params.id, req.body || {}, req.auth);
+        return res.json({ success: true, serviceCase });
+    } catch (error) {
+        return serviceCaseErrorResponse(res, error, '生命纪行状态更新失败');
     }
 });
 
