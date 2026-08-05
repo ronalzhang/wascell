@@ -155,6 +155,17 @@ test('public catalog is readable while commercial configuration is owner-only', 
     const ownerConfig = await fetch(`${baseUrl}/api/owner/config`, { headers: { cookie: ownerCookie } });
     assert.equal(ownerConfig.status, 200);
 
+    const journalUpdate = await fetch(`${baseUrl}/api/owner/config/private-journal`, {
+        method: 'PATCH',
+        headers: { cookie: ownerCookie, 'content-type': 'application/json' },
+        body: JSON.stringify({ enabled: true }),
+    });
+    assert.equal(journalUpdate.status, 200);
+    assert.deepEqual(await journalUpdate.json(), { success: true, showPrivateJournal: true });
+
+    const publishedCatalog = await fetch(`${baseUrl}/api/public/catalog`);
+    assert.equal((await publishedCatalog.json()).showPrivateJournal, true);
+
     const update = await fetch(`${baseUrl}/api/owner/config`, {
         method: 'PATCH',
         headers: { cookie: ownerCookie, 'content-type': 'application/json' },

@@ -684,6 +684,23 @@ app.patch('/api/owner/config', adminAuth.requireOwner, async (req, res) => {
     }
 });
 
+app.patch('/api/owner/config/private-journal', adminAuth.requireOwner, async (req, res) => {
+    if (typeof req.body?.enabled !== 'boolean') return res.status(400).json({ message: '公开状态无效' });
+    try {
+        const config = await businessConfigStore.update(
+            { showPrivateJournal: req.body.enabled },
+            {
+                actorId: req.auth.userId,
+                reason: req.body.enabled ? '所有者公开方舟生命纪行' : '所有者停止公开方舟生命纪行',
+            },
+        );
+        return res.json({ success: true, showPrivateJournal: config.showPrivateJournal });
+    } catch (error) {
+        console.error('更新方舟生命纪行公开状态失败:', error);
+        return res.status(500).json({ message: '公开状态保存失败' });
+    }
+});
+
 // 所有者管理销售账号；账号变更会使旧会话失效。
 app.get('/api/owner/staff', adminAuth.requireOwner, async (req, res) => {
     try {

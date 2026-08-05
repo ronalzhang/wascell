@@ -7,6 +7,7 @@ const root = path.resolve(__dirname, '..');
 
 test('owner script authenticates only through owner endpoints and exposes five views', async () => {
     const script = await fs.readFile(path.join(root, 'admin-pro.mjs'), 'utf8');
+    const page = await fs.readFile(path.join(root, 'admin-pro.html'), 'utf8');
     assert.match(script, /\/api\/owner\/login/);
     assert.doesNotMatch(script, /\/api\/sales\/login/);
     for (const route of ['/api/owner/customers', '/api/owner/knowledge', '/api/owner/config', '/api/owner/staff']) {
@@ -14,7 +15,9 @@ test('owner script authenticates only through owner endpoints and exposes five v
     }
     assert.match(script, /autocomplete="new-password"/);
     assert.match(script, /showPrivateJournal/);
-    assert.match(script, /type="checkbox"/);
+    assert.match(script, /\/api\/owner\/config\/private-journal/);
+    assert.match(page, /id="privateJournalToggle"/);
+    assert.match(page, /id="privateJournalStatus"/);
 });
 
 test('sales script authenticates through sales endpoint and has no owner API route', async () => {
