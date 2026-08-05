@@ -97,8 +97,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .journey-card { min-height: 390px; display: grid; grid-template-columns: 1.14fr .86fr; overflow: hidden; border: 1px solid var(--hairline); background: #0a0e0e; box-shadow: 0 30px 90px rgba(0,0,0,.3); }
 .journey-card.reverse { grid-template-columns: .86fr 1.14fr; }
 .journey-card.reverse figure { order: 2; }
-.journey-card figure { min-width: 0; min-height: 390px; margin: 0; overflow: hidden; background: radial-gradient(circle at 72% 28%, rgba(114,174,157,.09), transparent 38%), linear-gradient(145deg, #0c1413, #060909 68%); }
+.journey-card figure { position: relative; min-width: 0; min-height: 390px; margin: 0; overflow: hidden; background: radial-gradient(circle at 72% 28%, rgba(114,174,157,.09), transparent 38%), linear-gradient(145deg, #0c1413, #060909 68%); }
 .journey-card img { width: 100%; height: 100%; display: block; color: transparent; font-size: 0; object-fit: cover; opacity: 1; transform: none; filter: saturate(.72) contrast(1.03) brightness(1); transition: opacity .58s ease, transform .9s cubic-bezier(.22,.7,.24,1), filter .9s ease; }
+.journey-caption { position: absolute; right: 18px; bottom: 16px; margin: 0; padding: 7px 9px; border: 1px solid rgba(238,232,221,.24); background: rgba(4,8,8,.46); color: rgba(238,232,221,.78); font: 9px/1.35 "SFMono-Regular", Consolas, monospace; letter-spacing: .08em; backdrop-filter: blur(9px); }
 .journey-card img.is-image-pending { opacity: 0; }
 .journey-card img.is-image-ready { opacity: 1; }
 .journey-card.is-motion-pending img { transform: scale(1.018); filter: saturate(.72) contrast(1.03) brightness(.88); }
@@ -218,6 +219,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
     .protocol-rail article:last-child { border-bottom: 0; }
     .journey-card, .journey-card.reverse { grid-template-columns: 1fr; }
     .journey-card figure, .journey-card.reverse figure { order: 0; min-height: 0; aspect-ratio: 16 / 10; }
+    .journey-caption { right: 12px; bottom: 12px; max-width: calc(100% - 24px); font-size: 8px; }
 }
 
 @media (max-width: 599px) {

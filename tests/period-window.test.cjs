@@ -5,6 +5,7 @@ const path = require('node:path');
 
 const {
     buildPeriods,
+    itineraryForPeriod,
     renderPeriodPage,
 } = require('../scripts/arksoma-periods.cjs');
 
@@ -58,6 +59,24 @@ test('renderPeriodPage applies the third-period family edition without changing 
     assert.match(html, /RMB 560,000/);
     assert.match(html, /敬亲礼遇/);
     assert.doesNotMatch(html, /限额 6 席|6人|6 人/);
+});
+
+test('reference itinerary separates medical preparation from the cultural image', () => {
+    const itinerary = itineraryForPeriod({ type: 'standard', special: false });
+
+    assert.match(itinerary[1].title, /医疗准备/);
+    assert.equal(itinerary[1].image, 'imgs/geisha.jpg');
+    assert.equal(itinerary[1].alt, '介绍制茶与舞文化接待');
+    assert.match(itinerary[1].visualContext, /下午文化安排/);
+});
+
+test('reference itinerary closes with an incense gathering that is confirmed per period', () => {
+    const itinerary = itineraryForPeriod({ type: 'standard', special: false });
+
+    assert.equal(itinerary[4].image, 'imgs/incense.jpg');
+    assert.match(itinerary[4].title, /香道/);
+    assert.match(itinerary[4].copy, /当期确认/);
+    assert.match(itinerary[4].visualContext, /香道/);
 });
 
 test('production template preserves the approved responsive ARKSOMA structure', () => {

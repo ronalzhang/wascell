@@ -5,12 +5,20 @@ const MONTH_NAMES = [
 
 const SLOT_NAMES = { 1: '首期', 2: '二期', 3: '三期' };
 
+const REFERENCE_EXPERIENCES = Object.freeze({
+    tokyoBay: { image: 'imgs/kaiseki.jpg', width: 2062, height: 1148, alt: '白木匠造屋形船与东京湾夜景', visualContext: '图片呈现东京湾私席场景' },
+    geisha: { image: 'imgs/geisha.jpg', width: 2164, height: 1338, alt: '介绍制茶与舞文化接待', visualContext: '图片呈现当日下午文化安排' },
+    teaHome: { image: 'imgs/home.jpg', width: 2096, height: 1206, alt: '茶道大师私人宅邸', visualContext: '图片呈现茶室接待场景' },
+    dryGarden: { image: 'imgs/longtemple.jpg', width: 2050, height: 788, alt: '京都枯山水庭园', visualContext: '图片呈现庭园安静参访' },
+    incense: { image: 'imgs/incense.jpg', width: 2022, height: 1350, alt: '和室香道雅集', visualContext: '图片呈现香道接待场景' },
+});
+
 const DEFAULT_ITINERARY = [
-    { day: 'DAY 01', city: 'TOKYO', image: 'imgs/kaiseki.jpg', width: 2062, height: 1148, alt: '白木匠造屋形船与东京湾夜景', title: '东京湾私席，开启一段安静的同行。', copy: '登上仅接待少数宾客的白木匠造屋形船，由料理人现场准备怀石料理。东京湾夜景、私密会面与克制的席位安排，让旅程从彼此信任开始。', tags: ['船上怀石', '东京湾夜景', '私人会面'] },
-    { day: 'DAY 02', city: 'TOKYO', image: 'imgs/geisha.jpg', width: 2164, height: 1338, alt: '介绍制艺伎茶道体验', title: '完成细胞采集，进入介绍制的日本。', copy: '上午按个人方案完成自体细胞采集与必要检查；休息并确认状态后，进入非公开制老字号料亭，在茶与舞之间体验延续数十年的艺伎文化。', tags: ['细胞采集', '介绍制接待', '茶道与舞'] },
-    { day: 'DAY 03', city: 'TOKYO', image: 'imgs/home.jpg', width: 2096, height: 1206, alt: '茶道大师私人宅邸', title: '一盏茶的时间，重新理解长期主义。', copy: '探访里千家茶道大师私人宅邸，在平日不对外开放的茶室完成一期一会。三十余年的研习，被浓缩在器物、动作与留白之中。', tags: ['大师私宅', '三十载研习', '一期一会'] },
-    { day: 'DAY 04', city: 'KYOTO', image: 'imgs/longtemple.jpg', width: 2050, height: 788, alt: '京都龙安寺枯山水庭园', title: '在枯山水中，让复杂重新变得清晰。', copy: '走入始建于 1450 年的龙安寺与当期特别安排区域，在石、苔与庭园秩序中完成一次安静参访。具体寺院依据季节与开放条件确认。', tags: ['世界遗产', '枯山水', '安静参访'] },
-    { day: 'DAY 05', city: 'KYOTO', image: 'imgs/caiguoqiang.jpg', width: 2294, height: 1330, alt: '京都传统工艺与私人文化交流', title: '把技艺、记忆与未来带回自己的生活。', copy: '以传统工艺、私人收藏或当代艺术交流结束首阶段。顾问整理后续医学安排与在日需求，让这次旅程成为长期生命管理的开始。', tags: ['私人文化交流', '传统技艺', '持续协调'] },
+    { day: 'DAY 01', city: 'TOKYO', ...REFERENCE_EXPERIENCES.tokyoBay, title: '东京湾私席，开启一段安静的同行。', copy: '登上仅接待少数宾客的白木匠造屋形船，由料理人现场准备怀石料理。东京湾夜景、私密会面与克制的席位安排，让旅程从彼此信任开始。', tags: ['船上怀石', '东京湾夜景', '私人会面'] },
+    { day: 'DAY 02', city: 'TOKYO', ...REFERENCE_EXPERIENCES.geisha, title: '医疗准备之后，进入介绍制的茶与舞。', copy: '上午依个人方案完成医疗准备与必要确认；充分休息后，由顾问安排当日下午文化接待。最终节奏依当期状态确认。', tags: ['医疗准备', '介绍制接待', '茶与舞'] },
+    { day: 'DAY 03', city: 'TOKYO', ...REFERENCE_EXPERIENCES.teaHome, title: '一盏茶的时间，重新理解长期主义。', copy: '探访里千家茶道大师私人宅邸，在茶室完成一期一会。三十余年的研习，被浓缩在器物、动作与留白之中。', tags: ['大师私宅', '三十载研习', '一期一会'] },
+    { day: 'DAY 04', city: 'KYOTO', ...REFERENCE_EXPERIENCES.dryGarden, title: '在枯山水中，让复杂重新变得清晰。', copy: '走入庭园，在石、苔与留白的秩序中完成一次安静参访。具体寺院依据季节、开放条件与当期状态确认。', tags: ['庭园参访', '枯山水', '安静参访'] },
+    { day: 'DAY 05', city: 'KYOTO', ...REFERENCE_EXPERIENCES.incense, title: '以香道雅集，为首阶段留下一次安静收束。', copy: '在和室完成闻香与器物交流；随后由顾问整理后续医学安排与在日需求。具体项目依季节、预约与当期确认。', tags: ['香道雅集', '安静收束', '持续协调'] },
 ];
 
 const FILIAL_ITINERARY = DEFAULT_ITINERARY.map((item, index) => {
@@ -81,7 +89,7 @@ function renderJourneyCards(period) {
         const reverse = index % 2 ? ' reverse' : '';
         const position = String(index + 1).padStart(2, '0');
         const tags = item.tags.map((tag) => `<li>${tag}</li>`).join('');
-        return `<article class="journey-card${reverse}"><figure><img src="${item.image}" alt="${item.alt}" loading="lazy" decoding="async" data-journey-image width="${item.width}" height="${item.height}"></figure><div class="journey-copy"><p class="journey-index">${item.day} · ${item.city}<span>${position}/05</span></p><h3>${item.title}</h3><p>${item.copy}</p><ul>${tags}</ul></div></article>`;
+        return `<article class="journey-card${reverse}"><figure><img src="${item.image}" alt="${item.alt}" loading="lazy" decoding="async" data-journey-image width="${item.width}" height="${item.height}"><figcaption class="journey-caption">${item.visualContext}</figcaption></figure><div class="journey-copy"><p class="journey-index">${item.day} · ${item.city}<span>${position}/05</span></p><h3>${item.title}</h3><p>${item.copy}</p><ul>${tags}</ul></div></article>`;
     }).join('');
 }
 
