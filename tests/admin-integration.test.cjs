@@ -100,6 +100,10 @@ test('owner data APIs require an owner session', async () => {
 
     const authenticated = await fetch(`${baseUrl}/api/owner/realtime`, { headers: { cookie } });
     assert.equal(authenticated.status, 200);
+
+    const traffic = await fetch(`${baseUrl}/api/owner/stats?period=day&classification=all`, { headers: { cookie } });
+    assert.equal(traffic.status, 200);
+    assert.deepEqual(Object.keys((await traffic.json()).summary).sort(), ['automated', 'high_risk', 'likely_human', 'scan', 'unknown']);
 });
 
 test('a customer application becomes an authenticated admin order', async () => {

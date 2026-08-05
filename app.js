@@ -16,6 +16,7 @@ const { createAuditLog } = require('./lib/audit-log');
 const { createBusinessConfigStore } = require('./lib/business-config-store');
 const { createKnowledgeStore } = require('./lib/knowledge-store');
 const { createServiceCaseStore } = require('./lib/service-case-store');
+const { accumulateTrafficSignal, classifyTrafficSignals } = require('./lib/traffic-intelligence');
 
 // 异步文件操作
 const writeFileAsync = promisify(fs.writeFile);
@@ -484,11 +485,13 @@ async function updateStatsAsync(logEntry) {
                 count: 0,
                 maliciousCount: 0,
                 firstVisit: logEntry.timestamp,
-                lastVisit: logEntry.timestamp
+                lastVisit: logEntry.timestamp,
+                signals: {}
             };
         }
         stats.ipStats[logEntry.ip].count++;
         stats.ipStats[logEntry.ip].lastVisit = logEntry.timestamp;
+        stats.ipStats[logEntry.ip].signals = accumulateTrafficSignal(stats.ipStats[logEntry.ip].signals, logEntry);
         
         // 记录恶意请求次数
         if (logEntry.isMalicious) {
@@ -802,11 +805,16 @@ app.get('/api/sales/knowledge', adminAuth.requireSalesOrOwner, async (req, res) 
 app.get(['/api/admin/stats', '/api/owner/stats'], adminAuth.requireOwner, async (req, res) => {
     try {
         const { period = 'day', filter = 'all' } = req.query;
+        const classification = req.query.classification || (filter === 'blacklist' ? 'high_risk' : 'all');
 
         // 输入验证
         const validPeriods = ['day', 'week', 'month', 'last3days'];
         if (!validPeriods.includes(period)) {
             return res.status(400).json({ message: '无效的时间周期参数' });
+        }
+        const validClassifications = ['all', 'likely_human', 'automated', 'scan', 'high_risk', 'unknown'];
+        if (!validClassifications.includes(classification)) {
+            return res.status(400).json({ message: '无效的访问性质参数' });
         }
 
         // 对于last3days，我们需要从原始日志计算，因为stats.json是按天聚合的
@@ -916,22 +924,21 @@ app.get(['/api/admin/stats', '/api/owner/stats'], adminAuth.requireOwner, async 
         const page = parseInt(req.query.page) || 1;
         const pageSize = 20;
         
+        const summary = { likely_human: 0, automated: 0, scan: 0, high_risk: 0, unknown: 0 };
         let allIPs = Object.entries(stats.ipStats)
-            .map(([ip, data]) => ({ 
-                ip, 
-                ...data,
-                isBlacklisted: isBlacklistedIP(ip, stats.ipStats)
-            }))
+            .map(([ip, data]) => {
+                const trafficClassification = classifyTrafficSignals(data);
+                summary[trafficClassification.kind] += 1;
+                return {
+                    ip,
+                    ...data,
+                    isBlacklisted: isBlacklistedIP(ip, stats.ipStats),
+                    classification: trafficClassification,
+                };
+            })
             .sort((a, b) => b.count - a.count);
         
-        // 根据filter参数过滤
-        if (filter === 'blacklist') {
-            // 黑名单：只显示黑名单IP
-            allIPs = allIPs.filter(ip => ip.isBlacklisted);
-        } else {
-            // 访问IP：只显示非黑名单IP
-            allIPs = allIPs.filter(ip => !ip.isBlacklisted);
-        }
+        if (classification !== 'all') allIPs = allIPs.filter((item) => item.classification.kind === classification);
         
         const totalIPs = allIPs.length;
         const totalPages = Math.ceil(totalIPs / pageSize);
@@ -960,6 +967,7 @@ app.get(['/api/admin/stats', '/api/owner/stats'], adminAuth.requireOwner, async 
             .filter(([ip, data]) => isBlacklistedIP(ip, stats.ipStats))
             .length;
         result.blacklistCount = blacklistTotal;
+        result.summary = summary;
 
         res.json(result);
     } catch (error) {
