@@ -28,6 +28,19 @@ test('sales script authenticates through sales endpoint and has no owner API rou
     assert.doesNotMatch(script, /\/api\/owner\//);
 });
 
+test('owner statistics page presents visits, unique IPs and explainable IP intelligence', async () => {
+    const page = await fs.readFile(path.join(root, 'admin-pro.html'), 'utf8');
+    const script = await fs.readFile(path.join(root, 'admin-pro.mjs'), 'utf8');
+
+    assert.match(page, /id="trafficPeriod"/);
+    assert.match(page, /id="trafficClassification"/);
+    assert.match(page, /id="trafficIpsBody"/);
+    assert.match(page, /访问性质/);
+    assert.match(page, /判断依据/);
+    assert.match(script, /label:'独立 IP'/);
+    assert.match(script, /trafficClassification/);
+});
+
 test('initial anonymous visit stays quiet while a lost authenticated session is explained', async () => {
     const { sessionLoginMessage } = await import('../session-state.mjs');
 

@@ -49,11 +49,13 @@ button { color:inherit; }
 .metric-grid span { font-size:12px; letter-spacing:.08em; }
 .metric-grid strong { display:block; margin:14px 0 10px; font-family:Georgia,serif; font-size:35px; font-weight:400; }
 .metric-grid small { font:8px "SFMono-Regular",monospace; letter-spacing:.18em; }
+.traffic-summary-grid { margin-top:16px; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; }.traffic-summary-grid article { min-height:112px; padding:20px 24px; border:1px solid var(--line); background:#070b0b; }.traffic-summary-grid span,.traffic-summary-grid small { display:block; color:var(--muted); }.traffic-summary-grid span { font-size:11px; letter-spacing:.08em; }.traffic-summary-grid strong { display:block; margin:10px 0 8px; color:#d9d2c5; font:28px Georgia,serif; font-weight:400; }.traffic-summary-grid small { font:8px "SFMono-Regular",monospace; letter-spacing:.16em; }
 
 .chart-workspace, .order-workspace { margin-top:28px; border:1px solid var(--line); background:#070b0b; }
 .workspace-head { min-height:100px; padding:24px 28px; display:flex; justify-content:space-between; align-items:center; gap:24px; border-bottom:1px solid var(--line); }
 .workspace-head h2 { margin:10px 0 0; font-family:"Songti SC",STSong,serif; font-size:24px; font-weight:300; letter-spacing:.1em; }
 .workspace-head > span { color:var(--muted); font-size:11px; }
+.traffic-controls { display:flex; gap:10px; }.traffic-controls label { display:grid; gap:6px; }.traffic-controls span { color:var(--muted); font:8px "SFMono-Regular",monospace; letter-spacing:.13em; }.traffic-controls select { height:34px; min-width:112px; padding:0 10px; border:1px solid var(--line); background:#070b0b; color:#d7d0c3; font-size:11px; outline:none; }.traffic-controls select:focus { border-color:var(--gold); }
 .segmented { display:flex; padding:3px; border:1px solid var(--line); }
 .segmented button { height:32px; padding:0 16px; border:0; background:transparent; color:var(--muted); cursor:pointer; font-size:11px; }
 .segmented button.active { background:#eee8dd; color:#111; }
@@ -68,6 +70,7 @@ button { color:inherit; }
 .filters input:focus, .filters select:focus { border-color:var(--gold); }
 .table-shell { overflow:auto; }
 table { width:100%; border-collapse:collapse; min-width:840px; }
+.traffic-table { min-width:1020px; }.traffic-table td { vertical-align:top; }.traffic-table td:last-child { min-width:240px; color:#858b85; line-height:1.6; }.traffic-status { display:inline-block; padding:5px 8px; border:1px solid var(--line); font:9px "SFMono-Regular",monospace; letter-spacing:.07em; white-space:nowrap; }.traffic-likely_human { color:#a6c2b1; border-color:rgba(120,157,136,.35); }.traffic-automated { color:#aaa49a; }.traffic-scan { color:#d2ab89; border-color:rgba(210,171,137,.32); }.traffic-high_risk { color:#d49386; border-color:rgba(164,89,78,.46); }.traffic-unknown { color:#858985; }.traffic-pagination { padding:16px 20px; display:flex; justify-content:flex-end; gap:8px; border-top:1px solid var(--line); }.traffic-pagination button { height:34px; padding:0 14px; border:1px solid var(--line); background:transparent; color:#c7b898; cursor:pointer; font-size:11px; }.traffic-pagination button:disabled { opacity:.35; cursor:default; }
 th, td { padding:17px 20px; border-bottom:1px solid rgba(221,207,179,.09); text-align:left; }
 th { color:#666a66; font:8px "SFMono-Regular",monospace; letter-spacing:.17em; }
 td { color:#aaa9a3; font-size:12px; }
@@ -136,6 +139,7 @@ td small { display:block; margin-top:5px; color:#5d625f; font:9px "SFMono-Regula
     .admin-shell { grid-template-columns:210px minmax(0,1fr); }
     .admin-main { padding-inline:26px; }
     .metric-grid { grid-template-columns:repeat(2,1fr); }
+    .traffic-summary-grid { grid-template-columns:repeat(2,1fr); }
 }
 @media (max-width:760px) {
     .admin-shell { display:block; }
@@ -148,8 +152,10 @@ td small { display:block; margin-top:5px; color:#5d625f; font:9px "SFMono-Regula
     .top-actions span { display:none; }
     .metric-grid { grid-template-columns:1fr 1fr; gap:10px; }
     .metric-grid article { min-height:124px; padding:18px; }
+    .traffic-summary-grid { grid-template-columns:1fr 1fr; gap:10px; }.traffic-summary-grid article { min-height:102px; padding:16px; }
     .filters { grid-template-columns:1fr; }
     .workspace-head { align-items:flex-start; flex-direction:column; }
+    .traffic-controls { width:100%; }.traffic-controls label { flex:1; }.traffic-controls select { width:100%; min-width:0; }
     .chart-frame { height:300px; padding:16px; }
     .drawer-panel { width:100%; }
     .detail-grid { grid-template-columns:1fr; }
