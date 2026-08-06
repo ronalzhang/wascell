@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import { applyPreviewMode } from '../prototype/arksoma-cell-journey-preview.mjs';
 
 const root = new URL('../', import.meta.url);
 
@@ -60,6 +61,22 @@ function nestedElementWithClass(html, tagName, className) {
   }
   assert.fail(`unclosed .${className} ${tagName}`);
 }
+
+test('applyPreviewMode updates the shell and pressed state', () => {
+  const buttons = ['desktop', 'tablet', 'mobile'].map((mode) => ({
+    dataset: { previewMode: mode },
+    pressed: null,
+    setAttribute(name, value) { if (name === 'aria-pressed') this.pressed = value; }
+  }));
+  const root = {
+    dataset: {},
+    querySelectorAll() { return buttons; }
+  };
+
+  assert.equal(applyPreviewMode(root, 'mobile'), 'mobile');
+  assert.equal(root.dataset.mode, 'mobile');
+  assert.deepEqual(buttons.map((button) => button.pressed), ['false', 'false', 'true']);
+});
 
 test('attribute guard requires real attributes while preserving order and multi-class support', () => {
   for (const name of ['class', 'href', 'src', 'type']) {
