@@ -1,7 +1,16 @@
 :root {
-  color: #eee5d6;
-  background: #070d0e;
-  font-family: "Noto Serif SC", "Songti SC", serif;
+  --ink: #040606;
+  --ink-soft: #09100f;
+  --ivory: #eee4d2;
+  --ivory-bright: #fff9ed;
+  --bronze: #b99a70;
+  --bronze-line: rgba(185, 154, 112, 0.42);
+  --emerald: #72ae9d;
+  --muted: rgba(238, 228, 210, 0.64);
+  --hairline: rgba(238, 228, 210, 0.16);
+  color: var(--ivory);
+  background: var(--ink);
+  color-scheme: dark;
 }
 
 * {
@@ -11,7 +20,11 @@
 body {
   margin: 0;
   min-width: 0;
-  background: #070d0e;
+  background: var(--ink);
+  color: var(--ivory);
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", sans-serif;
+  font-weight: 300;
+  -webkit-font-smoothing: antialiased;
 }
 
 button {
@@ -23,15 +36,15 @@ button {
   justify-content: center;
   gap: 8px;
   padding: 18px 16px;
-  background: #070d0e;
+  background: var(--ink);
 }
 
 .preview-toolbar button {
   appearance: none;
-  border: 1px solid #69583f;
+  border: 1px solid var(--bronze-line);
   border-radius: 999px;
   background: transparent;
-  color: #bda985;
+  color: var(--bronze);
   cursor: pointer;
   font-size: 14px;
   line-height: 1;
@@ -39,9 +52,14 @@ button {
 }
 
 .preview-toolbar button[aria-pressed="true"] {
-  border-color: #b68a4c;
-  background: #b68a4c;
-  color: #090d0e;
+  border-color: var(--bronze);
+  background: var(--bronze);
+  color: var(--ink-soft);
+}
+
+.preview-toolbar button:focus-visible {
+  outline: 1px solid var(--ivory-bright);
+  outline-offset: 4px;
 }
 
 .preview-shell {
@@ -64,6 +82,8 @@ button {
 
 .preview-shell[data-mode="desktop"] {
   --preview-width: 1440px;
+  --safe: 760px;
+  --wide: 980px;
   --journey-padding: 86px 110px 72px;
   --journey-title-size: 60px;
   --journey-intro-margin: 24px 0 62px;
@@ -76,6 +96,8 @@ button {
 
 .preview-shell[data-mode="tablet"] {
   --preview-width: 1024px;
+  --safe: 720px;
+  --wide: 880px;
   --journey-padding: 64px 62px 56px;
   --journey-title-size: 48px;
   --journey-intro-margin: 22px 0 46px;
@@ -88,6 +110,8 @@ button {
 
 .preview-shell[data-mode="mobile"] {
   --preview-width: 390px;
+  --safe: 350px;
+  --wide: 358px;
   --journey-padding: 38px 22px 34px 36px;
   --journey-title-size: 31px;
   --journey-intro-margin: 20px 0 38px;
@@ -101,16 +125,15 @@ button {
 .cell-journey {
   position: relative;
   min-width: 0;
-  background: #070d0e;
-  background-image: radial-gradient(circle at 50% 36%, rgba(27, 42, 42, 0.5), transparent 54%);
-  color: #eee5d6;
+  background: var(--ink-soft);
+  background-image: radial-gradient(circle at 50% 36%, color-mix(in srgb, var(--emerald) 9%, transparent), transparent 54%);
+  color: var(--ivory);
   padding: var(--journey-padding);
 }
 
 .eyebrow {
   margin: 0 0 18px;
-  color: #c79a59;
-  font-family: "Helvetica Neue", Arial, sans-serif;
+  color: var(--bronze);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.18em;
@@ -119,21 +142,24 @@ button {
 
 .journey-title {
   margin: 0;
-  color: #f1e7d7;
+  width: min(var(--wide), 100%);
+  margin-inline: auto;
+  color: var(--ivory-bright);
+  font-family: "Songti SC", STSong, serif;
   font-size: var(--journey-title-size);
   font-weight: 400;
   letter-spacing: 0.05em;
   line-height: 1.18;
   text-align: center;
-  text-shadow: 0 0 22px rgba(234, 214, 184, 0.08);
+  text-shadow: 0 0 22px color-mix(in srgb, var(--ivory) 8%, transparent);
   white-space: nowrap;
   text-wrap: nowrap;
 }
 
 .journey-intro {
-  max-width: 620px;
+  width: min(620px, var(--safe), 100%);
   margin: var(--journey-intro-margin);
-  color: #aea59a;
+  color: var(--muted);
   font-size: var(--journey-intro-size);
   line-height: 1.9;
   text-align: center;
@@ -152,7 +178,7 @@ button {
   right: 0;
   left: 0;
   height: 1px;
-  background: #8f6d3d;
+  background: var(--bronze-line);
   content: "";
 }
 
@@ -163,7 +189,7 @@ button {
   min-width: 0;
   min-height: 438px;
   flex-direction: column;
-  border-left: 1px solid rgba(143, 109, 61, 0.32);
+  border-left: 1px solid var(--hairline);
   background: transparent;
   padding: 42px var(--stage-inline-padding) 0;
 }
@@ -178,10 +204,10 @@ button {
   left: calc(50% - 5px);
   width: 8px;
   height: 8px;
-  border: 1px solid #b68a4c;
+  border: 1px solid var(--bronze);
   border-radius: 50%;
-  background: #b68a4c;
-  box-shadow: 0 0 0 4px #070d0e, 0 0 0 5px rgba(182, 138, 76, 0.7);
+  background: var(--bronze);
+  box-shadow: 0 0 0 4px var(--ink-soft), 0 0 0 5px color-mix(in srgb, var(--bronze) 70%, transparent);
   content: "";
 }
 
@@ -189,19 +215,18 @@ button {
   display: flex;
   align-items: baseline;
   gap: var(--stage-head-gap);
-  color: #b68a4c;
+  color: var(--bronze);
 }
 
 .stage-head p {
   margin: 0;
-  font-family: "Helvetica Neue", Arial, sans-serif;
   font-size: 15px;
   letter-spacing: 0.04em;
 }
 
 .stage-number {
-  color: #f0e5d3;
-  font-family: Didot, "Bodoni 72", "Times New Roman", serif;
+  color: var(--ivory-bright);
+  font-family: "Bodoni 72", Didot, "Times New Roman", serif;
   font-size: 58px;
   font-weight: 400;
   letter-spacing: 0.02em;
@@ -210,16 +235,17 @@ button {
 
 .journey-stage h2 {
   margin: var(--stage-title-margin);
+  color: var(--ivory);
+  font-family: "Songti SC", STSong, serif;
   font-size: var(--stage-title-size);
   font-weight: 400;
   letter-spacing: 0.04em;
   line-height: 1.35;
-  color: #f0e5d3;
 }
 
 .journey-stage > p {
   margin: 0;
-  color: #aaa197;
+  color: var(--muted);
   font-size: 17px;
   line-height: 1.95;
 }
@@ -231,15 +257,14 @@ button {
   margin: 0;
   margin-top: auto;
   padding: 27px 0 0;
-  color: #c5ad88;
-  font-family: "Helvetica Neue", Arial, sans-serif;
+  color: var(--muted);
   font-size: 13px;
   line-height: 1.5;
   list-style: none;
 }
 
 .journey-stage li {
-  border: 1px solid #8f6d3d;
+  border: 1px solid var(--bronze-line);
   padding: 8px 14px;
   letter-spacing: 0.08em;
 }
@@ -250,8 +275,9 @@ button {
   align-items: center;
   justify-content: center;
   margin: 0 -70px;
-  border: 1px solid rgba(143, 109, 61, 0.38);
-  color: #d9b679;
+  border: 1px solid var(--bronze-line);
+  color: var(--bronze);
+  font-family: "Songti SC", STSong, serif;
   font-size: 25px;
   letter-spacing: 0.12em;
   text-align: center;
@@ -275,7 +301,7 @@ button {
 
 .preview-shell[data-mode="mobile"] .journey-stage-grid {
   grid-template-columns: 1fr;
-  border-left: 1px solid #c9c0b4;
+  border-left: 1px solid var(--hairline);
   padding-left: 18px;
 }
 
@@ -297,9 +323,9 @@ button {
   left: -23px;
   width: 9px;
   height: 9px;
-  border: 2px solid #b68a4c;
+  border: 2px solid var(--bronze);
   border-radius: 50%;
-  background: #070d0e;
+  background: var(--ink-soft);
   content: "";
 }
 
@@ -308,7 +334,7 @@ button {
 }
 
 .preview-shell[data-mode="mobile"] .stage-number {
-  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", sans-serif;
   font-size: 16px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -334,7 +360,7 @@ button {
   margin-right: 0;
   margin-left: 0;
   border: 0;
-  border-top: 1px solid rgba(143, 109, 61, 0.38);
+  border-top: 1px solid var(--bronze-line);
   padding-top: 17px;
   font-size: 13px;
   white-space: nowrap;

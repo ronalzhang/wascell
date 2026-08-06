@@ -167,17 +167,52 @@ test('cell journey preview defines local layout rules for each mode', async () =
   assert.ok(hasDeclaration(ruleBlock(css, '.journey-stage ul'), 'margin-top', 'auto'));
 });
 
-test('cell journey preview preserves the approved dark ceremonial visual hierarchy', async () => {
+test('cell journey preview consumes the production ARKSOMA tokens and typography', async () => {
   const css = await readFile(new URL('prototype/arksoma-cell-journey-preview.css', root), 'utf8');
 
-  assert.ok(hasDeclaration(ruleBlock(css, ':root'), 'color', '#eee5d6'));
-  assert.ok(hasDeclaration(ruleBlock(css, ':root'), 'background', '#070d0e'));
-  assert.ok(hasDeclaration(ruleBlock(css, '.preview-toolbar'), 'background', '#070d0e'));
-  assert.ok(hasDeclaration(ruleBlock(css, '.cell-journey'), 'background', '#070d0e'));
+  const rootRule = ruleBlock(css, ':root');
+  const productionTokens = {
+    '--ink': '#040606',
+    '--ink-soft': '#09100f',
+    '--ivory': '#eee4d2',
+    '--ivory-bright': '#fff9ed',
+    '--bronze': '#b99a70',
+    '--bronze-line': 'rgba\\(185,\\s*154,\\s*112,\\s*0\\.42\\)',
+    '--emerald': '#72ae9d',
+    '--muted': 'rgba\\(238,\\s*228,\\s*210,\\s*0\\.64\\)',
+    '--hairline': 'rgba\\(238,\\s*228,\\s*210,\\s*0\\.16\\)'
+  };
+  for (const [property, value] of Object.entries(productionTokens)) {
+    assert.ok(hasDeclaration(rootRule, property, value), `preview must define production ${property}`);
+  }
+
+  assert.ok(hasDeclaration(ruleBlock(css, 'body'), 'font-family', '-apple-system,\\s*BlinkMacSystemFont,\\s*"Helvetica Neue",\\s*"PingFang SC",\\s*sans-serif'));
+  assert.ok(hasDeclaration(ruleBlock(css, 'body'), 'background', 'var\\(--ink\\)'));
+  assert.ok(hasDeclaration(ruleBlock(css, 'body'), 'color', 'var\\(--ivory\\)'));
+  assert.ok(hasDeclaration(ruleBlock(css, '.cell-journey'), 'background', 'var\\(--ink-soft\\)'));
+  assert.ok(hasDeclaration(ruleBlock(css, '.cell-journey'), 'background-image', 'radial-gradient\\(circle at 50% 36%,\\s*color-mix\\(in srgb,\\s*var\\(--emerald\\) 9%,\\s*transparent\\),\\s*transparent 54%\\)'));
+  assert.ok(hasDeclaration(ruleBlock(css, '.cell-journey'), 'color', 'var\\(--ivory\\)'));
+  assert.ok(hasDeclaration(ruleBlock(css, '.eyebrow'), 'color', 'var\\(--bronze\\)'));
+  assert.ok(hasDeclaration(ruleBlock(css, '.journey-title'), 'color', 'var\\(--ivory-bright\\)'));
+  assert.ok(hasDeclaration(ruleBlock(css, '.journey-title'), 'font-family', '"Songti SC",\\s*STSong,\\s*serif'));
+  assert.ok(hasDeclaration(ruleBlock(css, '.journey-title'), 'width', 'min\\(var\\(--wide\\),\\s*100%\\)'));
+  assert.ok(hasDeclaration(ruleBlock(css, '.journey-intro'), 'width', 'min\\(620px,\\s*var\\(--safe\\),\\s*100%\\)'));
+  assert.ok(hasDeclaration(ruleBlock(css, '.journey-intro'), 'color', 'var\\(--muted\\)'));
+  assert.ok(hasDeclaration(ruleBlock(css, '.journey-stage-grid::before'), 'background', 'var\\(--bronze-line\\)'));
+  assert.ok(hasDeclaration(ruleBlock(css, '.journey-stage'), 'border-left', '1px\\s+solid\\s+var\\(--hairline\\)'));
+  assert.ok(hasDeclaration(ruleBlock(css, '.stage-number'), 'font-family', '"Bodoni 72",\\s*Didot,\\s*"Times New Roman",\\s*serif'));
+  assert.ok(hasDeclaration(ruleBlock(css, '.journey-stage h2'), 'font-family', '"Songti SC",\\s*STSong,\\s*serif'));
+  assert.ok(hasDeclaration(ruleBlock(css, '.journey-stage li'), 'border', '1px\\s+solid\\s+var\\(--bronze-line\\)'));
   assert.ok(hasDeclaration(ruleBlock(css, '.journey-title'), 'text-align', 'center'));
   assert.ok(hasDeclaration(ruleBlock(css, '.journey-intro'), 'text-align', 'center'));
-  assert.ok(hasDeclaration(ruleBlock(css, '.journey-stage li'), 'border', '1px\\s+solid\\s+#8f6d3d'));
   assert.ok(hasDeclaration(ruleBlock(css, '.journey-baseline'), 'text-align', 'center'));
+});
+
+test('preview toolbar exposes the production focus-visible treatment', async () => {
+  const css = await readFile(new URL('prototype/arksoma-cell-journey-preview.css', root), 'utf8');
+  const focusRule = ruleBlock(css, '.preview-toolbar button:focus-visible');
+  assert.ok(hasDeclaration(focusRule, 'outline', '1px\\s+solid\\s+var\\(--ivory-bright\\)'));
+  assert.ok(hasDeclaration(focusRule, 'outline-offset', '4px'));
 });
 
 test('preview keeps each fixed canvas inside a scaled, scrollable viewport without clipping', async () => {
@@ -212,6 +247,8 @@ test('preview fixes spacing and typography to each canvas without viewport-width
 
   const expectedModes = {
     desktop: {
+      '--safe': '760px',
+      '--wide': '980px',
       '--journey-padding': '86px\\s+110px\\s+72px',
       '--journey-title-size': '60px',
       '--stage-head-gap': '30px',
@@ -219,6 +256,8 @@ test('preview fixes spacing and typography to each canvas without viewport-width
       '--stage-title-size': '29px'
     },
     tablet: {
+      '--safe': '720px',
+      '--wide': '880px',
       '--journey-padding': '64px\\s+62px\\s+56px',
       '--journey-title-size': '48px',
       '--stage-head-gap': '12px',
@@ -226,6 +265,8 @@ test('preview fixes spacing and typography to each canvas without viewport-width
       '--stage-title-size': '25px'
     },
     mobile: {
+      '--safe': '350px',
+      '--wide': '358px',
       '--journey-padding': '38px\\s+22px\\s+34px\\s+36px',
       '--journey-title-size': '31px',
       '--stage-head-gap': '16px',
