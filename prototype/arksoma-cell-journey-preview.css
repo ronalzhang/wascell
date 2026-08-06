@@ -68,7 +68,6 @@ button {
   --journey-title-size: 60px;
   --journey-intro-margin: 24px 0 62px;
   --journey-intro-size: 15px;
-  --journey-grid-gap: 54px;
   --stage-head-gap: 30px;
   --stage-inline-padding: 54px;
   --stage-title-margin: 34px 0 14px;
@@ -81,7 +80,6 @@ button {
   --journey-title-size: 48px;
   --journey-intro-margin: 22px 0 46px;
   --journey-intro-size: 15px;
-  --journey-grid-gap: 24px;
   --stage-head-gap: 12px;
   --stage-inline-padding: 28px;
   --stage-title-margin: 28px 0 14px;
@@ -94,7 +92,6 @@ button {
   --journey-title-size: 31px;
   --journey-intro-margin: 20px 0 38px;
   --journey-intro-size: 14px;
-  --journey-grid-gap: 0;
   --stage-head-gap: 16px;
   --stage-inline-padding: 0;
   --stage-title-margin: 20px 0 12px;

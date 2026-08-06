@@ -214,7 +214,6 @@ test('preview fixes spacing and typography to each canvas without viewport-width
     desktop: {
       '--journey-padding': '86px\\s+110px\\s+72px',
       '--journey-title-size': '60px',
-      '--journey-grid-gap': '54px',
       '--stage-head-gap': '30px',
       '--stage-inline-padding': '54px',
       '--stage-title-size': '29px'
@@ -222,7 +221,6 @@ test('preview fixes spacing and typography to each canvas without viewport-width
     tablet: {
       '--journey-padding': '64px\\s+62px\\s+56px',
       '--journey-title-size': '48px',
-      '--journey-grid-gap': '24px',
       '--stage-head-gap': '12px',
       '--stage-inline-padding': '28px',
       '--stage-title-size': '25px'
@@ -230,7 +228,6 @@ test('preview fixes spacing and typography to each canvas without viewport-width
     mobile: {
       '--journey-padding': '38px\\s+22px\\s+34px\\s+36px',
       '--journey-title-size': '31px',
-      '--journey-grid-gap': '0',
       '--stage-head-gap': '16px',
       '--stage-inline-padding': '0',
       '--stage-title-size': '21px'
