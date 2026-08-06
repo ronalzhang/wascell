@@ -103,6 +103,36 @@
 
 final result: passed
 
+# ARKSOMA CELL JOURNEY Production Template QA
+
+## Source and implementation
+
+- Approved source: `/Users/godfather/.codex/generated_images/019f5e8c-6e48-7892-bb71-e52c309dbf5d/exec-0b8eee39-08f8-42be-9d81-7cf2eaee1a05.png`.
+- Rendered production page: `http://localhost:3016/`, generated from `templates/arksoma-period.html` and `arksoma.css`.
+- Browser evidence: `.codex-tmp/production-cell-journey-qa/desktop.png`, `tablet.png`, and `mobile.png`.
+- The source and all three production captures were opened together for visual comparison.
+
+## Responsive results
+
+| Viewport | Stage layout | Title | Baseline | Horizontal overflow |
+| --- | --- | --- | --- | --- |
+| 1440 × 1150 | three equal `406.66px` columns | one line | one line | none |
+| 1024 × 1050 | three equal `300px` columns | one line | one line | none |
+| 390 × 1100 | one `331px` column with vertical rail | one line | one line | none |
+
+- Desktop and iPad tag rows share an identical bottom coordinate within each viewport.
+- Mobile uses the approved compact `01 / 02 / 03 + timing` row, natural body wrapping, bordered tags and a left-side vertical timeline.
+- The final page retains the production ARKSOMA black, ivory and bronze tokens and its Songti/Bodoni typography hierarchy.
+- The source's secondary footer explanation is intentionally omitted; the approved production baseline is exactly `年度生命基线 · 首次完整方案已含`.
+- Browser console warnings and errors after the responsive sequence: empty.
+
+## Findings
+
+- No P0, P1 or P2 visual, layout, responsive, overflow, semantic or console finding remains.
+- P3: platform font fallback may create minor optical differences on non-Apple devices, without changing the verified line and column constraints.
+
+final result: passed
+
 # ARKSOMA CELL JOURNEY Preview QA
 
 ## Comparison target and evidence

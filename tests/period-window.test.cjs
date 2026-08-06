@@ -132,6 +132,7 @@ test('production template exposes dynamic SEO and the approved protocol-to-journ
     assert.match(html, /<link rel="canonical" href="https:\/\/arksoma\.com\/">/);
     assert.match(html, /<meta property="og:title" content="ARKSOMA 方舟计划｜2026·八月首期 · 日本细胞科技与生命资产管理">/);
     assert.match(html, /<meta property="og:url" content="https:\/\/arksoma\.com\/">/);
+    assert.match(html, /<link rel="stylesheet" href="arksoma\.css\?v=20260806-3">/);
     assert.match(html, /"@type":"WebSite"/);
     assert.match(html, /"name":"ARKSOMA"/);
     assert.match(html, /"alternateName":"方舟计划"/);
