@@ -167,6 +167,19 @@ test('cell journey preview defines local layout rules for each mode', async () =
   assert.ok(hasDeclaration(ruleBlock(css, '.journey-stage ul'), 'margin-top', 'auto'));
 });
 
+test('cell journey preview preserves the approved dark ceremonial visual hierarchy', async () => {
+  const css = await readFile(new URL('prototype/arksoma-cell-journey-preview.css', root), 'utf8');
+
+  assert.ok(hasDeclaration(ruleBlock(css, ':root'), 'color', '#eee5d6'));
+  assert.ok(hasDeclaration(ruleBlock(css, ':root'), 'background', '#070d0e'));
+  assert.ok(hasDeclaration(ruleBlock(css, '.preview-toolbar'), 'background', '#070d0e'));
+  assert.ok(hasDeclaration(ruleBlock(css, '.cell-journey'), 'background', '#070d0e'));
+  assert.ok(hasDeclaration(ruleBlock(css, '.journey-title'), 'text-align', 'center'));
+  assert.ok(hasDeclaration(ruleBlock(css, '.journey-intro'), 'text-align', 'center'));
+  assert.ok(hasDeclaration(ruleBlock(css, '.journey-stage li'), 'border', '1px\\s+solid\\s+#8f6d3d'));
+  assert.ok(hasDeclaration(ruleBlock(css, '.journey-baseline'), 'text-align', 'center'));
+});
+
 test('preview keeps each fixed canvas inside a scaled, scrollable viewport without clipping', async () => {
   const [html, css] = await Promise.all([
     readFile(new URL('prototype/arksoma-cell-journey-preview.html', root), 'utf8'),
@@ -184,6 +197,7 @@ test('preview keeps each fixed canvas inside a scaled, scrollable viewport witho
 
   const canvas = ruleBlock(css, '.preview-canvas');
   assert.ok(hasDeclaration(canvas, 'width', 'var\\(--preview-width\\)'));
+  assert.ok(hasDeclaration(canvas, 'margin-inline', 'auto'));
   assert.ok(hasDeclaration(canvas, 'zoom', 'var\\(--preview-scale\\)'));
   assert.ok(hasDeclaration(canvas, '--preview-scale', 'min\\(1,\\s*calc\\(\\(100cqw - 32px\\)\\s*\\/\\s*var\\(--preview-width\\)\\)\\)'));
 
@@ -202,13 +216,15 @@ test('preview fixes spacing and typography to each canvas without viewport-width
       '--journey-title-size': '60px',
       '--journey-grid-gap': '54px',
       '--stage-head-gap': '30px',
+      '--stage-inline-padding': '54px',
       '--stage-title-size': '29px'
     },
     tablet: {
       '--journey-padding': '64px\\s+62px\\s+56px',
       '--journey-title-size': '48px',
       '--journey-grid-gap': '24px',
-      '--stage-head-gap': '22px',
+      '--stage-head-gap': '12px',
+      '--stage-inline-padding': '28px',
       '--stage-title-size': '25px'
     },
     mobile: {
@@ -216,6 +232,7 @@ test('preview fixes spacing and typography to each canvas without viewport-width
       '--journey-title-size': '31px',
       '--journey-grid-gap': '0',
       '--stage-head-gap': '16px',
+      '--stage-inline-padding': '0',
       '--stage-title-size': '21px'
     }
   };

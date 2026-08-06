@@ -1,6 +1,6 @@
 :root {
-  color: #27231f;
-  background: #eeece7;
+  color: #eee5d6;
+  background: #070d0e;
   font-family: "Noto Serif SC", "Songti SC", serif;
 }
 
@@ -11,6 +11,7 @@
 body {
   margin: 0;
   min-width: 0;
+  background: #070d0e;
 }
 
 button {
@@ -22,14 +23,15 @@ button {
   justify-content: center;
   gap: 8px;
   padding: 18px 16px;
+  background: #070d0e;
 }
 
 .preview-toolbar button {
   appearance: none;
-  border: 1px solid #a69d90;
+  border: 1px solid #69583f;
   border-radius: 999px;
   background: transparent;
-  color: #4d473f;
+  color: #bda985;
   cursor: pointer;
   font-size: 14px;
   line-height: 1;
@@ -37,9 +39,9 @@ button {
 }
 
 .preview-toolbar button[aria-pressed="true"] {
-  border-color: #342c23;
-  background: #342c23;
-  color: #fffdf8;
+  border-color: #b68a4c;
+  background: #b68a4c;
+  color: #090d0e;
 }
 
 .preview-shell {
@@ -56,6 +58,7 @@ button {
   --preview-scale: min(1, calc((100cqw - 32px) / var(--preview-width)));
   width: var(--preview-width);
   min-width: var(--preview-width);
+  margin-inline: auto;
   zoom: var(--preview-scale);
 }
 
@@ -67,6 +70,7 @@ button {
   --journey-intro-size: 15px;
   --journey-grid-gap: 54px;
   --stage-head-gap: 30px;
+  --stage-inline-padding: 54px;
   --stage-title-margin: 34px 0 14px;
   --stage-title-size: 29px;
 }
@@ -78,7 +82,8 @@ button {
   --journey-intro-margin: 22px 0 46px;
   --journey-intro-size: 15px;
   --journey-grid-gap: 24px;
-  --stage-head-gap: 22px;
+  --stage-head-gap: 12px;
+  --stage-inline-padding: 28px;
   --stage-title-margin: 28px 0 14px;
   --stage-title-size: 25px;
 }
@@ -91,6 +96,7 @@ button {
   --journey-intro-size: 14px;
   --journey-grid-gap: 0;
   --stage-head-gap: 16px;
+  --stage-inline-padding: 0;
   --stage-title-margin: 20px 0 12px;
   --stage-title-size: 21px;
 }
@@ -98,26 +104,31 @@ button {
 .cell-journey {
   position: relative;
   min-width: 0;
-  background: #f8f6f1;
+  background: #070d0e;
+  background-image: radial-gradient(circle at 50% 36%, rgba(27, 42, 42, 0.5), transparent 54%);
+  color: #eee5d6;
   padding: var(--journey-padding);
 }
 
 .eyebrow {
   margin: 0 0 18px;
-  color: #82776b;
+  color: #c79a59;
   font-family: "Helvetica Neue", Arial, sans-serif;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.18em;
+  text-align: center;
 }
 
 .journey-title {
   margin: 0;
-  color: #25211d;
+  color: #f1e7d7;
   font-size: var(--journey-title-size);
   font-weight: 400;
   letter-spacing: 0.05em;
   line-height: 1.18;
+  text-align: center;
+  text-shadow: 0 0 22px rgba(234, 214, 184, 0.08);
   white-space: nowrap;
   text-wrap: nowrap;
 }
@@ -125,25 +136,26 @@ button {
 .journey-intro {
   max-width: 620px;
   margin: var(--journey-intro-margin);
-  color: #675f56;
+  color: #aea59a;
   font-size: var(--journey-intro-size);
   line-height: 1.9;
+  text-align: center;
 }
 
 .journey-stage-grid {
   position: relative;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--journey-grid-gap);
+  gap: 0;
 }
 
 .journey-stage-grid::before {
   position: absolute;
-  top: 23px;
-  right: 8%;
-  left: 8%;
+  top: 0;
+  right: 0;
+  left: 0;
   height: 1px;
-  background: #c9c0b4;
+  background: #8f6d3d;
   content: "";
 }
 
@@ -152,33 +164,51 @@ button {
   z-index: 1;
   display: flex;
   min-width: 0;
-  min-height: 288px;
+  min-height: 438px;
   flex-direction: column;
-  border-top: 1px solid #60574d;
-  background: #f8f6f1;
-  padding: 24px 0 0;
+  border-left: 1px solid rgba(143, 109, 61, 0.32);
+  background: transparent;
+  padding: 42px var(--stage-inline-padding) 0;
+}
+
+.journey-stage:first-child {
+  border-left: 0;
+}
+
+.journey-stage::after {
+  position: absolute;
+  top: -5px;
+  left: calc(50% - 5px);
+  width: 8px;
+  height: 8px;
+  border: 1px solid #b68a4c;
+  border-radius: 50%;
+  background: #b68a4c;
+  box-shadow: 0 0 0 4px #070d0e, 0 0 0 5px rgba(182, 138, 76, 0.7);
+  content: "";
 }
 
 .stage-head {
   display: flex;
   align-items: baseline;
   gap: var(--stage-head-gap);
-  color: #6f665b;
+  color: #b68a4c;
 }
 
 .stage-head p {
   margin: 0;
   font-family: "Helvetica Neue", Arial, sans-serif;
-  font-size: 12px;
+  font-size: 15px;
   letter-spacing: 0.04em;
 }
 
 .stage-number {
-  color: #332b23;
-  font-family: "Helvetica Neue", Arial, sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  color: #f0e5d3;
+  font-family: Didot, "Bodoni 72", "Times New Roman", serif;
+  font-size: 58px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  line-height: 1;
 }
 
 .journey-stage h2 {
@@ -187,13 +217,14 @@ button {
   font-weight: 400;
   letter-spacing: 0.04em;
   line-height: 1.35;
+  color: #f0e5d3;
 }
 
 .journey-stage > p {
   margin: 0;
-  color: #675f56;
-  font-size: 14px;
-  line-height: 1.85;
+  color: #aaa197;
+  font-size: 17px;
+  line-height: 1.95;
 }
 
 .journey-stage ul {
@@ -203,26 +234,30 @@ button {
   margin: 0;
   margin-top: auto;
   padding: 27px 0 0;
-  color: #554d43;
+  color: #c5ad88;
   font-family: "Helvetica Neue", Arial, sans-serif;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.5;
   list-style: none;
 }
 
-.journey-stage li::before {
-  margin-right: 7px;
-  color: #8d8173;
-  content: "—";
+.journey-stage li {
+  border: 1px solid #8f6d3d;
+  padding: 8px 14px;
+  letter-spacing: 0.08em;
 }
 
 .journey-baseline {
-  margin: 58px 0 0;
-  border-top: 1px solid #c9c0b4;
-  padding-top: 17px;
-  color: #665d52;
-  font-size: 13px;
-  letter-spacing: 0.08em;
+  display: flex;
+  min-height: 126px;
+  align-items: center;
+  justify-content: center;
+  margin: 0 -70px;
+  border: 1px solid rgba(143, 109, 61, 0.38);
+  color: #d9b679;
+  font-size: 25px;
+  letter-spacing: 0.12em;
+  text-align: center;
 }
 
 .preview-shell[data-mode="desktop"] .journey-title {
@@ -254,6 +289,8 @@ button {
 .preview-shell[data-mode="mobile"] .journey-stage {
   min-height: 0;
   border-top: 0;
+  border-left: 0;
+  background: transparent;
   padding: 0 0 34px;
 }
 
@@ -263,10 +300,29 @@ button {
   left: -23px;
   width: 9px;
   height: 9px;
-  border: 2px solid #7b7064;
+  border: 2px solid #b68a4c;
   border-radius: 50%;
-  background: #f8f6f1;
+  background: #070d0e;
   content: "";
+}
+
+.preview-shell[data-mode="mobile"] .journey-stage::after {
+  display: none;
+}
+
+.preview-shell[data-mode="mobile"] .stage-number {
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.preview-shell[data-mode="mobile"] .stage-head p {
+  font-size: 12px;
+}
+
+.preview-shell[data-mode="mobile"] .journey-stage > p {
+  font-size: 14px;
 }
 
 .preview-shell[data-mode="mobile"] .journey-stage ul {
@@ -275,5 +331,14 @@ button {
 }
 
 .preview-shell[data-mode="mobile"] .journey-baseline {
+  display: block;
+  min-height: 0;
   margin-top: 10px;
+  margin-right: 0;
+  margin-left: 0;
+  border: 0;
+  border-top: 1px solid rgba(143, 109, 61, 0.38);
+  padding-top: 17px;
+  font-size: 13px;
+  white-space: nowrap;
 }
