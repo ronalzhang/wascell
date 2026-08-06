@@ -5,7 +5,8 @@ import test from 'node:test';
 const root = new URL('../', import.meta.url);
 
 function attributeValue(attributes, name) {
-  return new RegExp(`\\b${name}\\s*=\\s*(["'])(.*?)\\1`, 'i').exec(attributes)?.[2];
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(?:^|\\s)${escaped}\\s*=\\s*(["'])(.*?)\\1`, 'i').exec(attributes)?.[2];
 }
 
 function hasClass(attributes, className) {
@@ -32,6 +33,10 @@ function hasDeclaration(rule, property, value) {
   return new RegExp(`(?:^|;)\\s*${property}\\s*:\\s*${value}\\s*(?:;|$)`, 'i').test(rule);
 }
 
+function hasForbiddenImport(script) {
+  return /\bimport\b/i.test(script);
+}
+
 function nestedElementWithClass(html, tagName, className) {
   const openingTag = new RegExp(`<${tagName}\\b([^>]*)>`, 'gi');
   let opening;
@@ -55,6 +60,27 @@ function nestedElementWithClass(html, tagName, className) {
   }
   assert.fail(`unclosed .${className} ${tagName}`);
 }
+
+test('attribute guard requires real attributes while preserving order and multi-class support', () => {
+  for (const name of ['class', 'href', 'src', 'type']) {
+    assert.equal(attributeValue(` data-${name}="decoy"`, name), undefined, `data-${name} must not impersonate ${name}`);
+  }
+  assert.equal(attributeValue(' href="first.css" rel="stylesheet" class="alpha beta"', 'href'), 'first.css');
+  assert.equal(attributeValue(' href="first.css" rel="stylesheet" class="alpha beta"', 'rel'), 'stylesheet');
+  assert.ok(hasClass(' id="preview" data-class="decoy" class="alpha journey-title beta"', 'journey-title'));
+  assert.equal(hasClass(' data-class="journey-title"', 'journey-title'), false);
+});
+
+test('import guard rejects side-effect, static, and dynamic imports', () => {
+  for (const source of [
+    "import './dependency.mjs';",
+    "import dependency from './dependency.mjs';",
+    "import { dependency } from './dependency.mjs';",
+    "import('./dependency.mjs');"
+  ]) {
+    assert.ok(hasForbiddenImport(source), `must reject ${source}`);
+  }
+});
 
 test('cell journey preview preserves the approved copy and structure', async () => {
   const html = await readFile(new URL('prototype/arksoma-cell-journey-preview.html', root), 'utf8');
@@ -138,5 +164,6 @@ test('cell journey preview stays dependency-free and asset-free', async () => {
   assert.doesNotMatch(css, /@(?:import|font-face)\b/i);
   assert.doesNotMatch(css, /\burl\s*\(/i);
   assert.doesNotMatch(css, /(?:-webkit-)?backdrop-filter\s*:/i);
-  assert.doesNotMatch(script, /(?:https?:\/\/|\bimport\s*(?:\(|[\w*{]))/i);
+  assert.doesNotMatch(script, /https?:\/\//i);
+  assert.equal(hasForbiddenImport(script), false, 'preview script must not import dependencies');
 });
