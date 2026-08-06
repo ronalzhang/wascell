@@ -70,9 +70,7 @@ test('cell journey preview defines local layout rules for each mode', async () =
   const css = await readFile(new URL('prototype/arksoma-cell-journey-preview.css', root), 'utf8');
   assert.ok(hasDeclaration(ruleBlock(css, '.journey-stage-grid'), 'grid-template-columns', 'repeat\\(3,\\s*minmax\\(0,\\s*1fr\\)\\)'));
   assert.ok(hasDeclaration(ruleBlock(css, '.preview-shell[data-mode="mobile"] .journey-stage-grid'), 'grid-template-columns', '1fr'));
-  for (const mode of ['desktop', 'tablet', 'mobile']) {
-    assert.ok(hasDeclaration(ruleBlock(css, `.preview-shell[data-mode="${mode}"] .journey-title`), 'white-space', 'nowrap'));
-  }
+  assert.ok(hasDeclaration(ruleBlock(css, '.journey-title'), 'white-space', 'nowrap'), 'the shared title rule must apply in desktop, tablet, and mobile modes');
   const stageHead = ruleBlock(css, '.stage-head');
   assert.ok(hasDeclaration(stageHead, 'display', 'flex'));
   assert.ok(hasDeclaration(stageHead, 'align-items', 'baseline'));
