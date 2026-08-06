@@ -132,6 +132,7 @@ test('production template exposes dynamic SEO and the approved protocol-to-journ
     assert.match(html, /<link rel="canonical" href="https:\/\/arksoma\.com\/">/);
     assert.match(html, /<meta property="og:title" content="ARKSOMA 方舟计划｜2026·八月首期 · 日本细胞科技与生命资产管理">/);
     assert.match(html, /<meta property="og:url" content="https:\/\/arksoma\.com\/">/);
+    assert.match(html, /<link rel="stylesheet" href="arksoma\.css\?v=20260806-3">/);
     assert.match(html, /"@type":"WebSite"/);
     assert.match(html, /"name":"ARKSOMA"/);
     assert.match(html, /"alternateName":"方舟计划"/);
@@ -143,11 +144,19 @@ test('production template exposes dynamic SEO and the approved protocol-to-journ
     const contact = html.indexOf('id="contact"');
     assert.ok(access < protocol && protocol < itinerary && itinerary < journal && journal < contact);
 
-    assert.match(html, /一次完整方案 · 两次赴日完成/);
+    assert.match(html, /一次方案 · 两次赴日/);
+    assert.equal((html.match(/class="protocol-number">0[1-3]</g) || []).length, 3);
+    assert.match(html, /class="protocol-number">01</);
+    assert.match(html, /class="protocol-number">02</);
+    assert.match(html, /class="protocol-number">03</);
     assert.match(html, /首次赴日[^<]*约 5 日/);
-    assert.match(html, /细胞制备[^<]*不少于 4 周/);
+    assert.match(html, /专业制备[^<]*不少于 4 周/);
     assert.match(html, /第二次赴日[^<]*约 1 日/);
-    assert.match(html, /以一组关键指标建立长期健康管理的个人起点/);
+    assert.match(html, /医学评估与自体采集/);
+    assert.match(html, /医学周期与私人协调/);
+    assert.match(html, /回输与医学观察/);
+    assert.match(html, /年度生命基线 · 首次完整方案已含/);
+    assert.doesNotMatch(html, /年度综合基线评估|以一组关键指标建立长期健康管理的个人起点/);
     assert.doesNotMatch(html, /后续回输不自动重复包含/);
     assert.match(html, /序 · 启 · 行 · 观 · 境 · 遇 · 识 · 容 · 和 · 同 · 照 · 澄 · 守 · 臻 · 恒/);
 
@@ -155,10 +164,13 @@ test('production template exposes dynamic SEO and the approved protocol-to-journ
     assert.match(journalSection, /hidden data-private-journal/);
     assert.doesNotMatch(journalSection, /VOL\.|01–15|I{2,}|插卡|照片袋|可替换照片页/);
     assert.match(journalSection, /整本统一送印、锁线与上壳/);
-    assert.match(css, /\.protocol-rail/);
-    assert.match(css, /\.protocol-rail article\s*\{[^}]*grid-template-rows/s);
+    assert.match(css, /\.protocol-rail\s*\{[^}]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/s);
+    assert.match(css, /\.protocol-rail article\s*\{[^}]*display:\s*flex[^}]*flex-direction:\s*column/s);
+    assert.match(css, /\.protocol-rail ul\s*\{[^}]*margin-top:\s*auto/s);
+    assert.match(css, /\.protocol-baseline\s*\{[^}]*white-space:\s*nowrap/s);
+    assert.match(css, /@media\s*\(max-width:\s*899px\)[\s\S]*\.protocol-rail\s*\{[^}]*grid-template-columns:\s*1fr/s);
+    assert.match(css, /@media\s*\(max-width:\s*899px\)[\s\S]*\.protocol-rail\s*\{[^}]*border-left:\s*1px solid var\(--hairline\)/s);
     assert.match(css, /\.journal-gallery/);
-    assert.match(css, /@media\s*\(max-width:\s*599px\)[\s\S]*\.protocol-rail/s);
     assert.match(css, /\.private-journal\s*\{[^}]*background:[^}]*#07100f/s);
 });
 

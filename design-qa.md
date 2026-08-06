@@ -102,3 +102,101 @@
 - Different platform Songti/Didot fallbacks may produce minor optical differences across iOS and macOS.
 
 final result: passed
+
+# ARKSOMA CELL JOURNEY Production Template QA
+
+## Source and implementation
+
+- Approved source: `/Users/godfather/.codex/generated_images/019f5e8c-6e48-7892-bb71-e52c309dbf5d/exec-0b8eee39-08f8-42be-9d81-7cf2eaee1a05.png`.
+- Rendered production page: `http://localhost:3016/`, generated from `templates/arksoma-period.html` and `arksoma.css`.
+- Browser evidence: `.codex-tmp/production-cell-journey-qa/desktop.png`, `tablet.png`, and `mobile.png`.
+- The source and all three production captures were opened together for visual comparison.
+
+## Responsive results
+
+| Viewport | Stage layout | Title | Baseline | Horizontal overflow |
+| --- | --- | --- | --- | --- |
+| 1440 × 1150 | three equal `406.66px` columns | one line | one line | none |
+| 1024 × 1050 | three equal `300px` columns | one line | one line | none |
+| 390 × 1100 | one `331px` column with vertical rail | one line | one line | none |
+
+- Desktop and iPad tag rows share an identical bottom coordinate within each viewport.
+- Mobile uses the approved compact `01 / 02 / 03 + timing` row, natural body wrapping, bordered tags and a left-side vertical timeline.
+- The final page retains the production ARKSOMA black, ivory and bronze tokens and its Songti/Bodoni typography hierarchy.
+- The source's secondary footer explanation is intentionally omitted; the approved production baseline is exactly `年度生命基线 · 首次完整方案已含`.
+- Browser console warnings and errors after the responsive sequence: empty.
+
+## Findings
+
+- No P0, P1 or P2 visual, layout, responsive, overflow, semantic or console finding remains.
+- P3: platform font fallback may create minor optical differences on non-Apple devices, without changing the verified line and column constraints.
+
+final result: passed
+
+# ARKSOMA CELL JOURNEY Preview QA
+
+## Comparison target and evidence
+
+- Source visual truth: `/Users/godfather/.codex/generated_images/019f5e8c-6e48-7892-bb71-e52c309dbf5d/exec-0b8eee39-08f8-42be-9d81-7cf2eaee1a05.png` (`1487 × 1058` px).
+- Browser-rendered implementation: `http://127.0.0.1:3015/prototype/arksoma-cell-journey-preview.html`.
+- Full browser screenshots:
+  - desktop: `.codex-tmp/arksoma-cell-journey-preview-qa/01-desktop.png` (`1472 × 1100` px; target canvas `1440 × 939` CSS px)
+  - iPad: `.codex-tmp/arksoma-cell-journey-preview-qa/02-tablet.png` (`1056 × 1050` px; target canvas `1024 × 869` CSS px)
+  - mobile: `.codex-tmp/arksoma-cell-journey-preview-qa/03-mobile.png` (`422 × 1150` px; target canvas `390 × 965` CSS px)
+- Full-view normalized comparison: `.codex-tmp/arksoma-cell-journey-preview-qa/09-final-comparison.png` (source left, accepted desktop canvas right, each normalized to `800 × 570` inside one `1600 × 570` comparison image).
+- Focused responsive evidence: `.codex-tmp/arksoma-cell-journey-preview-qa/05-tablet-canvas.png` and `.codex-tmp/arksoma-cell-journey-preview-qa/06-mobile-canvas.png`.
+- Density normalization: all accepted browser captures use `deviceScaleFactor: 1`; the source is resized proportionally only inside the combined comparison, with no density-based finding filed.
+- States: desktop, iPad and mobile selected states reached by real button clicks; the final delivery tab is left on desktop mode.
+
+## Responsive and interaction verification
+
+| Mode | Target canvas | Stage layout | Title | Annual baseline | Horizontal overflow |
+| --- | ---: | --- | --- | --- | --- |
+| desktop | 1440 px | three equal `406.664px` columns | one line | one line | none (`1472 === 1472`) |
+| iPad | 1024 px | three equal `300px` columns | one line | one line | none (`1056 === 1056`) |
+| mobile | 390 px | one `313px` content column on a vertical timeline | one line | one line | none (`422 === 422`) |
+
+- Desktop stage metadata is one flex row for `01/02/03` and timing; all three tag lists share the exact `812.796875px` bottom baseline.
+- iPad timing and all three stage headings remain whole lines after the post-fix padding adjustment; no isolated punctuation or clipped text remains.
+- Mobile stage heads stay compact, body copy wraps naturally, all seven bordered tags remain inside the `390px` canvas, and the annual baseline stays on one line.
+- The target canvas is a semantic `main` containing a `section` named by `aria-labelledby="journeyPreviewTitle"`; the accessible region name is `一次方案 · 两次赴日`.
+- Real clicks produced exactly one `aria-pressed="true"` control for each mode. Final state: desktop `true`, iPad/mobile `false`.
+- Browser console errors and warnings after the complete click sequence: empty.
+
+## Required fidelity surfaces
+
+- **Fonts and typography:** restrained sans-serif eyebrow and timing copy, Songti display/body hierarchy and Didot/Bodoni-style stage numerals preserve the reference's editorial contrast. Desktop/iPad/mobile titles stay on one line; no truncation or overflow was observed.
+- **Spacing and layout rhythm:** the accepted build restores the centered ceremonial header, continuous rail, equal desktop/tablet tracks, vertical separators, common tag baseline and framed annual baseline. Mobile intentionally switches to a single vertical timeline with consistent stage rhythm.
+- **Colors and visual tokens:** the implementation now uses the reference's near-black surface, warm ivory text, muted bronze rules/tags and low-noise emerald-black glow. Active preview controls reuse the same bronze token while retaining visible focus.
+- **Image quality and asset fidelity:** the approved target contains no photographic, logo, illustration or non-standard icon asset. The implementation remains asset-free and does not substitute imagery with custom SVG, emoji or placeholder art; the radial surface treatment is a background token, not a replacement asset.
+- **Copy and content:** title, three service stages, timings, medical coordination copy, seven tags and the single annual-baseline sentence match the approved preview contract. The reference's smaller secondary footer sentence is intentionally omitted because this task requires exactly one annual baseline line.
+- **Accessibility and controls:** semantic buttons, visible focus, named navigation, named section, heading hierarchy and list semantics are present. Tap controls remain usable at the mobile host width.
+
+## Findings and comparison history
+
+1. **Initial pass — blocked**
+   - [P1] The implementation used a light ivory canvas, left-aligned header, small numerals and unframed text tags, while the confirmed source uses a near-black ceremonial composition with ivory/bronze contrast, centered hierarchy, large stage numerals, rail markers, vertical dividers and framed tags.
+   - Fix: restored the source palette and hierarchy in `prototype/arksoma-cell-journey-preview.css`, including the centered header, continuous rail, stage markers/dividers, optical numerals, boxed tags and framed annual baseline. Added a regression test for the approved dark visual contract.
+2. **Responsive follow-up — blocked**
+   - [P2] Narrower target canvases were not centered in the preview host; the initial iPad column padding also forced stage timing onto awkward lines.
+   - Fix: centered each fixed canvas, introduced mode-specific stage inline padding and reduced the iPad metadata gap. Regression tests cover canvas centering and per-mode spacing variables.
+3. **Post-fix pass — passed**
+   - Re-captured the implementation at `1440 / 1024 / 390` target canvas widths and inspected all three saved screenshots with the image viewer.
+   - The combined source/desktop comparison confirms the accepted black/ivory/bronze art direction, hierarchy, rail, three-column composition, framed tags and annual-baseline treatment.
+   - No actionable P0/P1/P2 finding remains.
+
+## Follow-up polish
+
+- [P3] Songti and Didot/Bodoni fallback metrics can vary slightly by platform; the verified macOS rendering keeps all required lines and alignments intact.
+- [P3] The implementation keeps the authoritative one-line annual baseline, while the visual source includes a smaller secondary explanatory line; this is an intentional content-boundary difference rather than missing copy.
+
+## Implementation checklist
+
+- [x] Compare the source and implementation in one normalized image.
+- [x] Verify desktop, iPad and mobile visual states through real clicks.
+- [x] Verify typography, spacing, colors, imagery/asset fidelity and copy.
+- [x] Verify ARIA state, target-canvas semantics, horizontal overflow and browser logs.
+- [x] Run the focused regression file and the complete test suite after each accepted fix.
+- [x] Keep the local preview service and deliverable browser tab open; do not deploy.
+
+final result: passed

@@ -1,0 +1,367 @@
+:root {
+  --ink: #040606;
+  --ink-soft: #09100f;
+  --ivory: #eee4d2;
+  --ivory-bright: #fff9ed;
+  --bronze: #b99a70;
+  --bronze-line: rgba(185, 154, 112, 0.42);
+  --emerald: #72ae9d;
+  --muted: rgba(238, 228, 210, 0.64);
+  --hairline: rgba(238, 228, 210, 0.16);
+  color: var(--ivory);
+  background: var(--ink);
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 0;
+  background: var(--ink);
+  color: var(--ivory);
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", sans-serif;
+  font-weight: 300;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font: inherit;
+}
+
+.preview-toolbar {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 18px 16px;
+  background: var(--ink);
+}
+
+.preview-toolbar button {
+  appearance: none;
+  border: 1px solid var(--bronze-line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--bronze);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 10px 15px;
+}
+
+.preview-toolbar button[aria-pressed="true"] {
+  border-color: var(--bronze);
+  background: var(--bronze);
+  color: var(--ink-soft);
+}
+
+.preview-toolbar button:focus-visible {
+  outline: 1px solid var(--ivory-bright);
+  outline-offset: 4px;
+}
+
+.preview-shell {
+  --preview-width: 1440px;
+  container-type: inline-size;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto 36px;
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+.preview-canvas {
+  --preview-scale: min(1, calc((100cqw - 32px) / var(--preview-width)));
+  width: var(--preview-width);
+  min-width: var(--preview-width);
+  margin-inline: auto;
+  zoom: var(--preview-scale);
+}
+
+.preview-shell[data-mode="desktop"] {
+  --preview-width: 1440px;
+  --safe: 760px;
+  --wide: 980px;
+  --journey-padding: 86px 110px 72px;
+  --journey-title-size: 60px;
+  --journey-intro-margin: 24px 0 62px;
+  --journey-intro-size: 15px;
+  --stage-head-gap: 30px;
+  --stage-inline-padding: 54px;
+  --stage-title-margin: 34px 0 14px;
+  --stage-title-size: 29px;
+}
+
+.preview-shell[data-mode="tablet"] {
+  --preview-width: 1024px;
+  --safe: 720px;
+  --wide: 880px;
+  --journey-padding: 64px 62px 56px;
+  --journey-title-size: 48px;
+  --journey-intro-margin: 22px 0 46px;
+  --journey-intro-size: 15px;
+  --stage-head-gap: 12px;
+  --stage-inline-padding: 28px;
+  --stage-title-margin: 28px 0 14px;
+  --stage-title-size: 25px;
+}
+
+.preview-shell[data-mode="mobile"] {
+  --preview-width: 390px;
+  --safe: 350px;
+  --wide: 358px;
+  --journey-padding: 38px 22px 34px 36px;
+  --journey-title-size: 31px;
+  --journey-intro-margin: 20px 0 38px;
+  --journey-intro-size: 14px;
+  --stage-head-gap: 16px;
+  --stage-inline-padding: 0;
+  --stage-title-margin: 20px 0 12px;
+  --stage-title-size: 21px;
+}
+
+.cell-journey {
+  position: relative;
+  min-width: 0;
+  background: var(--ink-soft);
+  background-image: radial-gradient(circle at 50% 36%, color-mix(in srgb, var(--emerald) 9%, transparent), transparent 54%);
+  color: var(--ivory);
+  padding: var(--journey-padding);
+}
+
+.eyebrow {
+  margin: 0 0 18px;
+  color: var(--bronze);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-align: center;
+}
+
+.journey-title {
+  margin: 0;
+  width: min(var(--wide), 100%);
+  margin-inline: auto;
+  color: var(--ivory-bright);
+  font-family: "Songti SC", STSong, serif;
+  font-size: var(--journey-title-size);
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  line-height: 1.18;
+  text-align: center;
+  text-shadow: 0 0 22px color-mix(in srgb, var(--ivory) 8%, transparent);
+  white-space: nowrap;
+  text-wrap: nowrap;
+}
+
+.journey-intro {
+  width: min(620px, var(--safe), 100%);
+  margin: var(--journey-intro-margin);
+  color: var(--muted);
+  font-size: var(--journey-intro-size);
+  line-height: 1.9;
+  text-align: center;
+}
+
+.journey-stage-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+}
+
+.journey-stage-grid::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: var(--bronze-line);
+  content: "";
+}
+
+.journey-stage {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-width: 0;
+  min-height: 438px;
+  flex-direction: column;
+  border-left: 1px solid var(--hairline);
+  background: transparent;
+  padding: 42px var(--stage-inline-padding) 0;
+}
+
+.journey-stage:first-child {
+  border-left: 0;
+}
+
+.journey-stage::after {
+  position: absolute;
+  top: -5px;
+  left: calc(50% - 5px);
+  width: 8px;
+  height: 8px;
+  border: 1px solid var(--bronze);
+  border-radius: 50%;
+  background: var(--bronze);
+  box-shadow: 0 0 0 4px var(--ink-soft), 0 0 0 5px color-mix(in srgb, var(--bronze) 70%, transparent);
+  content: "";
+}
+
+.stage-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--stage-head-gap);
+  color: var(--bronze);
+}
+
+.stage-head p {
+  margin: 0;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+}
+
+.stage-number {
+  color: var(--ivory-bright);
+  font-family: "Bodoni 72", Didot, "Times New Roman", serif;
+  font-size: 58px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.journey-stage h2 {
+  margin: var(--stage-title-margin);
+  color: var(--ivory);
+  font-family: "Songti SC", STSong, serif;
+  font-size: var(--stage-title-size);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  line-height: 1.35;
+}
+
+.journey-stage > p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.95;
+}
+
+.journey-stage ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 0;
+  margin-top: auto;
+  padding: 27px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+  list-style: none;
+}
+
+.journey-stage li {
+  border: 1px solid var(--bronze-line);
+  padding: 8px 14px;
+  letter-spacing: 0.08em;
+}
+
+.journey-baseline {
+  display: flex;
+  min-height: 126px;
+  align-items: center;
+  justify-content: center;
+  margin: 0 -70px;
+  border: 1px solid var(--bronze-line);
+  color: var(--bronze);
+  font-family: "Songti SC", STSong, serif;
+  font-size: 25px;
+  letter-spacing: 0.12em;
+  text-align: center;
+}
+
+.preview-shell[data-mode="desktop"] .journey-title {
+  white-space: nowrap;
+}
+
+.preview-shell[data-mode="tablet"] .journey-title {
+  white-space: nowrap;
+}
+
+.preview-shell[data-mode="mobile"] .journey-title {
+  white-space: nowrap;
+}
+
+.preview-shell[data-mode="mobile"] .journey-title {
+  letter-spacing: 0.01em;
+}
+
+.preview-shell[data-mode="mobile"] .journey-stage-grid {
+  grid-template-columns: 1fr;
+  border-left: 1px solid var(--hairline);
+  padding-left: 18px;
+}
+
+.preview-shell[data-mode="mobile"] .journey-stage-grid::before {
+  display: none;
+}
+
+.preview-shell[data-mode="mobile"] .journey-stage {
+  min-height: 0;
+  border-top: 0;
+  border-left: 0;
+  background: transparent;
+  padding: 0 0 34px;
+}
+
+.preview-shell[data-mode="mobile"] .journey-stage::before {
+  position: absolute;
+  top: 3px;
+  left: -23px;
+  width: 9px;
+  height: 9px;
+  border: 2px solid var(--bronze);
+  border-radius: 50%;
+  background: var(--ink-soft);
+  content: "";
+}
+
+.preview-shell[data-mode="mobile"] .journey-stage::after {
+  display: none;
+}
+
+.preview-shell[data-mode="mobile"] .stage-number {
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.preview-shell[data-mode="mobile"] .stage-head p {
+  font-size: 12px;
+}
+
+.preview-shell[data-mode="mobile"] .journey-stage > p {
+  font-size: 14px;
+}
+
+.preview-shell[data-mode="mobile"] .journey-stage ul {
+  margin-top: 18px;
+  padding-top: 0;
+}
+
+.preview-shell[data-mode="mobile"] .journey-baseline {
+  display: block;
+  min-height: 0;
+  margin-top: 10px;
+  margin-right: 0;
+  margin-left: 0;
+  border: 0;
+  border-top: 1px solid var(--bronze-line);
+  padding-top: 17px;
+  font-size: 13px;
+  white-space: nowrap;
+}
