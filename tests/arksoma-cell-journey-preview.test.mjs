@@ -62,19 +62,28 @@ function nestedElementWithClass(html, tagName, className) {
   assert.fail(`unclosed .${className} ${tagName}`);
 }
 
-test('applyPreviewMode updates the shell and pressed state', () => {
+test('applyPreviewMode updates sibling toolbar controls through their shared preview container', () => {
   const buttons = ['desktop', 'tablet', 'mobile'].map((mode) => ({
     dataset: { previewMode: mode },
     pressed: null,
     setAttribute(name, value) { if (name === 'aria-pressed') this.pressed = value; }
   }));
+  const queriedSelectors = [];
+  const previewContainer = {
+    querySelectorAll(selector) {
+      queriedSelectors.push(selector);
+      return selector === '[data-preview-mode]' ? buttons : [];
+    }
+  };
   const root = {
     dataset: {},
-    querySelectorAll() { return buttons; }
+    parentElement: previewContainer,
+    querySelectorAll() { throw new Error('toolbar controls are not descendants of the shell'); }
   };
 
   assert.equal(applyPreviewMode(root, 'mobile'), 'mobile');
   assert.equal(root.dataset.mode, 'mobile');
+  assert.deepEqual(queriedSelectors, ['[data-preview-mode]']);
   assert.deepEqual(buttons.map((button) => button.pressed), ['false', 'false', 'true']);
 });
 
@@ -156,6 +165,30 @@ test('cell journey preview defines local layout rules for each mode', async () =
   assert.ok(hasDeclaration(stage, 'display', 'flex'));
   assert.ok(hasDeclaration(stage, 'flex-direction', 'column'));
   assert.ok(hasDeclaration(ruleBlock(css, '.journey-stage ul'), 'margin-top', 'auto'));
+});
+
+test('preview keeps each fixed canvas inside a scaled, scrollable viewport without clipping', async () => {
+  const [html, css] = await Promise.all([
+    readFile(new URL('prototype/arksoma-cell-journey-preview.html', root), 'utf8'),
+    readFile(new URL('prototype/arksoma-cell-journey-preview.css', root), 'utf8')
+  ]);
+  const shells = elementsWithClass(html, 'main', 'preview-shell');
+  assert.equal(shells.length, 1);
+  assert.equal(elementsWithClass(shells[0].content, 'div', 'preview-canvas').length, 1);
+
+  const viewport = ruleBlock(css, '.preview-shell');
+  assert.ok(hasDeclaration(viewport, 'width', '100%'));
+  assert.ok(hasDeclaration(viewport, 'overflow-x', 'auto'));
+  assert.doesNotMatch(css, /overflow\s*:\s*hidden/i);
+
+  const canvas = ruleBlock(css, '.preview-canvas');
+  assert.ok(hasDeclaration(canvas, 'width', 'var\\(--preview-width\\)'));
+  assert.ok(hasDeclaration(canvas, 'zoom', 'var\\(--preview-scale\\)'));
+  assert.ok(hasDeclaration(canvas, '--preview-scale', 'min\\(1,\\s*calc\\(\\(100vw - 32px\\)\\s*\\/\\s*var\\(--preview-width\\)\\)\\)'));
+
+  for (const [mode, width] of [['desktop', '1440px'], ['tablet', '1024px'], ['mobile', '390px']]) {
+    assert.ok(hasDeclaration(ruleBlock(css, `.preview-shell[data-mode="${mode}"]`), '--preview-width', width));
+  }
 });
 
 test('cell journey preview stays dependency-free and asset-free', async () => {

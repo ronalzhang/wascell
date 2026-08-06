@@ -7,42 +7,46 @@
     <link rel="stylesheet" href="arksoma-cell-journey-preview.css">
   </head>
   <body>
-    <nav class="preview-toolbar" aria-label="预览尺寸">
-      <button type="button" data-preview-mode="desktop" aria-pressed="true">电脑</button>
-      <button type="button" data-preview-mode="tablet" aria-pressed="false">iPad</button>
-      <button type="button" data-preview-mode="mobile" aria-pressed="false">手机</button>
-    </nav>
+    <div class="preview-experience">
+      <nav class="preview-toolbar" aria-label="预览尺寸">
+        <button type="button" data-preview-mode="desktop" aria-pressed="true">电脑</button>
+        <button type="button" data-preview-mode="tablet" aria-pressed="false">iPad</button>
+        <button type="button" data-preview-mode="mobile" aria-pressed="false">手机</button>
+      </nav>
 
-    <main class="preview-shell" data-mode="desktop">
-      <section class="cell-journey" aria-labelledby="journeyPreviewTitle">
-        <p class="eyebrow">ARKSOMA CELL JOURNEY</p>
-        <h1 id="journeyPreviewTitle" class="journey-title">一次方案 · 两次赴日</h1>
-        <p class="journey-intro">首次赴日完成医学评估与自体采集；专业制备完成后，再赴日回输与观察。</p>
+      <main class="preview-shell preview-viewport" data-mode="desktop">
+        <div class="preview-canvas">
+          <section class="cell-journey" aria-labelledby="journeyPreviewTitle">
+            <p class="eyebrow">ARKSOMA CELL JOURNEY</p>
+            <h1 id="journeyPreviewTitle" class="journey-title">一次方案 · 两次赴日</h1>
+            <p class="journey-intro">首次赴日完成医学评估与自体采集；专业制备完成后，再赴日回输与观察。</p>
 
-        <div class="journey-stage-grid">
-          <article class="journey-stage">
-            <div class="stage-head"><span class="stage-number">01</span><p>首次赴日 · 约 5 日</p></div>
-            <h2>医学评估与自体采集</h2>
-            <p>完成必要评估与自体组织采集，随后进入当期私人文化行程。</p>
-            <ul><li>医学评估</li><li>自体采集</li><li>私享行程</li></ul>
-          </article>
-          <article class="journey-stage">
-            <div class="stage-head"><span class="stage-number">02</span><p>专业制备 · 不少于 4 周</p></div>
-            <h2>医学周期与私人协调</h2>
-            <p>由日本专业机构完成细胞制备，私人医疗秘书同步衔接资料与回程档期。</p>
-            <ul><li>专业制备</li><li>全程协调</li></ul>
-          </article>
-          <article class="journey-stage">
-            <div class="stage-head"><span class="stage-number">03</span><p>第二次赴日 · 约 1 日</p></div>
-            <h2>回输与医学观察</h2>
-            <p>按机构确认时间完成回输与观察，并由私人医疗秘书安排当日在日服务。</p>
-            <ul><li>回输观察</li><li>私人安排</li></ul>
-          </article>
+            <div class="journey-stage-grid">
+              <article class="journey-stage">
+                <div class="stage-head"><span class="stage-number">01</span><p>首次赴日 · 约 5 日</p></div>
+                <h2>医学评估与自体采集</h2>
+                <p>完成必要评估与自体组织采集，随后进入当期私人文化行程。</p>
+                <ul><li>医学评估</li><li>自体采集</li><li>私享行程</li></ul>
+              </article>
+              <article class="journey-stage">
+                <div class="stage-head"><span class="stage-number">02</span><p>专业制备 · 不少于 4 周</p></div>
+                <h2>医学周期与私人协调</h2>
+                <p>由日本专业机构完成细胞制备，私人医疗秘书同步衔接资料与回程档期。</p>
+                <ul><li>专业制备</li><li>全程协调</li></ul>
+              </article>
+              <article class="journey-stage">
+                <div class="stage-head"><span class="stage-number">03</span><p>第二次赴日 · 约 1 日</p></div>
+                <h2>回输与医学观察</h2>
+                <p>按机构确认时间完成回输与观察，并由私人医疗秘书安排当日在日服务。</p>
+                <ul><li>回输观察</li><li>私人安排</li></ul>
+              </article>
+            </div>
+
+            <p class="journey-baseline">年度生命基线 · 首次完整方案已含</p>
+          </section>
         </div>
-
-        <p class="journey-baseline">年度生命基线 · 首次完整方案已含</p>
-      </section>
-    </main>
+      </main>
+    </div>
 
     <script type="module" src="arksoma-cell-journey-preview.mjs"></script>
   </body>

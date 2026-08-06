@@ -3,7 +3,8 @@ const VALID_MODES = new Set(['desktop', 'tablet', 'mobile']);
 export function applyPreviewMode(root, requestedMode) {
   const mode = VALID_MODES.has(requestedMode) ? requestedMode : 'desktop';
   root.dataset.mode = mode;
-  root.querySelectorAll('[data-preview-mode]').forEach((button) => {
+  const controlScope = root.parentElement || root.ownerDocument || root;
+  controlScope.querySelectorAll('[data-preview-mode]').forEach((button) => {
     button.setAttribute('aria-pressed', String(button.dataset.previewMode === mode));
   });
   return mode;
