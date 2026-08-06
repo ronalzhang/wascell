@@ -62,7 +62,7 @@ test('cell journey preview preserves the approved copy and structure', async () 
   const baselines = elementsWithClass(html, 'p', 'journey-baseline');
   assert.equal(baselines.length, 1);
   assert.equal(baselines[0].content.trim(), '年度生命基线 · 首次完整方案已含');
-  assert.match(html, /<p\b[^>]*\bclass\s*=\s*(["'])[^"']*\bjourney-baseline\b[^"']*\1[^>]*>\s*年度生命基线 · 首次完整方案已含\s*<\/p>\s*<\/section>/);
+  assert.match(html, /<\/div>\s*<p\b[^>]*\bclass\s*=\s*(["'])[^"']*\bjourney-baseline\b[^"']*\1[^>]*>\s*年度生命基线 · 首次完整方案已含\s*<\/p>\s*<\/section>/);
   assert.doesNotMatch(html, /建立个人健康参照/);
 });
 
