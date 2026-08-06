@@ -44,6 +44,7 @@ button {
 
 .preview-shell {
   --preview-width: 1440px;
+  container-type: inline-size;
   width: 100%;
   max-width: 100%;
   margin: 0 auto 36px;
@@ -52,7 +53,7 @@ button {
 }
 
 .preview-canvas {
-  --preview-scale: min(1, calc((100vw - 32px) / var(--preview-width)));
+  --preview-scale: min(1, calc((100cqw - 32px) / var(--preview-width)));
   width: var(--preview-width);
   min-width: var(--preview-width);
   zoom: var(--preview-scale);
@@ -60,21 +61,45 @@ button {
 
 .preview-shell[data-mode="desktop"] {
   --preview-width: 1440px;
+  --journey-padding: 86px 110px 72px;
+  --journey-title-size: 60px;
+  --journey-intro-margin: 24px 0 62px;
+  --journey-intro-size: 15px;
+  --journey-grid-gap: 54px;
+  --stage-head-gap: 30px;
+  --stage-title-margin: 34px 0 14px;
+  --stage-title-size: 29px;
 }
 
 .preview-shell[data-mode="tablet"] {
   --preview-width: 1024px;
+  --journey-padding: 64px 62px 56px;
+  --journey-title-size: 48px;
+  --journey-intro-margin: 22px 0 46px;
+  --journey-intro-size: 15px;
+  --journey-grid-gap: 24px;
+  --stage-head-gap: 22px;
+  --stage-title-margin: 28px 0 14px;
+  --stage-title-size: 25px;
 }
 
 .preview-shell[data-mode="mobile"] {
   --preview-width: 390px;
+  --journey-padding: 38px 22px 34px 36px;
+  --journey-title-size: 31px;
+  --journey-intro-margin: 20px 0 38px;
+  --journey-intro-size: 14px;
+  --journey-grid-gap: 0;
+  --stage-head-gap: 16px;
+  --stage-title-margin: 20px 0 12px;
+  --stage-title-size: 21px;
 }
 
 .cell-journey {
   position: relative;
   min-width: 0;
   background: #f8f6f1;
-  padding: clamp(40px, 6vw, 98px) clamp(24px, 7.6vw, 142px) clamp(38px, 5vw, 72px);
+  padding: var(--journey-padding);
 }
 
 .eyebrow {
@@ -89,7 +114,7 @@ button {
 .journey-title {
   margin: 0;
   color: #25211d;
-  font-size: clamp(30px, 4.1vw, 60px);
+  font-size: var(--journey-title-size);
   font-weight: 400;
   letter-spacing: 0.05em;
   line-height: 1.18;
@@ -99,9 +124,9 @@ button {
 
 .journey-intro {
   max-width: 620px;
-  margin: 24px 0 62px;
+  margin: var(--journey-intro-margin);
   color: #675f56;
-  font-size: 15px;
+  font-size: var(--journey-intro-size);
   line-height: 1.9;
 }
 
@@ -109,7 +134,7 @@ button {
   position: relative;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: clamp(18px, 3vw, 54px);
+  gap: var(--journey-grid-gap);
 }
 
 .journey-stage-grid::before {
@@ -137,7 +162,7 @@ button {
 .stage-head {
   display: flex;
   align-items: baseline;
-  gap: clamp(16px, 2vw, 30px);
+  gap: var(--stage-head-gap);
   color: #6f665b;
 }
 
@@ -157,8 +182,8 @@ button {
 }
 
 .journey-stage h2 {
-  margin: 34px 0 14px;
-  font-size: clamp(21px, 2vw, 29px);
+  margin: var(--stage-title-margin);
+  font-size: var(--stage-title-size);
   font-weight: 400;
   letter-spacing: 0.04em;
   line-height: 1.35;
@@ -212,32 +237,12 @@ button {
   white-space: nowrap;
 }
 
-.preview-shell[data-mode="tablet"] .cell-journey {
-  padding-right: 62px;
-  padding-left: 62px;
-}
-
-.preview-shell[data-mode="tablet"] .journey-stage-grid {
-  gap: 24px;
-}
-
-.preview-shell[data-mode="mobile"] .cell-journey {
-  padding: 38px 22px 34px 36px;
-}
-
 .preview-shell[data-mode="mobile"] .journey-title {
-  font-size: 31px;
   letter-spacing: 0.01em;
-}
-
-.preview-shell[data-mode="mobile"] .journey-intro {
-  margin: 20px 0 38px;
-  font-size: 14px;
 }
 
 .preview-shell[data-mode="mobile"] .journey-stage-grid {
   grid-template-columns: 1fr;
-  gap: 0;
   border-left: 1px solid #c9c0b4;
   padding-left: 18px;
 }
@@ -262,10 +267,6 @@ button {
   border-radius: 50%;
   background: #f8f6f1;
   content: "";
-}
-
-.preview-shell[data-mode="mobile"] .journey-stage h2 {
-  margin-top: 20px;
 }
 
 .preview-shell[data-mode="mobile"] .journey-stage ul {

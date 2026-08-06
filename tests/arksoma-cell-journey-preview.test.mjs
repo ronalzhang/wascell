@@ -178,16 +178,53 @@ test('preview keeps each fixed canvas inside a scaled, scrollable viewport witho
 
   const viewport = ruleBlock(css, '.preview-shell');
   assert.ok(hasDeclaration(viewport, 'width', '100%'));
+  assert.ok(hasDeclaration(viewport, 'container-type', 'inline-size'));
   assert.ok(hasDeclaration(viewport, 'overflow-x', 'auto'));
   assert.doesNotMatch(css, /overflow\s*:\s*hidden/i);
 
   const canvas = ruleBlock(css, '.preview-canvas');
   assert.ok(hasDeclaration(canvas, 'width', 'var\\(--preview-width\\)'));
   assert.ok(hasDeclaration(canvas, 'zoom', 'var\\(--preview-scale\\)'));
-  assert.ok(hasDeclaration(canvas, '--preview-scale', 'min\\(1,\\s*calc\\(\\(100vw - 32px\\)\\s*\\/\\s*var\\(--preview-width\\)\\)\\)'));
+  assert.ok(hasDeclaration(canvas, '--preview-scale', 'min\\(1,\\s*calc\\(\\(100cqw - 32px\\)\\s*\\/\\s*var\\(--preview-width\\)\\)\\)'));
 
   for (const [mode, width] of [['desktop', '1440px'], ['tablet', '1024px'], ['mobile', '390px']]) {
     assert.ok(hasDeclaration(ruleBlock(css, `.preview-shell[data-mode="${mode}"]`), '--preview-width', width));
+  }
+});
+
+test('preview fixes spacing and typography to each canvas without viewport-width units', async () => {
+  const css = await readFile(new URL('prototype/arksoma-cell-journey-preview.css', root), 'utf8');
+  assert.doesNotMatch(css, /(?:\d|\.)\s*(?:dvw|svw|lvw|vw)\b/i);
+
+  const expectedModes = {
+    desktop: {
+      '--journey-padding': '86px\\s+110px\\s+72px',
+      '--journey-title-size': '60px',
+      '--journey-grid-gap': '54px',
+      '--stage-head-gap': '30px',
+      '--stage-title-size': '29px'
+    },
+    tablet: {
+      '--journey-padding': '64px\\s+62px\\s+56px',
+      '--journey-title-size': '48px',
+      '--journey-grid-gap': '24px',
+      '--stage-head-gap': '22px',
+      '--stage-title-size': '25px'
+    },
+    mobile: {
+      '--journey-padding': '38px\\s+22px\\s+34px\\s+36px',
+      '--journey-title-size': '31px',
+      '--journey-grid-gap': '0',
+      '--stage-head-gap': '16px',
+      '--stage-title-size': '21px'
+    }
+  };
+
+  for (const [mode, variables] of Object.entries(expectedModes)) {
+    const rule = ruleBlock(css, '.preview-shell[data-mode="' + mode + '"]');
+    for (const [property, value] of Object.entries(variables)) {
+      assert.ok(hasDeclaration(rule, property, value), mode + ' must define ' + property);
+    }
   }
 });
 
