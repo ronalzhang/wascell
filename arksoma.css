@@ -52,6 +52,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .thesis-image { position: absolute; inset: 0; background: url("imgs/arksoma/cellular-stone-field.webp") center / cover no-repeat; opacity: 1; filter: brightness(1.08) saturate(1.02); }
 .thesis-copy { position: relative; padding: clamp(96px, 12vh, 140px) 0; }
 .thesis-copy h2, .itinerary-head h2, .closing h2, .access-heading h2, .origin-panel h2, .period-panel h2, .advisor-dialog h2 { margin: 25px 0 0; font-family: "Songti SC", STSong, serif; font-weight: 300; letter-spacing: .06em; }
+.thesis-copy h2, .access-heading h2, .protocol-heading h2, .protocol-rail h3, .journey-copy h3 { text-wrap: balance; }
+.access-lead, .protocol-rail article > p:not(.protocol-stage), .journey-copy > p:not(.journey-index), .itinerary-head > p { text-wrap: pretty; }
 .thesis-copy h2 { width: min(600px, 100%); font-size: clamp(45px, 6.3vw, 64px); line-height: 1.42; }
 .thesis-copy > p:not(.eyebrow) { width: min(520px, 100%); margin: 30px 0 0; color: var(--muted); font-size: 15px; line-height: 2; letter-spacing: .05em; }
 .protocol-grid { width: min(540px, 100%); margin: 50px 0 0; border-top: 1px solid var(--hairline); }
@@ -61,7 +63,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 
 .access-section { min-height: 94svh; display: grid; place-items: center; padding: 120px 0; background: #050807; }
 .access-shell { display: grid; grid-template-columns: .8fr 1.2fr; gap: clamp(64px, 9vw, 110px); padding: clamp(48px, 6vw, 72px); border: 1px solid var(--bronze-line); background: rgba(12,17,16,.72); box-shadow: 0 40px 120px rgba(0,0,0,.34); }
-.access-heading h2 { font-size: clamp(40px, 5.3vw, 54px); line-height: 1.42; }
+.access-heading h2 { font-size: clamp(38px, 3.8vw, 46px); line-height: 1.42; white-space: nowrap; }
 .access-heading h2 span { color: var(--bronze); font-size: .54em; letter-spacing: .14em; }
 .access-copy { color: var(--muted); font-size: 13px; line-height: 2; }
 .access-lead { margin-top: 0; color: var(--ivory); font-family: "Songti SC", STSong, serif; font-size: 18px; line-height: 1.9; }
@@ -276,7 +278,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
     .period-option span { font-size: 16px; }
     .period-option small { font-size: 8px; }
     .advisor-shell, .success-view { padding: 52px 24px 30px; }
-    .advisor-dialog h2 { font-size: 36px; }
+    .advisor-dialog h2 { font-size: clamp(28px, 8.8vw, 36px); white-space: nowrap; }
     .advisor-dialog form { grid-template-columns: 1fr; gap: 20px; }
     .wide { grid-column: 1; }
     .success-view dl div { align-items: start; text-align: left; }

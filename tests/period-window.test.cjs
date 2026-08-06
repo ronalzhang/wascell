@@ -110,6 +110,19 @@ test('production template preserves the approved responsive ARKSOMA structure', 
     assert.doesNotMatch(html, /id="advisorSuccess"[\s\S]*data-catalog-price/);
 });
 
+test('private advisory flow separates appointment intent from confirmed access', () => {
+    const template = fs.readFileSync(path.join(__dirname, '..', 'templates', 'arksoma-period.html'), 'utf8');
+    const periods = buildPeriods({ year: 2026, month: 8 }, 5);
+    const html = renderPeriodPage(template, periods[0], periods, periods[0].id);
+
+    assert.equal((html.match(/data-open-advisor>预约私人顾问<\/button>/g) || []).length, 2);
+    assert.match(html, /<h2 id="advisorTitle">安排一次私人沟通<\/h2>/);
+    assert.match(html, /<button class="submit-order wide" type="submit">提交预约意向<\/button>/);
+    assert.match(html, /<h2>预约意向已收到<\/h2>/);
+    assert.match(html, /确认沟通时间与后续安排/);
+    assert.doesNotMatch(html, /申请私人顾问|提交申请|申请已记录/);
+});
+
 test('production template exposes dynamic SEO and the approved protocol-to-journal story', () => {
     const template = fs.readFileSync(path.join(__dirname, '..', 'templates', 'arksoma-period.html'), 'utf8');
     const css = fs.readFileSync(path.join(__dirname, '..', 'arksoma.css'), 'utf8');

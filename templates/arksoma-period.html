@@ -43,7 +43,7 @@
                     <button class="period-trigger" id="periodTrigger" type="button" aria-controls="periodSheet" aria-expanded="false">
                         <span>{{PERIOD_LABEL}}</span><small>SELECT</small>
                     </button>
-                    <button class="primary-action" type="button" data-open-advisor>申请私人顾问</button>
+                    <button class="primary-action" type="button" data-open-advisor>预约私人顾问</button>
                     <p class="hero-facts"><span>东京 · 京都 · 富士山</span><span>{{CAPACITY}}</span></p>
                 </div>
             </div>
@@ -53,7 +53,7 @@
             <div class="thesis-image" role="img" aria-label="黑色岩石与细胞纹理交融"></div>
             <div class="thesis-copy safe-column" data-reveal>
                 <p class="eyebrow">ARKSOMA CELL PROTOCOL · 001</p>
-                <h2 id="scienceTitle">长寿医学，<br>在秩序中，回归本质。</h2>
+                <h2 id="scienceTitle">长寿医学，<br>在秩序中，<br>回归本质。</h2>
                 <p>从自体细胞采集、评估到长期生命档案建立，每一个环节都以审慎、可追溯和私人化为前提。我们管理的不是一次体验，而是面向未来的生命资产。</p>
                 <dl class="protocol-grid">
                     <div><dt>A—01</dt><dd>自体细胞路径</dd></div>
@@ -146,7 +146,7 @@
                 <p class="eyebrow">PRIVATE ADVISORY · {{PERIOD_LABEL}}</p>
                 <h2 id="closingTitle">为生命，预留第二种未来。</h2>
                 <p>顾问将结合您的健康资料、时间与在日偏好，安排私密沟通。</p>
-                <button class="primary-action" type="button" data-open-advisor>申请私人顾问</button>
+                <button class="primary-action" type="button" data-open-advisor>预约私人顾问</button>
                 <p class="closing-price"><span>单次细胞服务</span> · <span data-catalog-price>{{PRICE}}</span> · 截止 {{CUTOFF}}</p>
             </div>
         </section>
@@ -179,8 +179,8 @@
     <dialog class="advisor-dialog" id="advisorDialog" aria-labelledby="advisorTitle">
         <div class="advisor-shell" id="advisorFormView">
             <button class="text-close" type="button" data-close-advisor>关闭</button>
-            <p class="eyebrow">ONE-STEP PRIVATE APPLICATION</p>
-            <h2 id="advisorTitle">申请私人顾问</h2>
+            <p class="eyebrow">PRIVATE ADVISORY</p>
+            <h2 id="advisorTitle">安排一次私人沟通</h2>
             <div class="advisor-context" aria-label="本次申请信息">
                 <span data-service-period>单次细胞服务 · {{PERIOD_LABEL}}</span><strong data-catalog-price>{{PRICE}}</strong>
                 <small data-membership-copy>三次起可制定连续方案 · 首年方舟席位已含</small>
@@ -195,14 +195,14 @@
                 <label class="wide upload-field"><span>半年内体检报告（可选，最多 3 个）</span><input id="advisorFiles" name="attachments" type="file" multiple accept=".pdf,.jpg,.jpeg,.png"><strong>选择附件</strong><small>PDF、JPG、PNG · 单份 10 MB · 合计 20 MB</small></label>
                 <div class="file-list wide" id="fileList">尚未选择附件</div>
                 <p class="form-status wide" id="advisorStatus" role="status" aria-live="polite"></p>
-                <button class="submit-order wide" type="submit">提交申请</button>
+                <button class="submit-order wide" type="submit">提交预约意向</button>
             </form>
         </div>
         <div class="success-view" id="advisorSuccess" hidden>
-            <p class="eyebrow">APPLICATION RECEIVED</p>
+            <p class="eyebrow">PRIVATE REQUEST RECEIVED</p>
             <span class="success-mark">ARK</span>
-            <h2>申请已记录</h2>
-            <p>私人顾问将结合您的资料与在日偏好，安排后续沟通。</p>
+            <h2>预约意向已收到</h2>
+            <p>私人顾问将结合您的资料与在日偏好，确认沟通时间与后续安排。</p>
             <dl><div><dt>订单编号</dt><dd id="successOrderId">—</dd></div><div><dt>申请期次</dt><dd id="successPeriod">—</dd></div></dl>
             <button class="submit-order" type="button" data-close-success>完成</button>
         </div>

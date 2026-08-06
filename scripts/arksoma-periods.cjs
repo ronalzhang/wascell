@@ -16,9 +16,9 @@ const REFERENCE_EXPERIENCES = Object.freeze({
 const DEFAULT_ITINERARY = [
     { day: 'DAY 01', city: 'TOKYO', ...REFERENCE_EXPERIENCES.tokyoBay, title: '东京湾私席，开启一段安静的同行。', copy: '登上仅接待少数宾客的白木匠造屋形船，由料理人现场准备怀石料理。东京湾夜景、私密会面与克制的席位安排，让旅程从彼此信任开始。', tags: ['船上怀石', '东京湾夜景', '私人会面'] },
     { day: 'DAY 02', city: 'TOKYO', ...REFERENCE_EXPERIENCES.geisha, title: '医疗准备之后，进入介绍制的茶与舞。', copy: '上午依个人方案完成医疗准备与必要确认；充分休息后，由顾问安排当日下午文化接待。最终节奏依当期状态确认。', tags: ['医疗准备', '介绍制接待', '茶与舞'] },
-    { day: 'DAY 03', city: 'TOKYO', ...REFERENCE_EXPERIENCES.teaHome, title: '一盏茶的时间，重新理解长期主义。', copy: '探访里千家茶道大师私人宅邸，在茶室完成一期一会。三十余年的研习，被浓缩在器物、动作与留白之中。', tags: ['大师私宅', '三十载研习', '一期一会'] },
-    { day: 'DAY 04', city: 'KYOTO', ...REFERENCE_EXPERIENCES.dryGarden, title: '在枯山水中，让复杂重新变得清晰。', copy: '走入庭园，在石、苔与留白的秩序中完成一次安静参访。具体寺院依据季节、开放条件与当期状态确认。', tags: ['庭园参访', '枯山水', '安静参访'] },
-    { day: 'DAY 05', city: 'KYOTO', ...REFERENCE_EXPERIENCES.incense, title: '以香道雅集，为首阶段留下一次安静收束。', copy: '在和室完成闻香与器物交流；随后由顾问整理后续医学安排与在日需求。具体项目依季节、预约与当期确认。', tags: ['香道雅集', '安静收束', '持续协调'] },
+    { day: 'DAY 03', city: 'TOKYO', ...REFERENCE_EXPERIENCES.teaHome, title: '一盏茶的时间，重新理解长期主义。', copy: '探访里千家茶道大师私人宅邸，在茶室完成一期一会。三十余年研习，浓缩于器物、动作与留白。', tags: ['大师私宅', '三十载研习', '一期一会'] },
+    { day: 'DAY 04', city: 'KYOTO', ...REFERENCE_EXPERIENCES.dryGarden, title: '在枯山水中，让复杂重新变得清晰。', copy: '走入庭园，在石、苔与留白的秩序中完成安静参访。具体寺院依季节、开放条件与当期状态确认。', tags: ['庭园参访', '枯山水', '安静参访'] },
+    { day: 'DAY 05', city: 'KYOTO', ...REFERENCE_EXPERIENCES.incense, title: '以香道雅集，为首阶段留下一次安静收束。', copy: '在和室完成闻香与器物交流；随后由顾问整理医学与在日安排。具体项目依季节、预约和当期确认。', tags: ['香道雅集', '安静收束', '持续协调'] },
 ];
 
 const FILIAL_ITINERARY = DEFAULT_ITINERARY.map((item, index) => {

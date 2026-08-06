@@ -257,7 +257,7 @@ function initAdvisorDialog() {
         const key = createSubmissionKey(window.sessionStorage, data.periodId);
         submit.disabled = true;
         submit.textContent = '正在提交…';
-        status.textContent = '正在安全提交申请与附件…';
+        status.textContent = '正在安全提交预约意向与附件…';
         try {
             const response = await fetch('/api/advisor-applications', {
                 method: 'POST',
@@ -276,7 +276,7 @@ function initAdvisorDialog() {
             status.textContent = error.message;
         } finally {
             submit.disabled = false;
-            submit.textContent = '提交申请';
+            submit.textContent = '提交预约意向';
         }
     });
 }
