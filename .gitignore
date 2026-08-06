@@ -77,6 +77,8 @@ logs/
 Thumbs.db
 .playwright-cli/
 output/playwright/
+.worktrees/
+.superpowers/
 
 # IDE
 .vscode/
