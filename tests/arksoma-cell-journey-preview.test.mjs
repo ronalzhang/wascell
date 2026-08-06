@@ -14,7 +14,7 @@ function hasClass(attributes, className) {
 
 function elements(html, tagName) {
   return [...html.matchAll(new RegExp(`<${tagName}\\b([^>]*)>([\\s\\S]*?)<\\/${tagName}>`, 'gi'))]
-    .map(([, attributes, content]) => ({ attributes, content }));
+    .map(([markup, attributes, content]) => ({ markup, attributes, content }));
 }
 
 function elementsWithClass(html, tagName, className) {
@@ -32,15 +32,42 @@ function hasDeclaration(rule, property, value) {
   return new RegExp(`(?:^|;)\\s*${property}\\s*:\\s*${value}\\s*(?:;|$)`, 'i').test(rule);
 }
 
+function nestedElementWithClass(html, tagName, className) {
+  const openingTag = new RegExp(`<${tagName}\\b([^>]*)>`, 'gi');
+  let opening;
+  while ((opening = openingTag.exec(html))) {
+    if (hasClass(opening[1], className)) break;
+  }
+  assert.ok(opening, `missing .${className} ${tagName}`);
+
+  const tag = new RegExp(`</?${tagName}\\b[^>]*>`, 'gi');
+  tag.lastIndex = opening.index;
+  let depth = 0;
+  let token;
+  while ((token = tag.exec(html))) {
+    depth += token[0].startsWith('</') ? -1 : 1;
+    if (depth === 0) {
+      return {
+        markup: html.slice(opening.index, tag.lastIndex),
+        content: html.slice(opening.index + opening[0].length, token.index)
+      };
+    }
+  }
+  assert.fail(`unclosed .${className} ${tagName}`);
+}
+
 test('cell journey preview preserves the approved copy and structure', async () => {
   const html = await readFile(new URL('prototype/arksoma-cell-journey-preview.html', root), 'utf8');
+  const journeys = elementsWithClass(html, 'section', 'cell-journey');
+  assert.equal(journeys.length, 1);
+  const journey = journeys[0].content;
   const titles = elements(html, 'h1').filter(({ attributes }) => (
     attributeValue(attributes, 'id') === 'journeyPreviewTitle' && hasClass(attributes, 'journey-title')
   ));
   assert.equal(titles.length, 1);
   assert.equal(titles[0].content.trim(), '一次方案 · 两次赴日');
 
-  const stages = elementsWithClass(html, 'article', 'journey-stage');
+  const stages = elementsWithClass(journey, 'article', 'journey-stage');
   assert.equal(stages.length, 3);
   const expectedMeta = [
     ['01', '首次赴日 · 约 5 日'],
@@ -56,13 +83,19 @@ test('cell journey preview preserves the approved copy and structure', async () 
     assert.ok(elements(heads[0].content, 'p').some(({ content }) => content.trim() === timing), `stage ${number} must keep its timing in the meta row`);
   }
 
-  assert.match(html, /医学评估与自体采集/);
-  assert.match(html, /医学周期与私人协调/);
-  assert.match(html, /回输与医学观察/);
-  const baselines = elementsWithClass(html, 'p', 'journey-baseline');
+  assert.match(journey, /医学评估与自体采集/);
+  assert.match(journey, /医学周期与私人协调/);
+  assert.match(journey, /回输与医学观察/);
+  assert.equal((journey.match(/年度生命基线 · 首次完整方案已含/g) || []).length, 1);
+  const baselines = elementsWithClass(journey, 'p', 'journey-baseline');
   assert.equal(baselines.length, 1);
   assert.equal(baselines[0].content.trim(), '年度生命基线 · 首次完整方案已含');
-  assert.match(html, /<\/div>\s*<p\b[^>]*\bclass\s*=\s*(["'])[^"']*\bjourney-baseline\b[^"']*\1[^>]*>\s*年度生命基线 · 首次完整方案已含\s*<\/p>\s*<\/section>/);
+  assert.doesNotMatch(baselines[0].content, /<[^>]+>/);
+  const stageGrid = nestedElementWithClass(journey, 'div', 'journey-stage-grid');
+  assert.equal((stageGrid.content.match(/年度生命基线 · 首次完整方案已含/g) || []).length, 0);
+  assert.doesNotMatch(stageGrid.content, /journey-baseline/);
+  const gridEnd = journey.indexOf(stageGrid.markup) + stageGrid.markup.length;
+  assert.equal(journey.slice(gridEnd).trim(), baselines[0].markup, 'only the baseline element may follow the stage grid');
   assert.doesNotMatch(html, /建立个人健康参照/);
 });
 
@@ -70,7 +103,9 @@ test('cell journey preview defines local layout rules for each mode', async () =
   const css = await readFile(new URL('prototype/arksoma-cell-journey-preview.css', root), 'utf8');
   assert.ok(hasDeclaration(ruleBlock(css, '.journey-stage-grid'), 'grid-template-columns', 'repeat\\(3,\\s*minmax\\(0,\\s*1fr\\)\\)'));
   assert.ok(hasDeclaration(ruleBlock(css, '.preview-shell[data-mode="mobile"] .journey-stage-grid'), 'grid-template-columns', '1fr'));
-  assert.ok(hasDeclaration(ruleBlock(css, '.journey-title'), 'white-space', 'nowrap'), 'the shared title rule must apply in desktop, tablet, and mobile modes');
+  for (const mode of ['desktop', 'tablet', 'mobile']) {
+    assert.ok(hasDeclaration(ruleBlock(css, `.preview-shell[data-mode="${mode}"] .journey-title`), 'white-space', 'nowrap'));
+  }
   const stageHead = ruleBlock(css, '.stage-head');
   assert.ok(hasDeclaration(stageHead, 'display', 'flex'));
   assert.ok(hasDeclaration(stageHead, 'align-items', 'baseline'));
@@ -88,6 +123,9 @@ test('cell journey preview stays dependency-free and asset-free', async () => {
   ]);
 
   assert.doesNotMatch(html, /<(?:img|picture|svg|use|object|embed|video)\b/i);
+  assert.doesNotMatch(html, /<base\b/i);
+  assert.doesNotMatch(html, /<style\b/i);
+  assert.doesNotMatch(html, /\bstyle\s*=/i);
   const links = [...html.matchAll(/<link\b([^>]*)>/gi)].map(([, attributes]) => attributes);
   assert.equal(links.length, 1, 'preview may load only its local stylesheet');
   assert.match(attributeValue(links[0], 'rel') || '', /\bstylesheet\b/i);
@@ -100,5 +138,5 @@ test('cell journey preview stays dependency-free and asset-free', async () => {
   assert.doesNotMatch(css, /@(?:import|font-face)\b/i);
   assert.doesNotMatch(css, /\burl\s*\(/i);
   assert.doesNotMatch(css, /(?:-webkit-)?backdrop-filter\s*:/i);
-  assert.doesNotMatch(script, /(?:https?:\/\/|\bimport\s*(?:\(|[^;]*?\bfrom\b))/i);
+  assert.doesNotMatch(script, /(?:https?:\/\/|\bimport\s*(?:\(|[\w*{]))/i);
 });
