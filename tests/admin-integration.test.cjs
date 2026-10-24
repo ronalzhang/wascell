@@ -40,6 +40,8 @@ test.before(async () => {
             STAFF_DATA_DIR: path.join(runtimeDir, 'staff'),
             BUSINESS_DATA_DIR: path.join(runtimeDir, 'business'),
             KNOWLEDGE_DATA_DIR: path.join(runtimeDir, 'knowledge'),
+            TRAFFIC_STATS_FILE: path.join(runtimeDir, 'traffic.json'),
+            TRAFFIC_LOG_FILE: path.join(runtimeDir, 'access.log'),
         },
         stdio: ['ignore', 'pipe', 'pipe'],
     });
@@ -83,6 +85,15 @@ test('/admin and /admin-pro serve isolated sales and owner workspaces', async ()
     assert.match(salesHtml, /销售答疑/);
     assert.match(salesHtml, /name="username"/);
     assert.doesNotMatch(salesHtml, /访问统计|商业配置|团队权限|管理员入口|admin-pro/);
+});
+
+test('public static serving never exposes server code, statistics or crash artifacts', async () => {
+    for (const resource of ['/app.js', '/stats.json', '/access.log', '/deploy.sh', '/package.json', '/lib/admin-auth.js', '/core.123', '/core', '/stats.json.tmp', '/data/knowledge-seed.zh-CN.json']) {
+        const response = await fetch(`${baseUrl}${resource}`, { method: 'HEAD' });
+        assert.equal(response.status, 404, resource);
+    }
+    assert.equal((await fetch(`${baseUrl}/arksoma.css`)).status, 200);
+    assert.equal((await fetch(`${baseUrl}/arksoma-ui.mjs`)).status, 200);
 });
 
 test('owner data APIs require an owner session', async () => {

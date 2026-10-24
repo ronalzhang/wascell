@@ -1,7 +1,6 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
-const { promisify } = require('util');
 const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
@@ -16,15 +15,9 @@ const { createAuditLog } = require('./lib/audit-log');
 const { createBusinessConfigStore } = require('./lib/business-config-store');
 const { createKnowledgeStore } = require('./lib/knowledge-store');
 const { createServiceCaseStore } = require('./lib/service-case-store');
-const { accumulateTrafficSignal, classifyTrafficSignals } = require('./lib/traffic-intelligence');
-
-// 异步文件操作
-const writeFileAsync = promisify(fs.writeFile);
-const appendFileAsync = promisify(fs.appendFile);
-const readFileAsync = promisify(fs.readFile);
-const existsAsync = promisify(fs.exists);
-const statAsync = promisify(fs.stat);
-const renameAsync = promisify(fs.rename);
+const { createTrafficStore } = require('./lib/traffic-store');
+const { createAccessLogWriter } = require('./lib/access-log-writer');
+const { classifyTrafficSignals } = require('./lib/traffic-intelligence');
 
 const app = express();
 const PORT = process.env.PORT || 3003; // 使用3003端口避免与其他应用冲突
@@ -76,8 +69,10 @@ const advisorUpload = multer({
 });
 
 // 访问日志文件路径
-const LOG_FILE = path.join(__dirname, 'access.log');
-const STATS_FILE = path.join(__dirname, 'stats.json');
+const LOG_FILE = process.env.TRAFFIC_LOG_FILE || path.join(__dirname, 'access.log');
+const STATS_FILE = process.env.TRAFFIC_STATS_FILE || path.join(__dirname, 'stats.json');
+const trafficStore = createTrafficStore({ file: STATS_FILE });
+const accessLogWriter = createAccessLogWriter({ file: LOG_FILE });
 
 // IP地理位置缓存
 const ipLocationCache = new Map();
@@ -318,56 +313,11 @@ async function getIPLocation(ip) {
     return fallback;
 }
 
-// 文件锁机制
-let isWritingStats = false;
-const writeQueue = [];
-
-// 安全写入统计文件
+// Administrator recalculation modifies the shared snapshot and flushes once.
 async function safeWriteStats(stats) {
-    return new Promise((resolve, reject) => {
-        writeQueue.push({ stats, resolve, reject });
-        processWriteQueue();
-    });
-}
-
-async function processWriteQueue() {
-    if (isWritingStats || writeQueue.length === 0) {
-        return;
-    }
-
-    isWritingStats = true;
-    const { stats, resolve, reject } = writeQueue.shift();
-
-    try {
-        // 转换Set为数组保存
-        const dailyStats = {};
-        Object.keys(stats.daily).forEach(date => {
-            dailyStats[date] = {
-                ...stats.daily[date],
-                uniqueIPs: Array.from(stats.daily[date].uniqueIPs)
-            };
-        });
-
-        const saveStats = {
-            ...stats,
-            daily: dailyStats,
-            lastUpdated: new Date().toISOString()
-        };
-
-        // 写入临时文件，然后原子性重命名
-        const tempFile = STATS_FILE + '.tmp';
-        await writeFileAsync(tempFile, JSON.stringify(saveStats, null, 2));
-        await renameAsync(tempFile, STATS_FILE);
-
-        resolve();
-    } catch (error) {
-        console.error('安全写入统计文件失败:', error);
-        reject(error);
-    } finally {
-        isWritingStats = false;
-        // 处理队列中的下一个写入操作
-        setImmediate(processWriteQueue);
-    }
+    if (stats !== trafficStore.get()) throw new Error('拒绝替换当前统计快照');
+    trafficStore.markDirty();
+    await trafficStore.flush();
 }
 
 // 信任反向代理，正确获取客户端真实IP
@@ -402,8 +352,8 @@ app.use((req, res, next) => {
                (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 
                req.ip || 
                req.connection.remoteAddress;
-    const userAgent = req.get('User-Agent') || '';
-    const referer = req.get('Referer') || '';
+    const userAgent = (req.get('User-Agent') || '').slice(0, 512);
+    const referer = (req.get('Referer') || '').slice(0, 512);
     
     // 检测是否为恶意请求
     const url = req.url.toLowerCase();
@@ -413,97 +363,18 @@ app.use((req, res, next) => {
         timestamp,
         ip,
         method: req.method,
-        url: req.url,
+        url: req.url.slice(0, 2048),
         userAgent,
         referer,
         isMalicious // 标记是否为恶意请求
     };
 
-    // 异步写入访问日志和更新统计
-    setImmediate(async () => {
-        try {
-            await appendFileAsync(LOG_FILE, JSON.stringify(logEntry) + '\n');
-            await rotateLogIfNeeded();
-            await updateStatsAsync(logEntry);
-        } catch (error) {
-            console.error('写入日志或更新统计失败:', error);
-        }
-    });
+    // Counters are exact; raw diagnostic logs may shed overload instead of exhausting memory.
+    accessLogWriter.record(logEntry);
+    trafficStore.record(logEntry);
 
     next();
 });
-
-// 日志轮转功能
-async function rotateLogIfNeeded() {
-    try {
-        if (fs.existsSync(LOG_FILE)) {
-            const stats = await statAsync(LOG_FILE);
-            const fileSizeMB = stats.size / (1024 * 1024);
-
-            // 如果日志文件超过50MB，进行轮转
-            if (fileSizeMB > 50) {
-                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-                const backupFile = path.join(__dirname, `access-${timestamp}.log`);
-                await renameAsync(LOG_FILE, backupFile);
-                console.log(`日志文件已轮转: ${backupFile}`);
-            }
-        }
-    } catch (error) {
-        console.error('日志轮转失败:', error);
-    }
-}
-
-// 异步更新统计数据
-async function updateStatsAsync(logEntry) {
-    try {
-        let stats = await getStatsAsync();
-        const today = getToday();
-
-        // 初始化今日数据
-        if (!stats.daily[today]) {
-            stats.daily[today] = {
-                totalVisits: 0,
-                uniqueIPs: new Set(),
-                pages: {}
-            };
-        }
-
-        // 更新统计
-        stats.totalVisits++;
-        stats.daily[today].totalVisits++;
-        stats.daily[today].uniqueIPs.add(logEntry.ip);
-
-        // 页面访问统计
-        if (!stats.daily[today].pages[logEntry.url]) {
-            stats.daily[today].pages[logEntry.url] = 0;
-        }
-        stats.daily[today].pages[logEntry.url]++;
-
-        // IP统计
-        if (!stats.ipStats[logEntry.ip]) {
-            stats.ipStats[logEntry.ip] = {
-                count: 0,
-                maliciousCount: 0,
-                firstVisit: logEntry.timestamp,
-                lastVisit: logEntry.timestamp,
-                signals: {}
-            };
-        }
-        stats.ipStats[logEntry.ip].count++;
-        stats.ipStats[logEntry.ip].lastVisit = logEntry.timestamp;
-        stats.ipStats[logEntry.ip].signals = accumulateTrafficSignal(stats.ipStats[logEntry.ip].signals, logEntry);
-        
-        // 记录恶意请求次数
-        if (logEntry.isMalicious) {
-            stats.ipStats[logEntry.ip].maliciousCount = (stats.ipStats[logEntry.ip].maliciousCount || 0) + 1;
-        }
-
-        // 使用安全写入机制
-        await safeWriteStats(stats);
-    } catch (error) {
-        console.error('更新统计数据失败:', error);
-    }
-}
 
 // 获取当前日期(中国时区)
 function getToday() {
@@ -512,81 +383,25 @@ function getToday() {
     return chinaTime.toISOString().split('T')[0];
 }
 
-// 异步获取统计数据
-async function getStatsAsync() {
-    try {
-        if (fs.existsSync(STATS_FILE)) {
-            const fileContent = await readFileAsync(STATS_FILE, 'utf8');
-            const data = JSON.parse(fileContent);
-            // 恢复Set对象
-            if (data.daily) {
-                Object.keys(data.daily).forEach(date => {
-                    data.daily[date].uniqueIPs = new Set(data.daily[date].uniqueIPs || []);
-                });
-            }
-            return data;
-        }
-    } catch (error) {
-        console.error('读取统计数据失败:', error);
-        // JSON解析失败时，重置统计文件
-        const defaultStats = {
-            totalVisits: 0,
-            daily: {},
-            ipStats: {},
-            createdAt: new Date().toISOString()
-        };
-        try {
-            await safeWriteStats(defaultStats);
-            console.log('已重置统计数据文件');
-        } catch (writeError) {
-            console.error('重置统计数据文件失败:', writeError);
-        }
-        return defaultStats;
-    }
-
-    return {
-        totalVisits: 0,
-        daily: {},
-        ipStats: {},
-        createdAt: new Date().toISOString()
-    };
-}
-
-// 获取统计数据（同步版本，为兼容性保留）
-function getStats() {
-    try {
-        if (fs.existsSync(STATS_FILE)) {
-            const fileContent = fs.readFileSync(STATS_FILE, 'utf8');
-            const data = JSON.parse(fileContent);
-            // 恢复Set对象
-            if (data.daily) {
-                Object.keys(data.daily).forEach(date => {
-                    data.daily[date].uniqueIPs = new Set(data.daily[date].uniqueIPs || []);
-                });
-            }
-            return data;
-        }
-    } catch (error) {
-        console.error('读取统计数据失败:', error);
-        // JSON解析失败时，返回默认数据
-        return {
-            totalVisits: 0,
-            daily: {},
-            ipStats: {},
-            createdAt: new Date().toISOString()
-        };
-    }
-
-    return {
-        totalVisits: 0,
-        daily: {},
-        ipStats: {},
-        createdAt: new Date().toISOString()
-    };
-}
+async function getStatsAsync() { return trafficStore.get(); }
+function getStats() { return trafficStore.get(); }
 
 // 静态文件服务
-app.use(express.static('.', {
+const publicScripts = new Set(['period-switcher.js', 'chart.umd.js', 'admin.mjs', 'admin-pro.mjs', 'arksoma-ui.mjs', 'session-state.mjs']);
+app.use((req, res, next) => {
+    let pathname;
+    try { pathname = decodeURIComponent(req.path); }
+    catch { return res.sendStatus(400); }
+    const relative = pathname.replace(/^\/+/, '');
+    const extension = path.extname(relative).toLowerCase();
+    const isPublicAsset = /^(?:imgs|fonts)\/[a-z0-9_./-]+$/i.test(relative) && /\.(?:avif|webp|png|jpe?g|gif|svg|ico|woff2?|ttf|otf)$/i.test(relative) && !relative.split('/').some(part => part.startsWith('.'));
+    const isPublicPage = !relative.includes('/') && (extension === '.html' || extension === '.css' || relative === 'favicon.png' || publicScripts.has(relative));
+    // API and extensionless application routes continue to their explicit handlers.
+    if (isPublicAsset || isPublicPage || pathname.startsWith('/api/')) return next();
+    if (/^\/(?:|all|admin|admin-pro|\d{8})$/.test(pathname)) return next();
+    return res.sendStatus(404);
+});
+app.use(express.static(__dirname, {
     extensions: ['html'],
     setHeaders: (res, path) => {
         if (path.endsWith('.html')) {
@@ -1339,19 +1154,23 @@ app.get('/', (req, res) => {
 });
 
 // 启动服务器
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
     console.log(`方舟计划网站服务器运行在端口 ${PORT}`);
     console.log(`访问地址: http://localhost:${PORT}`);
     console.log(`管理后台: http://localhost:${PORT}/admin-pro`);
 });
 
-// 优雅关闭
-process.on('SIGTERM', () => {
-    console.log('收到SIGTERM信号，正在关闭服务器...');
-    process.exit(0);
-});
-
-process.on('SIGINT', () => {
-    console.log('收到SIGINT信号，正在关闭服务器...');
-    process.exit(0);
-}); 
+// Stop accepting requests, then persist the final shared snapshot.
+let shuttingDown = false;
+async function shutdown() {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    const timeout = setTimeout(() => process.exit(1), 10000);
+    timeout.unref();
+    server.close(async () => {
+        try { await Promise.all([trafficStore.close(), accessLogWriter.close()]); process.exit(0); }
+        catch (error) { console.error('统计保存失败:', error.message); process.exit(1); }
+    });
+}
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
