@@ -66,6 +66,7 @@ jspm_packages/
 
 # Access logs and statistics
 access.log
+access.log.[1-7]
 stats.json
 
 # PM2 logs
