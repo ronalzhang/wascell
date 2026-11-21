@@ -15,6 +15,8 @@ const { createAuditLog } = require('./lib/audit-log');
 const { createBusinessConfigStore } = require('./lib/business-config-store');
 const { createKnowledgeStore } = require('./lib/knowledge-store');
 const { createServiceCaseStore } = require('./lib/service-case-store');
+const { createPartnerProgram } = require('./lib/partner-program');
+const { registerPartnerRoutes, salesCustomerView, salesServiceCaseView } = require('./lib/partner-routes');
 const { createTrafficStore } = require('./lib/traffic-store');
 const { createAccessLogWriter } = require('./lib/access-log-writer');
 const { classifyTrafficSignals } = require('./lib/traffic-intelligence');
@@ -32,6 +34,7 @@ const STAFF_DATA_DIR = process.env.STAFF_DATA_DIR || path.join(PRIVATE_ROOT, 'st
 const BUSINESS_DATA_DIR = process.env.BUSINESS_DATA_DIR || path.join(PRIVATE_ROOT, 'business-data');
 const KNOWLEDGE_DATA_DIR = process.env.KNOWLEDGE_DATA_DIR || path.join(PRIVATE_ROOT, 'knowledge-data');
 const SERVICE_CASE_DATA_DIR = process.env.SERVICE_CASE_DATA_DIR || path.join(PRIVATE_ROOT, 'service-case-data');
+const PARTNER_PROGRAM_DATA_DIR = process.env.PARTNER_PROGRAM_DATA_DIR || path.join(BUSINESS_DATA_DIR, 'partner-program');
 
 fs.mkdirSync(ADVISOR_TEMP_DIR, { recursive: true, mode: 0o700 });
 
@@ -52,7 +55,18 @@ const advisorStore = createAdvisorStore({
     dataDir: ADVISOR_DATA_DIR,
     uploadDir: ADVISOR_UPLOAD_DIR,
 });
-const serviceCaseStore = createServiceCaseStore({ dataDir: SERVICE_CASE_DATA_DIR, auditLog });
+const serviceCaseStore = createServiceCaseStore({
+    dataDir: SERVICE_CASE_DATA_DIR,
+    auditLog,
+    getCustomers: advisorStore.getApplications,
+});
+const partnerProgram = createPartnerProgram({
+    dataDir: PARTNER_PROGRAM_DATA_DIR,
+    listAccounts: staffStore.listSales,
+    getCustomer: advisorStore.getApplication,
+    getCustomers: advisorStore.getApplications,
+    getCustomerIdentityId: advisorStore.getCustomerIdentityId,
+});
 
 const advisorUpload = multer({
     dest: ADVISOR_TEMP_DIR,
@@ -387,7 +401,10 @@ async function getStatsAsync() { return trafficStore.get(); }
 function getStats() { return trafficStore.get(); }
 
 // 静态文件服务
-const publicScripts = new Set(['period-switcher.js', 'chart.umd.js', 'admin.mjs', 'admin-pro.mjs', 'arksoma-ui.mjs', 'session-state.mjs']);
+const publicScripts = new Set([
+    'period-switcher.js', 'chart.umd.js', 'admin.mjs', 'admin-pro.mjs', 'arksoma-ui.mjs', 'session-state.mjs',
+    'partner-owner.mjs', 'partner-sales.mjs',
+]);
 app.use((req, res, next) => {
     let pathname;
     try { pathname = decodeURIComponent(req.path); }
@@ -406,7 +423,7 @@ app.use(express.static(__dirname, {
     setHeaders: (res, path) => {
         if (path.endsWith('.html')) {
             res.set('Cache-Control', 'no-cache');
-        } else if (path.endsWith('.js')) {
+        } else if (path.endsWith('.js') || path.endsWith('.mjs')) {
             res.set('Cache-Control', 'no-cache');
         }
     }
@@ -468,6 +485,7 @@ app.get('/api/session', adminAuth.session);
 app.post('/api/admin/login', adminAuth.ownerLogin);
 app.post('/api/admin/logout', adminAuth.logout);
 app.get('/api/admin/session', adminAuth.session);
+registerPartnerRoutes(app, adminAuth, partnerProgram);
 
 // 公开商业信息只返回前端展示白名单；内部容量和提醒规则保持私有。
 app.get('/api/public/catalog', async (req, res) => {
@@ -1015,19 +1033,49 @@ app.post('/api/owner/customers/:id/membership', adminAuth.requireOwner, async (r
 app.get('/api/sales/customers', adminAuth.requireSalesOrOwner, async (req, res) => {
     if (req.auth.role !== 'sales') return res.status(403).json({ message: '请使用销售账号' });
     try {
-        return res.json(await advisorStore.listForPrincipal(req.auth, req.query));
+        const result = await advisorStore.listForPrincipal(req.auth, req.query);
+        return res.set('Cache-Control', 'no-store').json({ ...result, items: result.items.map(salesCustomerView) });
     } catch (error) {
         console.error('读取销售客户失败:', error);
         return res.status(500).json({ message: '客户读取失败' });
     }
 });
 
+function salesCustomerMutation(operation) {
+    return async (req, res) => {
+        res.set('Cache-Control', 'no-store');
+        if (req.auth.role !== 'sales') return res.status(403).json({ message: '请使用销售账号' });
+        if (!req.is('application/json') || !req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
+            return res.status(400).json({ message: '请提交所需数据' });
+        }
+        try {
+            const { order, created } = await operation(req);
+            return res.status(created ? 201 : 200).json({ customer: salesCustomerView(order) });
+        } catch (error) {
+            if ([400, 403, 404, 409].includes(error.statusCode)) {
+                return res.status(error.statusCode).json({ message: error.message });
+            }
+            console.error('销售线索处理失败', { error: error.name });
+            return res.status(500).json({ message: '处理线索失败，请稍后重试' });
+        }
+    };
+}
+
+app.post('/api/sales/customers', adminAuth.requireSalesOrOwner, salesCustomerMutation(async req => {
+    await partnerProgram.assertSalesLeadAllowed(req.auth);
+    return advisorStore.createSalesLead(req.body, req.auth);
+}));
+
+app.patch('/api/sales/customers/:id/follow-up', adminAuth.requireSalesOrOwner, salesCustomerMutation(async req => ({
+    order: await advisorStore.updateSalesFollowUp(req.params.id, req.body, req.auth),
+})));
+
 app.get('/api/sales/customers/:id', adminAuth.requireSalesOrOwner, async (req, res) => {
     if (req.auth.role !== 'sales') return res.status(403).json({ message: '请使用销售账号' });
     const customer = await advisorStore.getApplication(req.params.id);
     if (!customer) return res.status(404).json({ message: '客户不存在' });
     if (customer.assignedSalesId !== req.auth.userId) return res.status(403).json({ message: '无权访问该客户' });
-    return res.json(customer);
+    return res.set('Cache-Control', 'no-store').json(salesCustomerView(customer));
 });
 
 app.post('/api/sales/customers/:id/internal-bookings', adminAuth.requireSalesOrOwner, async (req, res) => {
@@ -1113,7 +1161,8 @@ app.patch('/api/owner/service-cases/:id/journal', adminAuth.requireOwner, async 
 app.get('/api/sales/service-cases', adminAuth.requireSalesOrOwner, async (req, res) => {
     if (req.auth.role !== 'sales') return res.status(403).json({ message: '请使用销售账号' });
     try {
-        return res.json({ items: await serviceCaseStore.listForPrincipal(req.auth) });
+        const cases = await serviceCaseStore.listForPrincipal(req.auth);
+        return res.set('Cache-Control', 'no-store').json({ items: cases.map(salesServiceCaseView) });
     } catch (error) {
         return serviceCaseErrorResponse(res, error, '服务案例读取失败');
     }
@@ -1123,7 +1172,7 @@ app.patch('/api/sales/service-cases/:id/progress', adminAuth.requireSalesOrOwner
     if (req.auth.role !== 'sales') return res.status(403).json({ message: '请使用销售账号' });
     try {
         const serviceCase = await serviceCaseStore.updateProgress(req.params.id, req.body?.status, req.auth);
-        return res.json({ success: true, serviceCase });
+        return res.set('Cache-Control', 'no-store').json({ success: true, serviceCase: salesServiceCaseView(serviceCase) });
     } catch (error) {
         return serviceCaseErrorResponse(res, error, '服务进度更新失败');
     }
@@ -1133,7 +1182,7 @@ app.patch('/api/sales/service-cases/:id/journal', adminAuth.requireSalesOrOwner,
     if (req.auth.role !== 'sales') return res.status(403).json({ message: '请使用销售账号' });
     try {
         const serviceCase = await serviceCaseStore.updateJournal(req.params.id, req.body || {}, req.auth);
-        return res.json({ success: true, serviceCase });
+        return res.set('Cache-Control', 'no-store').json({ success: true, serviceCase: salesServiceCaseView(serviceCase) });
     } catch (error) {
         return serviceCaseErrorResponse(res, error, '生命纪行状态更新失败');
     }

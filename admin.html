@@ -1,13 +1,95 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ARKSOMA · 私人医疗秘书工作台</title><link rel="icon" type="image/png" href="favicon.png"><link rel="stylesheet" href="admin.css?v=20260731-1"><script type="module" src="admin.mjs?v=20260801-2"></script></head>
-<body>
-    <section class="login-screen" id="loginScreen"><form class="login-card" id="loginForm"><p class="eyebrow">PRIVATE ADVISORY DESK</p><h1>ARKSOMA</h1><p class="login-cn">方舟计划 · 顾问工作台</p><label><span>用户名</span><input id="username" name="username" autocomplete="username" required></label><label><span>密码</span><input id="password" name="password" type="password" autocomplete="current-password" required></label><button id="loginButton" type="submit">进入工作台</button><p class="form-message" id="loginMessage" role="alert"></p></form></section>
-    <div class="admin-shell" id="adminShell" hidden><aside class="sidebar"><div class="admin-brand"><strong>ARKSOMA</strong><span>PRIVATE ADVISORY DESK</span></div><nav><button class="active" data-view="customers" type="button"><span>01</span>客户管理</button><button data-view="knowledge" type="button"><span>02</span>销售答疑</button></nav><div class="system-state"><i></i><div><strong id="advisorName">PRIVATE DESK</strong><span>专属客户资料已隔离</span></div></div><button class="logout-button" id="logoutButton" type="button">安全退出</button></aside>
-        <main class="admin-main"><header class="topbar"><div><p id="pageEyebrow">CUSTOMER CONTINUITY</p><h1 id="pageTitle">客户管理</h1></div><div class="top-actions"><span id="lastUpdated">等待刷新</span><button id="refreshCurrent" type="button">刷新</button></div></header>
-            <section class="view-panel" id="customersView"><section class="order-workspace flat-workspace"><header class="workspace-head"><div><p>ASSIGNED CUSTOMERS</p><h2>我的客户</h2></div><span id="customerCount">—</span></header><div class="filters"><label class="search-field"><span>搜索</span><input id="customerSearch" type="search" placeholder="姓名或联系方式"></label></div><div class="table-shell"><table><thead><tr><th>客户</th><th>联系方式</th><th>最近期次</th><th>会员期限</th><th>服务状态</th></tr></thead><tbody id="customersBody"></tbody></table></div></section></section>
-            <section class="view-panel" id="knowledgeView" hidden><section class="order-workspace flat-workspace"><header class="workspace-head"><div><p>SALES PLAYBOOK</p><h2>客户旅程答疑</h2></div></header><div class="filters"><label class="search-field"><span>搜索</span><input id="knowledgeSearch" type="search" placeholder="输入客户问题"></label></div><div class="knowledge-grid" id="knowledgeList"></div></section></section>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ARKSOMA · 销售工作台</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="stylesheet" href="admin.css?v=20261121-1">
+    <link rel="stylesheet" href="partner-sales.css?v=20261121-1">
+    <script type="module" src="admin.mjs?v=20261121-1"></script>
+</head>
+<body class="sales-console">
+    <section class="login-screen" id="loginScreen">
+        <form class="login-card" id="loginForm">
+            <h1>ARKSOMA</h1>
+            <p class="login-cn">销售工作台</p>
+            <label><span>用户名</span><input id="username" name="username" autocomplete="username" required></label>
+            <label><span>密码</span><input id="password" name="password" type="password" autocomplete="current-password" required></label>
+            <button id="loginButton" type="submit">进入工作台</button>
+            <p class="form-message" id="loginMessage" role="alert"></p>
+        </form>
+    </section>
+
+    <div class="admin-shell" id="adminShell" hidden>
+        <aside class="sidebar">
+            <div class="admin-brand"><strong>ARKSOMA</strong><span>销售工作台</span></div>
+            <nav aria-label="销售工作台">
+                <button class="active" data-view="overview" type="button" aria-current="page">经营概览</button>
+                <button data-view="customers" type="button">客户管理</button>
+                <button data-view="orders" type="button">业务订单</button>
+                <button data-view="partnership" type="button">推荐与带教</button>
+                <button data-view="projects" type="button">运营项目</button>
+                <button data-view="statements" type="button">收益账单</button>
+                <button data-view="knowledge" type="button">销售答疑</button>
+            </nav>
+            <div class="system-state"><i aria-hidden="true"></i><div><strong id="advisorName"></strong><span>销售身份</span></div></div>
+            <button class="logout-button" id="logoutButton" type="button">安全退出</button>
+        </aside>
+        <main class="admin-main">
+            <header class="topbar">
+                <h1 id="pageTitle">经营概览</h1>
+                <div class="top-actions"><span id="lastUpdated" aria-live="polite"></span><button id="refreshCurrent" type="button">刷新</button></div>
+            </header>
+            <section class="view-panel" id="partnerView" aria-labelledby="pageTitle"></section>
+            <section class="view-panel" id="customersView" aria-labelledby="pageTitle" hidden>
+                <section class="order-workspace flat-workspace">
+                    <header class="workspace-head">
+                        <h2>我的客户</h2>
+                        <div class="ps-customer-actions">
+                            <span id="customerCount">—</span>
+                            <button id="leadPanelToggle" class="ps-button primary" type="button" aria-controls="leadPanel" aria-expanded="false" aria-describedby="leadRestriction">新增已授权线索</button>
+                        </div>
+                    </header>
+                    <p id="leadRestriction" class="ps-muted ps-lead-restriction" hidden></p>
+                    <div id="leadPanel" class="ps-lead-panel" hidden>
+                        <form id="leadCreateForm" class="ps-form">
+                            <div class="ps-two-fields">
+                                <label>客户称呼<input name="name" maxlength="100" required autocomplete="off"></label>
+                                <label>微信或手机 <small>与邮箱至少填一项</small><input name="contact" maxlength="160" autocomplete="off"></label>
+                            </div>
+                            <label>邮箱<input name="email" type="email" maxlength="160" autocomplete="off"></label>
+                            <label class="ps-check"><input type="checkbox" name="consent" required>客户已同意记录其信息并接受联系。</label>
+                            <p class="ps-form-feedback" id="leadFeedback" role="status"></p>
+                            <button class="ps-button primary" type="submit">保存线索</button>
+                        </form>
+                    </div>
+                    <div class="filters"><label class="search-field"><span>搜索</span><input id="customerSearch" type="search" placeholder="姓名或联系方式"></label></div>
+                    <div class="table-shell ps-customer-table">
+                        <table>
+                            <thead><tr><th scope="col">客户</th><th scope="col">联系方式</th><th scope="col">最近期次</th><th scope="col">会员期限</th><th scope="col">跟进阶段</th><th scope="col">会员状态</th></tr></thead>
+                            <tbody id="customersBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </section>
+            <section class="view-panel" id="knowledgeView" aria-labelledby="pageTitle" hidden>
+                <section class="order-workspace flat-workspace">
+                    <header class="workspace-head"><h2>客户旅程答疑</h2></header>
+                    <div class="filters"><label class="search-field"><span>搜索</span><input id="knowledgeSearch" type="search" placeholder="输入客户问题"></label></div>
+                    <div class="knowledge-grid" id="knowledgeList"></div>
+                </section>
+            </section>
         </main>
     </div>
-    <aside class="order-drawer" id="drawer" hidden><button class="drawer-backdrop" type="button" data-close-drawer aria-label="关闭"></button><div class="drawer-panel"><header class="drawer-head"><div><p>PRIVATE CUSTOMER</p><h2 id="drawerTitle">客户详情</h2></div><button type="button" data-close-drawer>关闭</button></header><div id="drawerContent"></div></div></aside><div class="toast" id="adminToast"></div>
-</body></html>
+
+    <aside class="order-drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle" hidden>
+        <button class="drawer-backdrop" type="button" data-close-drawer tabindex="-1" aria-label="关闭"></button>
+        <div class="drawer-panel">
+            <header class="drawer-head"><h2 id="drawerTitle">客户详情</h2><button type="button" data-close-drawer>关闭</button></header>
+            <div id="drawerContent"></div>
+        </div>
+    </aside>
+    <div class="toast" id="adminToast" role="status"></div>
+</body>
+</html>

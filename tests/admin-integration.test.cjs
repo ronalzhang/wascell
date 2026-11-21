@@ -1,6 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { spawn } = require('node:child_process');
+const { once } = require('node:events');
 const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
@@ -40,6 +41,7 @@ test.before(async () => {
             STAFF_DATA_DIR: path.join(runtimeDir, 'staff'),
             BUSINESS_DATA_DIR: path.join(runtimeDir, 'business'),
             KNOWLEDGE_DATA_DIR: path.join(runtimeDir, 'knowledge'),
+            SERVICE_CASE_DATA_DIR: path.join(runtimeDir, 'service-cases'),
             TRAFFIC_STATS_FILE: path.join(runtimeDir, 'traffic.json'),
             TRAFFIC_LOG_FILE: path.join(runtimeDir, 'access.log'),
         },
@@ -60,7 +62,11 @@ test.before(async () => {
 });
 
 test.after(async () => {
-    if (child) child.kill('SIGTERM');
+    if (child?.exitCode === null && child.signalCode === null) {
+        const stopped = once(child, 'exit');
+        child.kill('SIGTERM');
+        await stopped;
+    }
     if (runtimeDir) await fs.rm(runtimeDir, { recursive: true, force: true });
 });
 
@@ -305,4 +311,117 @@ test('owner manages staff and knowledge while sales receives only published know
 
     const forbiddenStaff = await fetch(`${baseUrl}/api/owner/staff`, { headers: { cookie: salesCookie } });
     assert.equal(forbiddenStaff.status, 403);
+});
+
+async function sessionCookie(role, body) {
+    const login = await fetch(`${baseUrl}/api/${role}/login`, {
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
+    });
+    assert.equal(login.status, 200);
+    return login.headers.get('set-cookie');
+}
+
+function callJson(url, cookie, method, body) {
+    return fetch(baseUrl + url, {
+        method, headers: { cookie, 'content-type': 'application/json' }, body: JSON.stringify(body),
+    });
+}
+
+test('partner workspace API routes require the appropriate role and keep policy configuration private', async () => {
+    const sales = await sessionCookie('sales', { username: 'sales.integration', password: 'Sales-Integration-2026' });
+    const admin = await sessionCookie('owner', { password: 'integration-password' });
+    const root = '/api/owner/partner-program';
+    const desk = '/api/sales/partner-program';
+    assert.equal((await fetch(baseUrl + root)).status, 401);
+    assert.equal((await fetch(baseUrl + root, { headers: { cookie: sales } })).status, 403);
+    assert.equal((await fetch(baseUrl + desk, { headers: { cookie: admin } })).status, 403);
+    const response = await fetch(baseUrl + root, { headers: { cookie: admin } });
+    assert.equal(response.status, 200);
+    const { policy } = await response.json();
+    assert.equal(policy.enabled, false);
+    const updated = await callJson(root + '/policy', admin, 'POST', {
+        ...policy, reason: '测试版本', mentorCapacity: 3, maxForecastCustomers: 22,
+    });
+    assert.equal(updated.status, 200);
+    assert.equal((await callJson(desk + '/policy', sales, 'POST', { ...policy, enabled: true })).status, 403);
+    const preview = await callJson(desk + '/preview', sales, 'POST', { customers: 0, referrals: 2 });
+    assert.equal(preview.status, 200);
+    assert.equal((await preview.json()).totalFen, 0);
+    const personal = await fetch(baseUrl + desk, { headers: { cookie: sales } });
+    assert.equal(personal.status, 200);
+    const view = await personal.json();
+    assert.equal(view.policy.maxForecastCustomers, 22);
+    assert.equal(view.policy.minPlatformBps, undefined);
+    assert.equal(view.accounts, undefined);
+    assert.equal(view.income.paidFen, 0);
+});
+
+test('customer transfers revoke old service-case access and sales responses omit private financial fields', async () => {
+    const admin = await sessionCookie('owner', { password: 'integration-password' });
+    const sales = await sessionCookie('sales', { username: 'sales.integration', password: 'Sales-Integration-2026' });
+    const other = await sessionCookie('sales', { username: 'sales.other', password: 'Sales-Other-2026' });
+    const form = new FormData();
+    form.set('submissionKey', 'partner-case-acl');
+    form.set('name', '案例客户一');
+    form.set('contact', 'case-01');
+    form.set('note', '不属于销售资料的测试备注');
+    const created = await fetch(baseUrl + '/api/advisor-applications', { method: 'POST', body: form });
+    assert.equal(created.status, 201);
+    const { orderId } = await created.json();
+    const ownerPath = '/api/owner/customers/' + orderId;
+    const salesPath = '/api/sales/customers/' + orderId;
+    assert.equal((await callJson(ownerPath + '/assignment', admin, 'PATCH', { salesId: salesOneId })).status, 200);
+    const customer = await (await fetch(baseUrl + salesPath, { headers: { cookie: sales } })).json();
+    assert.equal(customer.name, '案例客户一');
+    for (const field of ['note', 'adminNote', 'attachments', 'submissionKey']) assert.equal(customer[field], undefined);
+
+    const createdCase = await callJson(ownerPath + '/service-cases', admin, 'POST', { periodId: '20261201', periodLabel: '十二月首期' });
+    assert.equal(createdCase.status, 201);
+    const { serviceCase } = await createdCase.json();
+    const detailPath = '/api/sales/service-cases/' + serviceCase.id;
+    const payment = await callJson('/api/owner/service-cases/' + serviceCase.id + '/payment', admin, 'PATCH', {
+        amount: 1000, payerName: '测试付款方', reference: 'PAID-ACL-TEST',
+    });
+    assert.equal(payment.status, 200);
+    const original = await (await fetch(baseUrl + '/api/sales/service-cases', { headers: { cookie: sales } })).json();
+    assert.equal(original.items[0].paymentStatus, 'paid');
+    assert.equal(original.items[0].payment, undefined);
+
+    assert.equal((await callJson(ownerPath + '/assignment', admin, 'PATCH', { salesId: salesTwoId })).status, 200);
+    const oldCases = await (await fetch(baseUrl + '/api/sales/service-cases', { headers: { cookie: sales } })).json();
+    assert.ok(oldCases.items.every(item => item.id !== serviceCase.id));
+    assert.equal((await callJson(detailPath + '/journal', sales, 'PATCH', { photoCount: 1 })).status, 403);
+    const newCases = await (await fetch(baseUrl + '/api/sales/service-cases', { headers: { cookie: other } })).json();
+    assert.ok(newCases.items.some(item => item.id === serviceCase.id));
+    const journal = await callJson(detailPath + '/journal', other, 'PATCH', { photoCount: 1 });
+    assert.equal(journal.status, 200);
+    assert.equal((await journal.json()).serviceCase.payment, undefined);
+});
+
+test('sales can record and follow up a consented private lead, once, under the current assignment', async () => {
+    const admin = await sessionCookie('owner', { password: 'integration-password' });
+    const sales = await sessionCookie('sales', { username: 'sales.integration', password: 'Sales-Integration-2026' });
+    const other = await sessionCookie('sales', { username: 'sales.other', password: 'Sales-Other-2026' });
+    const root = '/api/sales/customers';
+    const lead = {
+        requestId: 'a79b95e5-b18f-4dce-aca4-b83d47fd23a1', name: '内部线索一', contact: 'lead-901',
+    };
+    assert.equal((await callJson(root, sales, 'POST', lead)).status, 400);
+    const created = await callJson(root, sales, 'POST', { ...lead, consent: true });
+    assert.equal(created.status, 201);
+    const { customer } = await created.json();
+    assert.equal(customer.assignedSalesId, salesOneId);
+    const retried = await callJson(root, sales, 'POST', { ...lead, consent: true });
+    assert.equal(retried.status, 200);
+    assert.equal((await retried.json()).customer.id, customer.id);
+    const duplicate = await callJson(root, other, 'POST', { ...lead, consent: true });
+    assert.equal(duplicate.status, 409);
+    const follow = root + '/' + customer.id + '/follow-up';
+    assert.equal((await callJson(follow, other, 'PATCH', { status: 'contacted' })).status, 403);
+    assert.equal((await callJson(follow, sales, 'PATCH', { status: 'confirmed' })).status, 400);
+    const updated = await callJson(follow, sales, 'PATCH', { status: 'contacted', salesNote: '已约定联系时间' });
+    assert.equal(updated.status, 200);
+    assert.equal((await updated.json()).customer.salesNote, '已约定联系时间');
+    const fromAdmin = await fetch(baseUrl + '/api/owner/customers/' + customer.id, { headers: { cookie: admin } });
+    assert.equal((await fromAdmin.json()).status, 'contacted');
 });
