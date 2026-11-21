@@ -20,10 +20,14 @@ const { registerPartnerRoutes, salesCustomerView, salesServiceCaseView } = requi
 const { createTrafficStore } = require('./lib/traffic-store');
 const { createAccessLogWriter } = require('./lib/access-log-writer');
 const { classifyTrafficSignals } = require('./lib/traffic-intelligence');
+const { createRateLimiter, createClientAddress } = require('./lib/request-guard');
+const { loadPublishedPeriods, validatedApplication, verifyAdvisorAttachment } = require('./lib/public-application-policy');
 
 const app = express();
 const PORT = process.env.PORT || 3003; // 使用3003端口避免与其他应用冲突
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+const publishedPeriods = loadPublishedPeriods(__dirname);
+const knownOrigins = new Set(['https://arksoma.com', 'https://www.arksoma.com', 'https://wascell.com', 'https://www.wascell.com']);
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || (IS_PRODUCTION ? '' : 'development-only');
 const ADMIN_SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 const PRIVATE_ROOT = path.resolve(__dirname, '..', 'wascell-private');
@@ -70,7 +74,7 @@ const partnerProgram = createPartnerProgram({
 
 const advisorUpload = multer({
     dest: ADVISOR_TEMP_DIR,
-    limits: { files: 3, fileSize: 10 * 1024 * 1024, fields: 20 },
+    limits: { files: 3, fileSize: 10 * 1024 * 1024, fields: 20, fieldSize: 4096, parts: 24 },
     fileFilter: (req, file, callback) => {
         const extension = path.extname(file.originalname || '').toLowerCase();
         const allowed = (
@@ -78,7 +82,7 @@ const advisorUpload = multer({
             ((extension === '.jpg' || extension === '.jpeg') && file.mimetype === 'image/jpeg') ||
             (extension === '.png' && file.mimetype === 'image/png')
         );
-        callback(allowed ? null : new Error(`${path.basename(file.originalname || '附件')} 的文件类型不受支持`), allowed);
+        callback(allowed ? null : new Error('附件文件类型不受支持'), allowed);
     },
 });
 
@@ -335,7 +339,7 @@ async function safeWriteStats(stats) {
 }
 
 // 信任反向代理，正确获取客户端真实IP
-app.set('trust proxy', true);
+app.set('trust proxy', 'loopback');
 
 // 中间件配置
 app.use(helmet({
@@ -351,23 +355,14 @@ app.use(helmet({
 }));
 app.use(compression());
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 // 访问统计中间件
 app.use((req, res, next) => {
     const timestamp = new Date().toISOString();
-    // 优先从 Cloudflare 头获取真实客户端IP，然后是其他代理头
-    // CF-Connecting-IP: Cloudflare 提供的真实用户 IP
-    // X-Real-IP: Nginx 代理头
-    // X-Forwarded-For: 标准代理头（取第一个IP）
-    const ip = req.headers['cf-connecting-ip'] ||
-               req.headers['x-real-ip'] || 
-               (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 
-               req.ip || 
-               req.connection.remoteAddress;
+    const ip = createClientAddress(req, { trustLoopbackProxy: IS_PRODUCTION });
+    req.logClientAddress = ip;
     const userAgent = (req.get('User-Agent') || '').slice(0, 512);
-    const referer = (req.get('Referer') || '').slice(0, 512);
+    const referer = (req.get('Referer') || '').split(/[?#]/, 1)[0].slice(0, 512);
     
     // 检测是否为恶意请求
     const url = req.url.toLowerCase();
@@ -377,18 +372,65 @@ app.use((req, res, next) => {
         timestamp,
         ip,
         method: req.method,
-        url: req.url.slice(0, 2048),
+        url: req.path.slice(0, 2048),
         userAgent,
         referer,
         isMalicious // 标记是否为恶意请求
     };
 
     // Counters are exact; raw diagnostic logs may shed overload instead of exhausting memory.
-    accessLogWriter.record(logEntry);
+    if (req.path.toLowerCase().startsWith('/api/')) {
+        res.once('finish', () => accessLogWriter.record({
+            ...logEntry, statusCode: res.statusCode, role: req.auth?.role || null, actorId: req.auth?.userId || null,
+        }));
+        res.once('close', () => {
+            if (!res.writableFinished) accessLogWriter.record({ ...logEntry, statusCode: null, aborted: true });
+        });
+    } else {
+        accessLogWriter.record(logEntry);
+    }
     trafficStore.record(logEntry);
 
     next();
 });
+
+const submissionLimit = createRateLimiter({ limit: 8, windowMs: 15 * 60 * 1000, maxKeys: 4096 });
+const submissionGlobal = createRateLimiter({ limit: 100, windowMs: 60 * 1000, maxKeys: 1 });
+const ownerLoginLimit = createRateLimiter({ limit: 15, windowMs: 10 * 60 * 1000, maxKeys: 4096 });
+const salesLoginLimit = createRateLimiter({ limit: 25, windowMs: 10 * 60 * 1000, maxKeys: 4096 });
+
+function enforceRate(res, result) {
+    if (result.allowed) return true;
+    res.set('Retry-After', String(Math.max(1, Math.ceil(result.retryAfterMs / 1000))));
+    res.status(429).json({ message: '请求过于频繁，请稍后重试' });
+    return false;
+}
+
+app.use((req, res, next) => {
+    const route = req.path.toLowerCase().replace(/\/+$/, '');
+    if (/^\/api\/(?:owner|admin|sales|session)(?:\/|$)/.test(route)) res.set('Cache-Control', 'no-store');
+    if (!route.startsWith('/api/') || ['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
+    const origin = req.get('Origin');
+    const ownOrigin = IS_PRODUCTION ?
+        knownOrigins.has(origin) : ['http://', 'https://'].some(proto => origin === proto + req.get('Host'));
+    if (!ownOrigin && (origin || req.get('Sec-Fetch-Site') === 'cross-site')) {
+        return res.status(403).json({ message: '请从官网页面操作' });
+    }
+    if (req.method === 'POST') {
+        const limits = {
+            '/api/advisor-applications': submissionLimit,
+            '/api/admin/login': ownerLoginLimit,
+            '/api/owner/login': ownerLoginLimit,
+            '/api/sales/login': salesLoginLimit,
+        };
+        const limit = limits[route];
+        if (limit && !enforceRate(res, limit(req.logClientAddress))) return;
+        if (route === '/api/advisor-applications' && !enforceRate(res, submissionGlobal('unknown'))) return;
+    }
+    return next();
+});
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // 获取当前日期(中国时区)
 function getToday() {
@@ -431,6 +473,7 @@ app.use(express.static(__dirname, {
 
 // 客户顾问申请：资料与附件一次提交，附件不会进入静态目录。
 app.post('/api/advisor-applications', (req, res) => {
+    if (!req.is('multipart/form-data')) return res.status(415).json({ message: '请使用官网申请表提交' });
     advisorUpload.array('attachments', 3)(req, res, async (uploadError) => {
         const uploadedFiles = req.files || [];
         const cleanupTemporaryFiles = async () => {
@@ -442,7 +485,7 @@ app.post('/api/advisor-applications', (req, res) => {
             const isTooLarge = uploadError.code === 'LIMIT_FILE_SIZE';
             return res.status(isTooLarge ? 413 : 400).json({
                 success: false,
-                message: isTooLarge ? '单个附件不能超过 10 MB' : uploadError.message,
+                message: isTooLarge ? '单个附件不能超过 10 MB' : '申请表或附件格式不受支持',
             });
         }
 
@@ -452,13 +495,10 @@ app.post('/api/advisor-applications', (req, res) => {
                 await cleanupTemporaryFiles();
                 return res.status(413).json({ success: false, message: '附件总大小不能超过 20 MB' });
             }
-            const result = await advisorStore.createApplication({
-                ...req.body,
-                source: {
-                    page: req.body.sourcePage || req.get('Referer') || '',
-                    device: req.get('User-Agent') || '',
-                },
-            }, uploadedFiles);
+            const input = validatedApplication(req.body, publishedPeriods, req.get('User-Agent') || '');
+            await Promise.all(uploadedFiles.map(verifyAdvisorAttachment));
+            const result = await advisorStore.createApplication(input, uploadedFiles, null, { publicIntake: true });
+            if (!result.created) await cleanupTemporaryFiles();
             return res.status(result.created ? 201 : 200).json({
                 success: true,
                 orderId: result.order.id,
@@ -467,11 +507,12 @@ app.post('/api/advisor-applications', (req, res) => {
             });
         } catch (error) {
             await cleanupTemporaryFiles();
-            const isValidationError = /请填写|缺少提交|附件|文件类型/.test(error.message);
-            console.error('顾问申请写入失败:', isValidationError ? error.message : error);
-            return res.status(isValidationError ? 400 : 500).json({
+            const status = error.statusCode === 409 ? 409 :
+                /请填写|缺少提交|附件|文件类型|申请期次|提交标识/.test(error.message) ? 400 : 500;
+            if (status === 500) console.error('顾问申请写入失败', error.code || error.name);
+            return res.status(status).json({
                 success: false,
-                message: isValidationError ? error.message : '申请提交失败，请稍后重试',
+                message: status < 500 ? error.message : '申请提交失败，请稍后重试',
             });
         }
     });
@@ -1203,7 +1244,7 @@ app.get('/', (req, res) => {
 });
 
 // 启动服务器
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, '127.0.0.1', () => {
     console.log(`方舟计划网站服务器运行在端口 ${PORT}`);
     console.log(`访问地址: http://localhost:${PORT}`);
     console.log(`管理后台: http://localhost:${PORT}/admin-pro`);

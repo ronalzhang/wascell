@@ -126,7 +126,7 @@ test('owner data APIs require an owner session', async () => {
 test('a customer application becomes an authenticated admin order', async () => {
     const form = new FormData();
     form.set('submissionKey', 'integration-order-001');
-    form.set('periodId', '20260901');
+    form.set('periodId', '20261201');
     form.set('periodLabel', '2026·九月首期');
     form.set('name', '测试客户');
     form.set('contact', 'test_wechat');
@@ -203,7 +203,7 @@ test('public catalog is readable while commercial configuration is owner-only', 
 test('sales customer APIs enforce assignment and owner-only membership changes', async () => {
     const secondForm = new FormData();
     secondForm.set('submissionKey', 'integration-order-002');
-    secondForm.set('periodId', '20260902');
+    secondForm.set('periodId', '20261202');
     secondForm.set('periodLabel', '2026·九月二期');
     secondForm.set('name', '其他客户');
     secondForm.set('contact', 'other_wechat');
@@ -362,6 +362,7 @@ test('customer transfers revoke old service-case access and sales responses omit
     const other = await sessionCookie('sales', { username: 'sales.other', password: 'Sales-Other-2026' });
     const form = new FormData();
     form.set('submissionKey', 'partner-case-acl');
+    form.set('periodId', '20261201');
     form.set('name', '案例客户一');
     form.set('contact', 'case-01');
     form.set('note', '不属于销售资料的测试备注');
@@ -424,4 +425,65 @@ test('sales can record and follow up a consented private lead, once, under the c
     assert.equal((await updated.json()).customer.salesNote, '已约定联系时间');
     const fromAdmin = await fetch(baseUrl + '/api/owner/customers/' + customer.id, { headers: { cookie: admin } });
     assert.equal((await fromAdmin.json()).status, 'contacted');
+});
+
+test('public application rejects unpublished dates, cross-site submissions and mismatched uploads', async () => {
+    function form(period, key) {
+        const data = new FormData();
+        data.set('periodId', period);
+        data.set('submissionKey', key);
+        data.set('name', '体例客户');
+        data.set('contact', 'example_visitor_001');
+        return data;
+    }
+    const url = baseUrl + '/api/advisor-applications';
+    const unavailable = await fetch(url, { method: 'POST', body: form('20260901', 'retired-period') });
+    assert.equal(unavailable.status, 400);
+    const cross = await fetch(url, { method: 'POST', headers: { origin: 'https://example.com' }, body: form('20261201', 'cross-site') });
+    assert.equal(cross.status, 403);
+    const mismatched = form('20261201', 'bad-file');
+    mismatched.append('attachments', new Blob(['ordinary text'], { type: 'application/pdf' }), 'sample.pdf');
+    assert.equal((await fetch(url, { method: 'POST', body: mismatched })).status, 400);
+    const valid = form('20261201', 'validated-once');
+    const created = await fetch(url, { method: 'POST', body: valid });
+    assert.equal(created.status, 201);
+    const repeat = await fetch(url, { method: 'POST', body: form('20261201', 'validated-once') });
+    assert.equal(repeat.status, 200);
+    assert.equal((await repeat.json()).duplicate, true);
+    const renamed = form('20261201', 'other-submission-token');
+    renamed.set('name', '另一个姓名');
+    const newer = await fetch(url, { method: 'POST', body: renamed });
+    assert.equal(newer.status, 409);
+    assert.equal((await newer.json()).orderId, undefined);
+});
+
+test('administrator login aliases share a rate limit and log response status without query credentials', async () => {
+    const login = await callJson('/api/owner/login', '', 'POST', { password: 'integration-password' });
+    assert.equal(login.status, 200);
+    const attempts = [];
+    for (let i = 0; i < 24; i++) {
+        const endpoint = i % 2 ? '/api/admin/login' : '/api/owner/login';
+        const response = await callJson(endpoint + '?probe=omit-this-value', '', 'POST', { password: 'invalid-for-security-test' });
+        attempts.push(response.status);
+        if (response.status === 429) {
+            assert.ok(Number(response.headers.get('retry-after')) > 0);
+            break;
+        }
+    }
+    assert.ok(attempts.includes(429));
+    const logfile = path.join(runtimeDir, 'access.log');
+    let logs = '';
+    for (let attempt = 0; attempt < 30; attempt++) {
+        logs = await fs.readFile(logfile, 'utf8').catch(error => {
+            if (error.code === 'ENOENT') return '';
+            throw error;
+        });
+        if (logs.includes('"statusCode":429')) break;
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    const records = logs.trim().split('\n').filter(Boolean).map(JSON.parse);
+    assert.ok(records.some(record => record.url === '/api/owner/login' && record.statusCode === 401));
+    assert.ok(records.some(record => record.url === '/api/owner/login' && record.statusCode === 200 && record.role === 'owner'));
+    assert.ok(records.some(record => record.statusCode === 429 && /\/api\/(?:admin|owner)\/login/.test(record.url)));
+    assert.ok(records.every(record => !record.url.includes('omit-this-value')));
 });
