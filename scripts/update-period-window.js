@@ -50,13 +50,13 @@ function writePage(filePath, content, dryRun) {
 function main() {
     const args = parseArgs(process.argv.slice(2));
     const periods = buildPeriods(startMonth(args.start), args.count);
-    const rootTargetId = periods[0].id;
+    const indexPeriodId = periods[0].id;
     const template = fs.readFileSync(TEMPLATE, 'utf8');
 
     for (const period of periods) {
-        const html = renderPeriodPage(template, period, periods, rootTargetId);
+        const html = renderPeriodPage(template, period, periods);
         writePage(path.join(ROOT, `${period.id}.html`), html, args.dryRun);
-        if (period.id === rootTargetId) writePage(path.join(ROOT, 'index.html'), html, args.dryRun);
+        if (period.id === indexPeriodId) writePage(path.join(ROOT, 'index.html'), html, args.dryRun);
     }
     console.log(`period window: ${periods[0].label} - ${periods.at(-1).label}`);
 }

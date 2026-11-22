@@ -1,6 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { spawn } = require('node:child_process');
+const { once } = require('node:events');
 const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
@@ -40,6 +41,7 @@ test.before(async () => {
             STAFF_DATA_DIR: path.join(runtimeDir, 'staff'),
             BUSINESS_DATA_DIR: path.join(runtimeDir, 'business'),
             KNOWLEDGE_DATA_DIR: path.join(runtimeDir, 'knowledge'),
+            SERVICE_CASE_DATA_DIR: path.join(runtimeDir, 'service-cases'),
             TRAFFIC_STATS_FILE: path.join(runtimeDir, 'traffic.json'),
             TRAFFIC_LOG_FILE: path.join(runtimeDir, 'access.log'),
         },
@@ -60,7 +62,11 @@ test.before(async () => {
 });
 
 test.after(async () => {
-    if (child) child.kill('SIGTERM');
+    if (child?.exitCode === null && child.signalCode === null) {
+        const stopped = once(child, 'exit');
+        child.kill('SIGTERM');
+        await stopped;
+    }
     if (runtimeDir) await fs.rm(runtimeDir, { recursive: true, force: true });
 });
 
@@ -120,7 +126,7 @@ test('owner data APIs require an owner session', async () => {
 test('a customer application becomes an authenticated admin order', async () => {
     const form = new FormData();
     form.set('submissionKey', 'integration-order-001');
-    form.set('periodId', '20260901');
+    form.set('periodId', '20261201');
     form.set('periodLabel', '2026·九月首期');
     form.set('name', '测试客户');
     form.set('contact', 'test_wechat');
@@ -197,7 +203,7 @@ test('public catalog is readable while commercial configuration is owner-only', 
 test('sales customer APIs enforce assignment and owner-only membership changes', async () => {
     const secondForm = new FormData();
     secondForm.set('submissionKey', 'integration-order-002');
-    secondForm.set('periodId', '20260902');
+    secondForm.set('periodId', '20261202');
     secondForm.set('periodLabel', '2026·九月二期');
     secondForm.set('name', '其他客户');
     secondForm.set('contact', 'other_wechat');
@@ -307,91 +313,177 @@ test('owner manages staff and knowledge while sales receives only published know
     assert.equal(forbiddenStaff.status, 403);
 });
 
-test('program price controls authorize the owner and expose only the selected published quote', async () => {
-    const publicUrl = `${baseUrl}/api/public/programs`;
-    const settingsUrl = `${baseUrl}/api/owner/program-prices`;
-    const before = await fetch(publicUrl);
-    assert.equal(before.status, 200);
-    const original = await before.json();
-    assert.equal(original.programs.length, 11);
-    assert.equal(original.programs.some((program) => Object.hasOwn(program, 'quote')), false);
-    assert.equal((await fetch(settingsUrl)).status, 401);
-
-    const headers = { 'content-type': 'application/json' };
-    const sales = await fetch(`${baseUrl}/api/sales/login`, {
-        method: 'POST', headers,
-        body: JSON.stringify({ username: 'sales.integration', password: 'Sales-Integration-2026' }),
+async function sessionCookie(role, body) {
+    const login = await fetch(`${baseUrl}/api/${role}/login`, {
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
     });
-    assert.equal((await fetch(settingsUrl, { headers: { cookie: sales.headers.get('set-cookie') } })).status, 403);
+    assert.equal(login.status, 200);
+    return login.headers.get('set-cookie');
+}
 
-    const owner = await fetch(`${baseUrl}/api/owner/login`, {
-        method: 'POST', headers,
-        body: JSON.stringify({ password: 'integration-password' }),
+function callJson(url, cookie, method, body) {
+    return fetch(baseUrl + url, {
+        method, headers: { cookie, 'content-type': 'application/json' }, body: JSON.stringify(body),
     });
-    headers.cookie = owner.headers.get('set-cookie');
-    const initial = await (await fetch(settingsUrl, { headers })).json();
-    const pricing = {
-        revision: initial.pricing.revision, show: true, currency: 'JPY',
-        quotes: {
-            'periodontal-regeneration': {
-                show: true, amounts: {
-                    JPY: { min: 3300000, tax: 'inclusive' },
-                    USD: { min: 22000.55, tax: 'exclusive' },
-                },
-            },
-        },
-    };
-    const update = (next) => fetch(settingsUrl, {
-        method: 'PATCH', headers, body: JSON.stringify({ pricing: next, reason: '验证项目报价' }),
+}
+
+test('partner workspace API routes require the appropriate role and keep policy configuration private', async () => {
+    const sales = await sessionCookie('sales', { username: 'sales.integration', password: 'Sales-Integration-2026' });
+    const admin = await sessionCookie('owner', { password: 'integration-password' });
+    const root = '/api/owner/partner-program';
+    const desk = '/api/sales/partner-program';
+    assert.equal((await fetch(baseUrl + root)).status, 401);
+    assert.equal((await fetch(baseUrl + root, { headers: { cookie: sales } })).status, 403);
+    assert.equal((await fetch(baseUrl + desk, { headers: { cookie: admin } })).status, 403);
+    const response = await fetch(baseUrl + root, { headers: { cookie: admin } });
+    assert.equal(response.status, 200);
+    const { policy } = await response.json();
+    assert.equal(policy.enabled, false);
+    const updated = await callJson(root + '/policy', admin, 'POST', {
+        ...policy, reason: '测试版本', mentorCapacity: 3, maxForecastCustomers: 22,
     });
-    const saved = await update(pricing);
-    assert.equal(saved.status, 200);
-    let active = await (await fetch(publicUrl)).json();
-    const dental = (catalog) => catalog.programs.find((program) => program.id === 'periodontal-regeneration');
-    assert.deepEqual(dental(active).quote, { currency: 'JPY', min: 3300000, tax: 'inclusive' });
-    assert.ok(!JSON.stringify(active).includes('22000.55'));
-    assert.equal((await update(pricing)).status, 409);
-
-    pricing.revision++;
-    pricing.currency = 'CNY';
-    assert.equal((await update(pricing)).status, 200);
-    active = await (await fetch(publicUrl)).json();
-    assert.equal(Object.hasOwn(dental(active), 'quote'), false);
-
-    pricing.revision++;
-    pricing.currency = 'USD';
-    pricing.show = false;
-    assert.equal((await update(pricing)).status, 200);
-    active = await (await fetch(publicUrl)).json();
-    assert.equal(Object.hasOwn(dental(active), 'quote'), false);
+    assert.equal(updated.status, 200);
+    assert.equal((await callJson(desk + '/policy', sales, 'POST', { ...policy, enabled: true })).status, 403);
+    const preview = await callJson(desk + '/preview', sales, 'POST', { customers: 0, referrals: 2 });
+    assert.equal(preview.status, 200);
+    assert.equal((await preview.json()).totalFen, 0);
+    const personal = await fetch(baseUrl + desk, { headers: { cookie: sales } });
+    assert.equal(personal.status, 200);
+    const view = await personal.json();
+    assert.equal(view.policy.maxForecastCustomers, 22);
+    assert.equal(view.policy.minPlatformBps, undefined);
+    assert.equal(view.accounts, undefined);
+    assert.equal(view.income.paidFen, 0);
 });
 
-test('portfolio routes load and a selected project stays attached to a consultation', async () => {
-    for (const route of ['', '/projects', '/assessment', '/arrangements']) {
-        const response = await fetch(`${baseUrl}/portfolio${route}`);
-        assert.equal(response.status, 200);
-        assert.match(await response.text(), /探索再生项目/);
+test('customer transfers revoke old service-case access and sales responses omit private financial fields', async () => {
+    const admin = await sessionCookie('owner', { password: 'integration-password' });
+    const sales = await sessionCookie('sales', { username: 'sales.integration', password: 'Sales-Integration-2026' });
+    const other = await sessionCookie('sales', { username: 'sales.other', password: 'Sales-Other-2026' });
+    const form = new FormData();
+    form.set('submissionKey', 'partner-case-acl');
+    form.set('periodId', '20261201');
+    form.set('name', '案例客户一');
+    form.set('contact', 'case-01');
+    form.set('note', '不属于销售资料的测试备注');
+    const created = await fetch(baseUrl + '/api/advisor-applications', { method: 'POST', body: form });
+    assert.equal(created.status, 201);
+    const { orderId } = await created.json();
+    const ownerPath = '/api/owner/customers/' + orderId;
+    const salesPath = '/api/sales/customers/' + orderId;
+    assert.equal((await callJson(ownerPath + '/assignment', admin, 'PATCH', { salesId: salesOneId })).status, 200);
+    const customer = await (await fetch(baseUrl + salesPath, { headers: { cookie: sales } })).json();
+    assert.equal(customer.name, '案例客户一');
+    for (const field of ['note', 'adminNote', 'attachments', 'submissionKey']) assert.equal(customer[field], undefined);
+
+    const createdCase = await callJson(ownerPath + '/service-cases', admin, 'POST', { periodId: '20261201', periodLabel: '十二月首期' });
+    assert.equal(createdCase.status, 201);
+    const { serviceCase } = await createdCase.json();
+    const detailPath = '/api/sales/service-cases/' + serviceCase.id;
+    const payment = await callJson('/api/owner/service-cases/' + serviceCase.id + '/payment', admin, 'PATCH', {
+        amount: 1000, payerName: '测试付款方', reference: 'PAID-ACL-TEST',
+    });
+    assert.equal(payment.status, 200);
+    const original = await (await fetch(baseUrl + '/api/sales/service-cases', { headers: { cookie: sales } })).json();
+    assert.equal(original.items[0].paymentStatus, 'paid');
+    assert.equal(original.items[0].payment, undefined);
+
+    assert.equal((await callJson(ownerPath + '/assignment', admin, 'PATCH', { salesId: salesTwoId })).status, 200);
+    const oldCases = await (await fetch(baseUrl + '/api/sales/service-cases', { headers: { cookie: sales } })).json();
+    assert.ok(oldCases.items.every(item => item.id !== serviceCase.id));
+    assert.equal((await callJson(detailPath + '/journal', sales, 'PATCH', { photoCount: 1 })).status, 403);
+    const newCases = await (await fetch(baseUrl + '/api/sales/service-cases', { headers: { cookie: other } })).json();
+    assert.ok(newCases.items.some(item => item.id === serviceCase.id));
+    const journal = await callJson(detailPath + '/journal', other, 'PATCH', { photoCount: 1 });
+    assert.equal(journal.status, 200);
+    assert.equal((await journal.json()).serviceCase.payment, undefined);
+});
+
+test('sales can record and follow up a consented private lead, once, under the current assignment', async () => {
+    const admin = await sessionCookie('owner', { password: 'integration-password' });
+    const sales = await sessionCookie('sales', { username: 'sales.integration', password: 'Sales-Integration-2026' });
+    const other = await sessionCookie('sales', { username: 'sales.other', password: 'Sales-Other-2026' });
+    const root = '/api/sales/customers';
+    const lead = {
+        requestId: 'a79b95e5-b18f-4dce-aca4-b83d47fd23a1', name: '内部线索一', contact: 'lead-901',
+    };
+    assert.equal((await callJson(root, sales, 'POST', lead)).status, 400);
+    const created = await callJson(root, sales, 'POST', { ...lead, consent: true });
+    assert.equal(created.status, 201);
+    const { customer } = await created.json();
+    assert.equal(customer.assignedSalesId, salesOneId);
+    const retried = await callJson(root, sales, 'POST', { ...lead, consent: true });
+    assert.equal(retried.status, 200);
+    assert.equal((await retried.json()).customer.id, customer.id);
+    const duplicate = await callJson(root, other, 'POST', { ...lead, consent: true });
+    assert.equal(duplicate.status, 409);
+    const follow = root + '/' + customer.id + '/follow-up';
+    assert.equal((await callJson(follow, other, 'PATCH', { status: 'contacted' })).status, 403);
+    assert.equal((await callJson(follow, sales, 'PATCH', { status: 'confirmed' })).status, 400);
+    const updated = await callJson(follow, sales, 'PATCH', { status: 'contacted', salesNote: '已约定联系时间' });
+    assert.equal(updated.status, 200);
+    assert.equal((await updated.json()).customer.salesNote, '已约定联系时间');
+    const fromAdmin = await fetch(baseUrl + '/api/owner/customers/' + customer.id, { headers: { cookie: admin } });
+    assert.equal((await fromAdmin.json()).status, 'contacted');
+});
+
+test('public application rejects unpublished dates, cross-site submissions and mismatched uploads', async () => {
+    function form(period, key) {
+        const data = new FormData();
+        data.set('periodId', period);
+        data.set('submissionKey', key);
+        data.set('name', '体例客户');
+        data.set('contact', 'example_visitor_001');
+        return data;
     }
-    const body = new FormData();
-    body.set('name', '本地测试');
-    body.set('contact', 'test-contact');
-    body.set('submissionKey', 'portfolio-test-request');
-    body.set('portfolio', '1');
-    body.set('contactConsent', 'yes');
-    body.set('programId', 'hair-follicle');
-    body.set('reportStatus', 'incomplete');
-    const application = await fetch(`${baseUrl}/api/advisor-applications`, { method: 'POST', body });
-    assert.equal(application.status, 201);
-    const { orderId } = await application.json();
-    const owner = await fetch(`${baseUrl}/api/owner/login`, {
-        method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ password: 'integration-password' }),
-    });
-    const response = await fetch(`${baseUrl}/api/owner/applications/${orderId}`, {
-        headers: { cookie: owner.headers.get('set-cookie') },
-    });
-    const order = await response.json();
-    assert.equal(order.programId, 'hair-follicle');
-    assert.equal(order.reportStatus, 'incomplete');
-    assert.equal(order.contactConsent, true);
+    const url = baseUrl + '/api/advisor-applications';
+    const unavailable = await fetch(url, { method: 'POST', body: form('20260901', 'retired-period') });
+    assert.equal(unavailable.status, 400);
+    const cross = await fetch(url, { method: 'POST', headers: { origin: 'https://example.com' }, body: form('20261201', 'cross-site') });
+    assert.equal(cross.status, 403);
+    const mismatched = form('20261201', 'bad-file');
+    mismatched.append('attachments', new Blob(['ordinary text'], { type: 'application/pdf' }), 'sample.pdf');
+    assert.equal((await fetch(url, { method: 'POST', body: mismatched })).status, 400);
+    const valid = form('20261201', 'validated-once');
+    const created = await fetch(url, { method: 'POST', body: valid });
+    assert.equal(created.status, 201);
+    const repeat = await fetch(url, { method: 'POST', body: form('20261201', 'validated-once') });
+    assert.equal(repeat.status, 200);
+    assert.equal((await repeat.json()).duplicate, true);
+    const renamed = form('20261201', 'other-submission-token');
+    renamed.set('name', '另一个姓名');
+    const newer = await fetch(url, { method: 'POST', body: renamed });
+    assert.equal(newer.status, 409);
+    assert.equal((await newer.json()).orderId, undefined);
+});
+
+test('administrator login aliases share a rate limit and log response status without query credentials', async () => {
+    const login = await callJson('/api/owner/login', '', 'POST', { password: 'integration-password' });
+    assert.equal(login.status, 200);
+    const attempts = [];
+    for (let i = 0; i < 24; i++) {
+        const endpoint = i % 2 ? '/api/admin/login' : '/api/owner/login';
+        const response = await callJson(endpoint + '?probe=omit-this-value', '', 'POST', { password: 'invalid-for-security-test' });
+        attempts.push(response.status);
+        if (response.status === 429) {
+            assert.ok(Number(response.headers.get('retry-after')) > 0);
+            break;
+        }
+    }
+    assert.ok(attempts.includes(429));
+    const logfile = path.join(runtimeDir, 'access.log');
+    let logs = '';
+    for (let attempt = 0; attempt < 30; attempt++) {
+        logs = await fs.readFile(logfile, 'utf8').catch(error => {
+            if (error.code === 'ENOENT') return '';
+            throw error;
+        });
+        if (logs.includes('"statusCode":429')) break;
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    const records = logs.trim().split('\n').filter(Boolean).map(JSON.parse);
+    assert.ok(records.some(record => record.url === '/api/owner/login' && record.statusCode === 401));
+    assert.ok(records.some(record => record.url === '/api/owner/login' && record.statusCode === 200 && record.role === 'owner'));
+    assert.ok(records.some(record => record.statusCode === 429 && /\/api\/(?:admin|owner)\/login/.test(record.url)));
+    assert.ok(records.every(record => !record.url.includes('omit-this-value')));
 });

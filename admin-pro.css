@@ -41,6 +41,9 @@ button:focus-visible, a:focus-visible { outline:2px solid var(--gold); outline-o
 .sidebar nav button b { min-width:22px; margin-left:auto; padding:4px 6px; border-radius:12px; background:#223752; color:#d0def1; font-size:10px; text-align:center; }
 .sidebar nav button:hover { background:var(--panel-2); color:var(--ivory); }
 .sidebar nav button.active { border-color:rgba(225,194,139,.42); background:linear-gradient(115deg,#213b60,var(--panel-2)); color:var(--gold); }
+.admin-shell .sidebar .owner-nav-group > p, .admin-shell .sidebar .owner-nav button { color:var(--muted); }
+.admin-shell .sidebar .owner-nav button:hover:not(.active) { background:var(--panel-2); color:var(--ivory); }
+.admin-shell .sidebar .owner-nav button.active { border-color:rgba(225,194,139,.42); background:linear-gradient(115deg,#213b60,var(--panel-2)); color:var(--gold); box-shadow:inset 2px 0 var(--gold); }
 .system-state { margin-top:auto; padding:18px 0; display:flex; gap:11px; align-items:center; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
 .system-state i { width:7px; height:7px; border-radius:50%; background:#799a87; box-shadow:0 0 12px #799a87; }
 .system-state strong, .system-state span { display:block; }

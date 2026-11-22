@@ -8,6 +8,7 @@ const {
     itineraryForPeriod,
     renderPeriodPage,
 } = require('../scripts/arksoma-periods.cjs');
+const { readPeriodOptions } = require('../lib/program-catalog');
 
 test('buildPeriods creates the five-period August window with stable ids and labels', () => {
     const periods = buildPeriods({ year: 2026, month: 8 }, 5);
@@ -37,14 +38,14 @@ test('renderPeriodPage preserves ARKSOMA content and fills first-period commerci
         '<button id="originTrigger">37°32′10″N 139°36′20″E</button>',
     ].join('');
 
-    const html = renderPeriodPage(template, periods[0], periods, periods[0].id);
+    const html = renderPeriodPage(template, periods[0], periods);
 
     assert.match(html, /ARKSOMA 方舟计划｜2026·八月首期 · 日本细胞科技与生命资产管理/);
     assert.match(html, /2026·八月首期/);
     assert.match(html, /限额 5 席/);
     assert.match(html, /RMB 580,000/);
     assert.match(html, /2026年7月5日/);
-    assert.match(html, /href="\/"[^>]*aria-current="page"/);
+    assert.match(html, /href="\/20260801"[^>]*aria-current="page"/);
     assert.match(html, /37°32′10″N 139°36′20″E/);
     assert.doesNotMatch(html, /\{\{[A-Z_]+\}\}/);
 });
@@ -52,7 +53,7 @@ test('renderPeriodPage preserves ARKSOMA content and fills first-period commerci
 test('renderPeriodPage applies the third-period family edition without changing the brand', () => {
     const periods = buildPeriods({ year: 2026, month: 8 }, 5);
     const template = '{{PAGE_TITLE}}|{{PERIOD_LABEL}}|{{CAPACITY}}|{{PRICE}}|{{APPLY_NOTE}}|{{PERIOD_MENU}}';
-    const html = renderPeriodPage(template, periods[2], periods, periods[0].id);
+    const html = renderPeriodPage(template, periods[2], periods);
 
     assert.match(html, /^ARKSOMA 方舟计划｜2026·八月三期 · 日本细胞科技与生命资产管理/);
     assert.match(html, /敬亲礼遇期 · 3组家庭席位/);
@@ -82,7 +83,7 @@ test('reference itinerary closes with an incense gathering that is confirmed per
 test('production template preserves the approved responsive ARKSOMA structure', () => {
     const template = fs.readFileSync(path.join(__dirname, '..', 'templates', 'arksoma-period.html'), 'utf8');
     const periods = buildPeriods({ year: 2026, month: 8 }, 5);
-    const html = renderPeriodPage(template, periods[0], periods, periods[0].id);
+    const html = renderPeriodPage(template, periods[0], periods);
 
     assert.match(html, /name="viewport" content="width=device-width, initial-scale=1"/);
     assert.match(html, /PRIVATE ACCESS · BY APPOINTMENT/);
@@ -113,7 +114,7 @@ test('production template preserves the approved responsive ARKSOMA structure', 
 test('private advisory flow separates appointment intent from confirmed access', () => {
     const template = fs.readFileSync(path.join(__dirname, '..', 'templates', 'arksoma-period.html'), 'utf8');
     const periods = buildPeriods({ year: 2026, month: 8 }, 5);
-    const html = renderPeriodPage(template, periods[0], periods, periods[0].id);
+    const html = renderPeriodPage(template, periods[0], periods);
 
     assert.equal((html.match(/data-open-advisor>预约私人顾问<\/button>/g) || []).length, 2);
     assert.match(html, /<h2 id="advisorTitle">安排一次私人沟通<\/h2>/);
@@ -127,11 +128,11 @@ test('production template exposes dynamic SEO and the approved protocol-to-journ
     const template = fs.readFileSync(path.join(__dirname, '..', 'templates', 'arksoma-period.html'), 'utf8');
     const css = fs.readFileSync(path.join(__dirname, '..', 'arksoma.css'), 'utf8');
     const periods = buildPeriods({ year: 2026, month: 8 }, 5);
-    const html = renderPeriodPage(template, periods[0], periods, periods[0].id);
+    const html = renderPeriodPage(template, periods[0], periods);
 
-    assert.match(html, /<link rel="canonical" href="https:\/\/arksoma\.com\/">/);
+    assert.match(html, /<link rel="canonical" href="https:\/\/arksoma\.com\/20260801">/);
     assert.match(html, /<meta property="og:title" content="ARKSOMA 方舟计划｜2026·八月首期 · 日本细胞科技与生命资产管理">/);
-    assert.match(html, /<meta property="og:url" content="https:\/\/arksoma\.com\/">/);
+    assert.match(html, /<meta property="og:url" content="https:\/\/arksoma\.com\/20260801">/);
     assert.match(html, /<link rel="stylesheet" href="arksoma\.css\?v=20260806-3">/);
     assert.match(html, /"@type":"WebSite"/);
     assert.match(html, /"name":"ARKSOMA"/);
@@ -230,9 +231,22 @@ test('production styles keep native scrolling, one-shot image settling and glyph
 test('period menu renders links inside the fixed sheet and keeps the active period', () => {
     const periods = buildPeriods({ year: 2026, month: 8 }, 5);
     const template = '<aside id="periodSheet">{{PERIOD_MENU}}</aside>';
-    const html = renderPeriodPage(template, periods[3], periods, periods[0].id);
+    const html = renderPeriodPage(template, periods[3], periods);
 
-    assert.match(html, /<a href="20260901"[^>]*aria-current="page"/);
+    assert.deepEqual(Array.from(html.matchAll(/href="([^"]+)"/g), ([, href]) => href), periods.map(({ id }) => `/${id}`));
+    assert.match(html, /<a href="\/20260901"[^>]*aria-current="page"/);
     assert.match(html, /敬亲礼遇期/);
     assert.doesNotMatch(html, /父母长辈特惠/);
+});
+
+test('portfolio period options map older and current menus to the same dated archive URLs', () => {
+    const first = { id: '20261101', label: '2026·十一月首期', href: '/20261101', closed: true, special: false };
+    const second = { id: '20261201', label: '2026·十二月首期', href: '/20261201', closed: false, special: false };
+    const menu = (firstHref, secondHref) => `
+        <nav class="period-options"><a href="${firstHref}"><span>${first.label}</span><small>已满</small></a><a href="${secondHref}"><span>${second.label}</span><small>可申请</small></a></nav>
+        <input type="hidden" name="periodId" value="${first.id}">
+    `;
+
+    assert.deepEqual(readPeriodOptions(menu('/', '20261201'), '2026-11-01'), [first, second]);
+    assert.deepEqual(readPeriodOptions(menu('/20261101', '/20261201'), '2026-11-01'), [first, second]);
 });

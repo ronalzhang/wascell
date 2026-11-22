@@ -71,12 +71,11 @@ function buildPeriods(start, count) {
     return periods;
 }
 
-function periodMenu(periods, activeId, rootTargetId) {
+function periodMenu(periods, activeId) {
     return periods.map((period, index) => {
-        const href = period.id === rootTargetId ? '/' : period.id;
         const availability = period.special ? '敬亲礼遇期' : index < 2 ? '已满' : '可申请';
         const current = period.id === activeId ? ' selected" aria-current="page' : '';
-        return `<a href="${href}" class="period-option${current}"><span>${period.label}</span><small>${availability}</small></a>`;
+        return `<a href="/${period.id}" class="period-option${current}"><span>${period.label}</span><small>${availability}</small></a>`;
     }).join('');
 }
 
@@ -106,10 +105,9 @@ function valuesForPeriod(period) {
     return { capacity, capacityLabel, price, applyNote, publicCopy };
 }
 
-function renderPeriodPage(template, period, periods, rootTargetId) {
+function renderPeriodPage(template, period, periods) {
     const { capacity, capacityLabel, price, applyNote, publicCopy } = valuesForPeriod(period);
-    const pagePath = period.id === rootTargetId ? '/' : `/${period.id}`;
-    const pageUrl = `https://arksoma.com${pagePath}`;
+    const pageUrl = `https://arksoma.com/${period.id}`;
     const pageTitle = `ARKSOMA 方舟计划｜${period.label} · 日本细胞科技与生命资产管理`;
     const values = {
         PAGE_TITLE: pageTitle,
@@ -118,7 +116,7 @@ function renderPeriodPage(template, period, periods, rootTargetId) {
         OG_TITLE: pageTitle,
         PERIOD_ID: period.id,
         PERIOD_LABEL: period.label,
-        PERIOD_MENU: periodMenu(periods, period.id, rootTargetId),
+        PERIOD_MENU: periodMenu(periods, period.id),
         CAPACITY: capacityLabel,
         CAPACITY_NUMBER: String(capacity),
         PRICE: price,

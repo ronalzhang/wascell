@@ -15,14 +15,20 @@ const { createAuditLog } = require('./lib/audit-log');
 const { createBusinessConfigStore } = require('./lib/business-config-store');
 const { createKnowledgeStore } = require('./lib/knowledge-store');
 const { createServiceCaseStore } = require('./lib/service-case-store');
+const { createPartnerProgram } = require('./lib/partner-program');
+const { registerPartnerRoutes, salesCustomerView, salesServiceCaseView } = require('./lib/partner-routes');
 const { createTrafficStore } = require('./lib/traffic-store');
 const { createAccessLogWriter } = require('./lib/access-log-writer');
 const { classifyTrafficSignals } = require('./lib/traffic-intelligence');
 const { PROGRAMS, SUPPORT, projectPublicCatalog, readPeriodOptions } = require('./lib/program-catalog');
+const { createRateLimiter, createClientAddress } = require('./lib/request-guard');
+const { loadPublishedPeriods, validatedApplication, verifyAdvisorAttachment } = require('./lib/public-application-policy');
 
 const app = express();
 const PORT = process.env.PORT || 3003; // 使用3003端口避免与其他应用冲突
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+const publishedPeriods = loadPublishedPeriods(__dirname);
+const knownOrigins = new Set(['https://arksoma.com', 'https://www.arksoma.com', 'https://wascell.com', 'https://www.wascell.com']);
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || (IS_PRODUCTION ? '' : 'development-only');
 const ADMIN_SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 const PRIVATE_ROOT = path.resolve(__dirname, '..', 'wascell-private');
@@ -33,6 +39,7 @@ const STAFF_DATA_DIR = process.env.STAFF_DATA_DIR || path.join(PRIVATE_ROOT, 'st
 const BUSINESS_DATA_DIR = process.env.BUSINESS_DATA_DIR || path.join(PRIVATE_ROOT, 'business-data');
 const KNOWLEDGE_DATA_DIR = process.env.KNOWLEDGE_DATA_DIR || path.join(PRIVATE_ROOT, 'knowledge-data');
 const SERVICE_CASE_DATA_DIR = process.env.SERVICE_CASE_DATA_DIR || path.join(PRIVATE_ROOT, 'service-case-data');
+const PARTNER_PROGRAM_DATA_DIR = process.env.PARTNER_PROGRAM_DATA_DIR || path.join(BUSINESS_DATA_DIR, 'partner-program');
 
 fs.mkdirSync(ADVISOR_TEMP_DIR, { recursive: true, mode: 0o700 });
 
@@ -53,11 +60,22 @@ const advisorStore = createAdvisorStore({
     dataDir: ADVISOR_DATA_DIR,
     uploadDir: ADVISOR_UPLOAD_DIR,
 });
-const serviceCaseStore = createServiceCaseStore({ dataDir: SERVICE_CASE_DATA_DIR, auditLog });
+const serviceCaseStore = createServiceCaseStore({
+    dataDir: SERVICE_CASE_DATA_DIR,
+    auditLog,
+    getCustomers: advisorStore.getApplications,
+});
+const partnerProgram = createPartnerProgram({
+    dataDir: PARTNER_PROGRAM_DATA_DIR,
+    listAccounts: staffStore.listSales,
+    getCustomer: advisorStore.getApplication,
+    getCustomers: advisorStore.getApplications,
+    getCustomerIdentityId: advisorStore.getCustomerIdentityId,
+});
 
 const advisorUpload = multer({
     dest: ADVISOR_TEMP_DIR,
-    limits: { files: 3, fileSize: 10 * 1024 * 1024, fields: 20 },
+    limits: { files: 3, fileSize: 10 * 1024 * 1024, fields: 20, fieldSize: 4096, parts: 24 },
     fileFilter: (req, file, callback) => {
         const extension = path.extname(file.originalname || '').toLowerCase();
         const allowed = (
@@ -65,7 +83,7 @@ const advisorUpload = multer({
             ((extension === '.jpg' || extension === '.jpeg') && file.mimetype === 'image/jpeg') ||
             (extension === '.png' && file.mimetype === 'image/png')
         );
-        callback(allowed ? null : new Error(`${path.basename(file.originalname || '附件')} 的文件类型不受支持`), allowed);
+        callback(allowed ? null : new Error('附件文件类型不受支持'), allowed);
     },
 });
 
@@ -322,7 +340,7 @@ async function safeWriteStats(stats) {
 }
 
 // 信任反向代理，正确获取客户端真实IP
-app.set('trust proxy', true);
+app.set('trust proxy', 'loopback');
 
 // 中间件配置
 app.use(helmet({
@@ -338,23 +356,14 @@ app.use(helmet({
 }));
 app.use(compression());
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 // 访问统计中间件
 app.use((req, res, next) => {
     const timestamp = new Date().toISOString();
-    // 优先从 Cloudflare 头获取真实客户端IP，然后是其他代理头
-    // CF-Connecting-IP: Cloudflare 提供的真实用户 IP
-    // X-Real-IP: Nginx 代理头
-    // X-Forwarded-For: 标准代理头（取第一个IP）
-    const ip = req.headers['cf-connecting-ip'] ||
-               req.headers['x-real-ip'] || 
-               (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 
-               req.ip || 
-               req.connection.remoteAddress;
+    const ip = createClientAddress(req, { trustLoopbackProxy: IS_PRODUCTION });
+    req.logClientAddress = ip;
     const userAgent = (req.get('User-Agent') || '').slice(0, 512);
-    const referer = (req.get('Referer') || '').slice(0, 512);
+    const referer = (req.get('Referer') || '').split(/[?#]/, 1)[0].slice(0, 512);
     
     // 检测是否为恶意请求
     const url = req.url.toLowerCase();
@@ -364,18 +373,65 @@ app.use((req, res, next) => {
         timestamp,
         ip,
         method: req.method,
-        url: req.url.slice(0, 2048),
+        url: req.path.slice(0, 2048),
         userAgent,
         referer,
         isMalicious // 标记是否为恶意请求
     };
 
     // Counters are exact; raw diagnostic logs may shed overload instead of exhausting memory.
-    accessLogWriter.record(logEntry);
+    if (req.path.toLowerCase().startsWith('/api/')) {
+        res.once('finish', () => accessLogWriter.record({
+            ...logEntry, statusCode: res.statusCode, role: req.auth?.role || null, actorId: req.auth?.userId || null,
+        }));
+        res.once('close', () => {
+            if (!res.writableFinished) accessLogWriter.record({ ...logEntry, statusCode: null, aborted: true });
+        });
+    } else {
+        accessLogWriter.record(logEntry);
+    }
     trafficStore.record(logEntry);
 
     next();
 });
+
+const submissionLimit = createRateLimiter({ limit: 8, windowMs: 15 * 60 * 1000, maxKeys: 4096 });
+const submissionGlobal = createRateLimiter({ limit: 100, windowMs: 60 * 1000, maxKeys: 1 });
+const ownerLoginLimit = createRateLimiter({ limit: 15, windowMs: 10 * 60 * 1000, maxKeys: 4096 });
+const salesLoginLimit = createRateLimiter({ limit: 25, windowMs: 10 * 60 * 1000, maxKeys: 4096 });
+
+function enforceRate(res, result) {
+    if (result.allowed) return true;
+    res.set('Retry-After', String(Math.max(1, Math.ceil(result.retryAfterMs / 1000))));
+    res.status(429).json({ message: '请求过于频繁，请稍后重试' });
+    return false;
+}
+
+app.use((req, res, next) => {
+    const route = req.path.toLowerCase().replace(/\/+$/, '');
+    if (/^\/api\/(?:owner|admin|sales|session)(?:\/|$)/.test(route)) res.set('Cache-Control', 'no-store');
+    if (!route.startsWith('/api/') || ['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
+    const origin = req.get('Origin');
+    const ownOrigin = IS_PRODUCTION ?
+        knownOrigins.has(origin) : ['http://', 'https://'].some(proto => origin === proto + req.get('Host'));
+    if (!ownOrigin && (origin || req.get('Sec-Fetch-Site') === 'cross-site')) {
+        return res.status(403).json({ message: '请从官网页面操作' });
+    }
+    if (req.method === 'POST') {
+        const limits = {
+            '/api/advisor-applications': submissionLimit,
+            '/api/admin/login': ownerLoginLimit,
+            '/api/owner/login': ownerLoginLimit,
+            '/api/sales/login': salesLoginLimit,
+        };
+        const limit = limits[route];
+        if (limit && !enforceRate(res, limit(req.logClientAddress))) return;
+        if (route === '/api/advisor-applications' && !enforceRate(res, submissionGlobal('unknown'))) return;
+    }
+    return next();
+});
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // 获取当前日期(中国时区)
 function getToday() {
@@ -388,7 +444,10 @@ async function getStatsAsync() { return trafficStore.get(); }
 function getStats() { return trafficStore.get(); }
 
 // 静态文件服务
-const publicScripts = new Set(['period-switcher.js', 'chart.umd.js', 'admin.mjs', 'admin-pro.mjs', 'arksoma-ui.mjs', 'session-state.mjs', 'portfolio.mjs', 'admin-program-prices.mjs']);
+const publicScripts = new Set([
+    'period-switcher.js', 'chart.umd.js', 'admin.mjs', 'admin-pro.mjs', 'arksoma-ui.mjs', 'session-state.mjs',
+    'partner-owner.mjs', 'partner-sales.mjs', 'portfolio.mjs', 'admin-program-prices.mjs',
+]);
 app.use((req, res, next) => {
     let pathname;
     try { pathname = decodeURIComponent(req.path); }
@@ -399,11 +458,12 @@ app.use((req, res, next) => {
     const isPublicPage = !relative.includes('/') && (extension === '.html' || extension === '.css' || relative === 'favicon.png' || publicScripts.has(relative));
     // API and extensionless application routes continue to their explicit handlers.
     if (isPublicAsset || isPublicPage || pathname.startsWith('/api/')) return next();
-    if (/^\/(?:|all|admin|admin-pro|\d{8}|portfolio(?:\/(?:projects|assessment|arrangements))?\/?)$/.test(pathname)) return next();
+    if (/^\/(?:|all|admin|admin-pro|flagship-journey|\d{8}|portfolio(?:\/(?:projects|assessment|arrangements))?\/?)$/.test(pathname)) return next();
     return res.sendStatus(404);
 });
 app.use(express.static(__dirname, {
     extensions: ['html'],
+    index: false,
     setHeaders: (res, path) => {
         if (path.endsWith('.html')) {
             res.set('Cache-Control', 'no-cache');
@@ -415,6 +475,7 @@ app.use(express.static(__dirname, {
 
 // 客户顾问申请：资料与附件一次提交，附件不会进入静态目录。
 app.post('/api/advisor-applications', (req, res) => {
+    if (!req.is('multipart/form-data')) return res.status(415).json({ message: '请使用官网申请表提交' });
     advisorUpload.array('attachments', 3)(req, res, async (uploadError) => {
         const uploadedFiles = req.files || [];
         const cleanupTemporaryFiles = async () => {
@@ -426,7 +487,7 @@ app.post('/api/advisor-applications', (req, res) => {
             const isTooLarge = uploadError.code === 'LIMIT_FILE_SIZE';
             return res.status(isTooLarge ? 413 : 400).json({
                 success: false,
-                message: isTooLarge ? '单个附件不能超过 10 MB' : uploadError.message,
+                message: isTooLarge ? '单个附件不能超过 10 MB' : '申请表或附件格式不受支持',
             });
         }
 
@@ -436,35 +497,13 @@ app.post('/api/advisor-applications', (req, res) => {
                 await cleanupTemporaryFiles();
                 return res.status(413).json({ success: false, message: '附件总大小不能超过 20 MB' });
             }
-            const input = { ...req.body };
-            delete input.programLabel;
-            const isPortfolioRequest = input.portfolio === '1' || Boolean(input.programId);
-            if (!isPortfolioRequest) delete input.reportStatus;
-            if (isPortfolioRequest) {
-                if (input.contactConsent !== 'yes') throw new Error('请填写联系授权');
-                input.portfolio = '1';
-                const program = PROGRAMS.find((item) => item.id === input.programId);
-                if (input.programId && !program) throw new Error('项目无效');
-                if (input.reportStatus && !['ready', 'incomplete', 'not-ready'].includes(input.reportStatus)) {
-                    throw new Error('体检资料状态无效');
-                }
-                input.programLabel = program?.title;
-                if (input.periodId) {
-                    const periods = await readCurrentPortfolioPeriods();
-                    const period = periods.find((item) => item.id === input.periodId && !item.closed);
-                    if (!program?.featured || !period) throw new Error('期次已结束或无效，请重新选择');
-                    input.periodLabel = period.label;
-                } else {
-                    input.periodLabel = '';
-                }
-            }
-            const result = await advisorStore.createApplication({
-                ...input,
-                source: {
-                    page: req.body.sourcePage || req.get('Referer') || '',
-                    device: req.get('User-Agent') || '',
-                },
-            }, uploadedFiles);
+            const usingPortfolio = req.body.portfolio === '1' || Boolean(req.body.programId);
+            const portfolioPeriods = usingPortfolio && req.body.periodId ? await readCurrentPortfolioPeriods() : [];
+            const input = validatedApplication(req.body, publishedPeriods, req.get('User-Agent') || '', portfolioPeriods);
+            if (usingPortfolio && uploadedFiles.length) throw new Error('本次联系登记请勿提交附件');
+            await Promise.all(uploadedFiles.map(verifyAdvisorAttachment));
+            const result = await advisorStore.createApplication(input, uploadedFiles, null, { publicIntake: true });
+            if (!result.created) await cleanupTemporaryFiles();
             return res.status(result.created ? 201 : 200).json({
                 success: true,
                 orderId: result.order.id,
@@ -473,11 +512,12 @@ app.post('/api/advisor-applications', (req, res) => {
             });
         } catch (error) {
             await cleanupTemporaryFiles();
-            const isValidationError = /请填写|缺少提交|附件|文件类型|无效/.test(error.message);
-            console.error('顾问申请写入失败:', isValidationError ? error.message : error);
-            return res.status(isValidationError ? 400 : 500).json({
+            const status = error.statusCode === 409 ? 409 :
+                /请填写|缺少提交|附件|文件类型|申请期次|提交标识|项目无效|状态无效/.test(error.message) ? 400 : 500;
+            if (status === 500) console.error('顾问申请写入失败', error.code || error.name);
+            return res.status(status).json({
                 success: false,
-                message: isValidationError ? error.message : '申请提交失败，请稍后重试',
+                message: status < 500 ? error.message : '申请提交失败，请稍后重试',
             });
         }
     });
@@ -491,6 +531,7 @@ app.get('/api/session', adminAuth.session);
 app.post('/api/admin/login', adminAuth.ownerLogin);
 app.post('/api/admin/logout', adminAuth.logout);
 app.get('/api/admin/session', adminAuth.session);
+registerPartnerRoutes(app, adminAuth, partnerProgram);
 
 // 公开商业信息只返回前端展示白名单；内部容量和提醒规则保持私有。
 app.get('/api/public/catalog', async (req, res) => {
@@ -1101,19 +1142,49 @@ app.post('/api/owner/customers/:id/membership', adminAuth.requireOwner, async (r
 app.get('/api/sales/customers', adminAuth.requireSalesOrOwner, async (req, res) => {
     if (req.auth.role !== 'sales') return res.status(403).json({ message: '请使用销售账号' });
     try {
-        return res.json(await advisorStore.listForPrincipal(req.auth, req.query));
+        const result = await advisorStore.listForPrincipal(req.auth, req.query);
+        return res.set('Cache-Control', 'no-store').json({ ...result, items: result.items.map(salesCustomerView) });
     } catch (error) {
         console.error('读取销售客户失败:', error);
         return res.status(500).json({ message: '客户读取失败' });
     }
 });
 
+function salesCustomerMutation(operation) {
+    return async (req, res) => {
+        res.set('Cache-Control', 'no-store');
+        if (req.auth.role !== 'sales') return res.status(403).json({ message: '请使用销售账号' });
+        if (!req.is('application/json') || !req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
+            return res.status(400).json({ message: '请提交所需数据' });
+        }
+        try {
+            const { order, created } = await operation(req);
+            return res.status(created ? 201 : 200).json({ customer: salesCustomerView(order) });
+        } catch (error) {
+            if ([400, 403, 404, 409].includes(error.statusCode)) {
+                return res.status(error.statusCode).json({ message: error.message });
+            }
+            console.error('销售线索处理失败', { error: error.name });
+            return res.status(500).json({ message: '处理线索失败，请稍后重试' });
+        }
+    };
+}
+
+app.post('/api/sales/customers', adminAuth.requireSalesOrOwner, salesCustomerMutation(async req => {
+    await partnerProgram.assertSalesLeadAllowed(req.auth);
+    return advisorStore.createSalesLead(req.body, req.auth);
+}));
+
+app.patch('/api/sales/customers/:id/follow-up', adminAuth.requireSalesOrOwner, salesCustomerMutation(async req => ({
+    order: await advisorStore.updateSalesFollowUp(req.params.id, req.body, req.auth),
+})));
+
 app.get('/api/sales/customers/:id', adminAuth.requireSalesOrOwner, async (req, res) => {
     if (req.auth.role !== 'sales') return res.status(403).json({ message: '请使用销售账号' });
     const customer = await advisorStore.getApplication(req.params.id);
     if (!customer) return res.status(404).json({ message: '客户不存在' });
     if (customer.assignedSalesId !== req.auth.userId) return res.status(403).json({ message: '无权访问该客户' });
-    return res.json(customer);
+    return res.set('Cache-Control', 'no-store').json(salesCustomerView(customer));
 });
 
 app.post('/api/sales/customers/:id/internal-bookings', adminAuth.requireSalesOrOwner, async (req, res) => {
@@ -1199,7 +1270,8 @@ app.patch('/api/owner/service-cases/:id/journal', adminAuth.requireOwner, async 
 app.get('/api/sales/service-cases', adminAuth.requireSalesOrOwner, async (req, res) => {
     if (req.auth.role !== 'sales') return res.status(403).json({ message: '请使用销售账号' });
     try {
-        return res.json({ items: await serviceCaseStore.listForPrincipal(req.auth) });
+        const cases = await serviceCaseStore.listForPrincipal(req.auth);
+        return res.set('Cache-Control', 'no-store').json({ items: cases.map(salesServiceCaseView) });
     } catch (error) {
         return serviceCaseErrorResponse(res, error, '服务案例读取失败');
     }
@@ -1209,7 +1281,7 @@ app.patch('/api/sales/service-cases/:id/progress', adminAuth.requireSalesOrOwner
     if (req.auth.role !== 'sales') return res.status(403).json({ message: '请使用销售账号' });
     try {
         const serviceCase = await serviceCaseStore.updateProgress(req.params.id, req.body?.status, req.auth);
-        return res.json({ success: true, serviceCase });
+        return res.set('Cache-Control', 'no-store').json({ success: true, serviceCase: salesServiceCaseView(serviceCase) });
     } catch (error) {
         return serviceCaseErrorResponse(res, error, '服务进度更新失败');
     }
@@ -1219,7 +1291,7 @@ app.patch('/api/sales/service-cases/:id/journal', adminAuth.requireSalesOrOwner,
     if (req.auth.role !== 'sales') return res.status(403).json({ message: '请使用销售账号' });
     try {
         const serviceCase = await serviceCaseStore.updateJournal(req.params.id, req.body || {}, req.auth);
-        return res.json({ success: true, serviceCase });
+        return res.set('Cache-Control', 'no-store').json({ success: true, serviceCase: salesServiceCaseView(serviceCase) });
     } catch (error) {
         return serviceCaseErrorResponse(res, error, '生命纪行状态更新失败');
     }
@@ -1234,17 +1306,17 @@ app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
-app.get(['/portfolio', '/portfolio/projects', '/portfolio/assessment', '/portfolio/arrangements'], (req, res) => {
-    res.sendFile(path.join(__dirname, 'portfolio.html'));
+app.get(['/', '/portfolio', '/portfolio/projects', '/portfolio/assessment', '/portfolio/arrangements'], (req, res) => {
+    res.set('Cache-Control', 'no-cache').sendFile(path.join(__dirname, 'portfolio.html'));
 });
 
-// 默认路由 - 返回首页
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+// 月度脚本仍生成 index.html，作为当前旗舰期次及既有预约入口。
+app.get('/flagship-journey', (req, res) => {
+    res.set('Cache-Control', 'no-cache').sendFile(path.join(__dirname, 'index.html'));
 });
 
 // 启动服务器
-const server = app.listen(PORT, process.env.WASCELL_BIND_HOST, () => {
+const server = app.listen(PORT, '127.0.0.1', () => {
     console.log(`方舟计划网站服务器运行在端口 ${PORT}`);
     console.log(`访问地址: http://localhost:${PORT}`);
     console.log(`管理后台: http://localhost:${PORT}/admin-pro`);
