@@ -1,3 +1,4 @@
+import { consultationSection, bindConsultationFields } from './consultation-form.mjs?v=20261122-1';
 import { advisorReportLabel, sessionLoginMessage } from './session-state.mjs?v=20261122-1';
 import { createPartnerSales, escapeHtml } from './partner-sales.mjs?v=20261122-3';
 
@@ -223,8 +224,6 @@ function closeCustomer({ restoreFocus = true } = {}) {
     drawerTrigger = undefined;
 }
 
-const consultStages = { scheduled: '已安排', completed: '已沟通', cancelled: '已取消' };
-const consultChannels = { phone: '电话', wechat: '微信', in_person: '面谈' };
 const bookingStages = { draft: '待管理员确认', confirmed: '已确认', cancelled: '已取消' };
 
 function bookingForm() {
@@ -382,11 +381,11 @@ async function openCustomer(trigger) {
             <div><dt>关注项目</dt><dd>${escapeHtml(customer.programLabel || '未登记')}</dd></div>
             <div><dt>体检资料（客户填写）</dt><dd>${escapeHtml(advisorReportLabel(customer.reportStatus) || (customer.reportStatus ? '待确认' : '未登记'))}</dd></div>
             <div><dt>会员到期</dt><dd>${formatDate(customer.membershipExpiresAt)}</dd></div>
-            <div><dt>顾问预约</dt><dd>${customer.consultation ? `${escapeHtml(consultStages[customer.consultation.status])} · ${escapeHtml(customer.consultation.dateTime.replace('T', ' '))}（北京时间） · ${escapeHtml(consultChannels[customer.consultation.channel])}` : '待协调'}</dd></div>
             <div><dt>后续预约</dt><dd>${(customer.internalBookings || []).length} 条</dd></div>
         </dl>
         <button type="button" class="ps-button ps-drawer-draft" id="customerDraft">查看业务订单</button>
         ${followUpForm(customer)}
+        ${consultationSection(customer, escapeHtml)}
         ${customer.internalBookings?.length ? `<section class="detail-section"><h4>已提交的后续预约</h4>
             ${customer.internalBookings.map(item => `<p>${escapeHtml(item.periodLabel)} · ${escapeHtml(item.guestCount)} 人 · ${escapeHtml(bookingStages[item.status] || '待核对')}</p>`).join('')}</section>` : ''}
         ${member(customer) === '会员有效' ? bookingForm()
@@ -400,6 +399,33 @@ async function openCustomer(trigger) {
         closeCustomer({ restoreFocus: false });
         setView('orders', { customer });
     };
+    const consultation = select('#consultationForm');
+    bindConsultationFields(consultation);
+    consultation.addEventListener('submit', async event => {
+        event.preventDefault();
+        const button = consultation.querySelector('[type="submit"]');
+        const feedback = consultation.querySelector('[data-consultation-feedback]');
+        if (button.disabled) return;
+        button.disabled = true;
+        try {
+            await api(`/api/sales/customers/${encodeURIComponent(customer.id)}/consultation`, {
+                method: 'PATCH', body: JSON.stringify(Object.fromEntries(new FormData(consultation))),
+            });
+            if (!consultation.isConnected) return;
+            toast('顾问预约已保存');
+            if (state.view === 'customers') await loadCustomers();
+            if (consultation.isConnected) {
+                const refreshed = [...document.querySelectorAll('#customersBody [data-customer]')]
+                    .find(button => button.dataset.customer === customer.id);
+                if (refreshed) await openCustomer(refreshed);
+                else closeCustomer();
+            }
+        } catch (error) {
+            if (consultation.isConnected) feedback.textContent = error.message;
+        } finally {
+            button.disabled = false;
+        }
+    });
     select('#followUpForm').addEventListener('submit', (event) => submitFollowUp(event, customer));
     select('#bookingForm')?.addEventListener('submit', (event) => submitBooking(event, customer));
 }

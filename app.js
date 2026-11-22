@@ -446,7 +446,7 @@ function getStats() { return trafficStore.get(); }
 // 静态文件服务
 const publicScripts = new Set([
     'period-switcher.js', 'chart.umd.js', 'admin.mjs', 'admin-pro.mjs', 'arksoma-ui.mjs', 'session-state.mjs',
-    'partner-owner.mjs', 'partner-sales.mjs', 'portfolio.mjs', 'admin-program-prices.mjs',
+    'partner-owner.mjs', 'partner-sales.mjs', 'consultation-form.mjs', 'portfolio.mjs', 'admin-program-prices.mjs',
 ]);
 app.use((req, res, next) => {
     let pathname;
@@ -1197,6 +1197,10 @@ app.patch('/api/sales/customers/:id/follow-up', adminAuth.requireSalesOrOwner, s
     order: await advisorStore.updateSalesFollowUp(req.params.id, req.body, req.auth),
 })));
 
+app.patch('/api/sales/customers/:id/consultation', adminAuth.requireSalesOrOwner, salesCustomerMutation(async req => ({
+    order: await advisorStore.updateConsultation(req.params.id, req.body, req.auth),
+})));
+
 app.get('/api/sales/customers/:id', adminAuth.requireSalesOrOwner, async (req, res) => {
     if (req.auth.role !== 'sales') return res.status(403).json({ message: '请使用销售账号' });
     const customer = await advisorStore.getApplication(req.params.id);
@@ -1228,7 +1232,7 @@ app.post('/api/sales/customers/:id/internal-bookings', adminAuth.requireSalesOrO
 
 app.patch('/api/owner/customers/:id/consultation', adminAuth.requireOwner, async (req, res) => {
     try {
-        const consultation = await advisorStore.updateConsultation(req.params.id, req.body || {}, req.auth);
+        const { consultation } = await advisorStore.updateConsultation(req.params.id, req.body || {}, req.auth);
         return res.json({ success: true, consultation });
     } catch (error) {
         return res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : '咨询安排暂不可用' });

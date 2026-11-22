@@ -1,3 +1,4 @@
+import { consultationSection, bindConsultationFields } from './consultation-form.mjs?v=20261122-1';
 import { advisorReportLabel, sessionLoginMessage } from './session-state.mjs?v=20261122-1';
 import { createPartnerOwner } from './partner-owner.mjs?v=20261122-3';
 import { createProgramPricesView } from './admin-program-prices.mjs?v=20261122-1';
@@ -146,26 +147,6 @@ function customerOptions(entries, selected) {
     return Object.entries(entries).map(([key, label]) => `<option value="${esc(key)}"${key === selected ? ' selected' : ''}>${esc(label)}</option>`).join('');
 }
 
-const consultStages = { scheduled: '已安排', completed: '已沟通', cancelled: '已取消' };
-const consultChannels = { phone: '电话', wechat: '微信', in_person: '面谈' };
-
-function consultationSection(customer) {
-    const consultation = customer.consultation;
-    const live = consultation?.status === 'scheduled';
-    return `<section class="detail-section"><h4>顾问预约安排</h4>
-        ${consultation ? `<p>${esc(consultStages[consultation.status])} · ${esc(consultation.dateTime.replace('T', ' '))}（北京时间） · ${esc(consultChannels[consultation.channel])}</p><p>${esc(consultation.reason)}</p>`
-            : '<p>请先联系客户确认可沟通时间，再登记。</p>'}
-        <form class="admin-form" id="consultationForm">
-            <label>预约处理<select name="status"><option value="scheduled">${live ? '修改安排' : '登记已确认的安排'}</option>
-                ${live ? '<option value="completed">完成咨询</option><option value="cancelled">取消安排</option>' : ''}</select></label>
-            <label>沟通时间（北京时间）<input name="dateTime" type="datetime-local" value="${esc(live ? consultation.dateTime : '')}" required></label>
-            <label>沟通方式<select name="channel">${customerOptions(consultChannels, live ? consultation.channel : 'phone')}</select></label>
-            <label>办理记录<input name="reason" maxlength="400" placeholder="填写联系结果、咨询结论或取消原因" required></label>
-            <button type="submit">保存预约安排</button>
-        </form>
-    </section>`;
-}
-
 function bookingSection(customer, canOrder) {
     return (customer.internalBookings || []).map(booking => {
         const order = customer.linkedOrders?.find(item => item.bookingId === booking.id && item.state !== 'cancelled');
@@ -219,7 +200,7 @@ async function openCustomer(id) {
                 <button type="submit">保存跟进</button>
             </form>
         </section>
-        ${consultationSection(customer)}
+        ${consultationSection(customer, esc, { showReason: true })}
         <section class="detail-section"><h4>关联业务订单</h4>
             ${orders.length ? orders.map(order => `<p><button class="line-button" type="button" data-open-order="${esc(order.id)}">${esc(order.label)} · ${esc(orderStages[order.state] || order.state)}</button></p>`).join('') : '<p>当前没有关联订单。</p>'}
             ${canOrder ? '<button type="button" class="line-button" data-open-service="">开服务订单</button>' : '<p>先联系客户并保存「需求已确认」，即可开服务订单。</p>'}
@@ -258,13 +239,7 @@ async function openCustomer(id) {
     bindMutation($('#customerAssignment'), path + '/assignment', 'PATCH', '客户归属已保存');
     bindMutation($('#customerFollowUp'), `/api/owner/applications/${encodeURIComponent(id)}`, 'PATCH', '跟进阶段已保存');
     const consultationForm = $('#consultationForm');
-    consultationForm.elements.status.onchange = () => {
-        const scheduling = consultationForm.elements.status.value === 'scheduled';
-        for (const control of [consultationForm.elements.dateTime, consultationForm.elements.channel]) {
-            control.disabled = !scheduling;
-            control.closest('label').hidden = !scheduling;
-        }
-    };
+    bindConsultationFields(consultationForm);
     bindMutation(consultationForm, path + '/consultation', 'PATCH', '顾问预约安排已保存');
     bindMutation($('#memberAdjust'), path + '/membership', 'POST', '会员期限已保存', body => ({ ...body, type: 'owner_adjusted' }));
     bindMutation($('#memberActivate'), path + '/membership', 'POST', '首次会员已启用', body => ({ ...body, type: 'plan_confirmed', firstActivation: true }));
