@@ -116,7 +116,8 @@ test('owner operations lists unpriced preparations before they become actual pro
         assert.match(html, /费用待确认/);
     }
     assert.match(operations, /完成交接清单/);
-    assert.doesNotMatch(operations, /历史付费模板|可申请/);
+    assert.match(operations, /历史付费模板/);
+    assert.doesNotMatch(operations, /可申请/);
 });
 
 test('owner cost verification distinguishes an explicit zero from an untouched order line', async () => {

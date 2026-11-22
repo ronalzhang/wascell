@@ -16,7 +16,7 @@ const sourceTypes = { order: '订单', settlement: '结算批次', project: '运
 const auditNames = {
     policy: '发布政策', product: '更新产品', partner: '审核资格', referral: '审核推荐',
     mentorship: '更新带教', quality: '更新质量状态', template: '更新模板', project: '处理项目',
-    order: '录入订单', 'order-status': '更新订单', movement: '记账流水', settlement: '锁定月结',
+    order: '录入订单', 'service-order': '录入服务订单', 'order-status': '更新订单', movement: '记账流水', settlement: '锁定月结',
     payment: '核对付款', dispute: '处理对账异议', 'mentor-request': '申请带教',
     'mentorship-progress': '更新带教进度', 'project-apply': '申请承接项目', 'project-submit': '提交项目交付'
 };
@@ -36,6 +36,11 @@ const policyFields = [
 const esc = (value) => String(value ?? '').replace(/[&<>'"]/g,
     (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[char]);
 const ledger = (amount) => Number.isFinite(amount) ? currency.format(amount / 100) : '—';
+function orderAmount(order, amount) {
+    if (!Number.isFinite(amount)) return '—';
+    if (!order.currency || order.currency === 'CNY') return ledger(amount);
+    return new Intl.NumberFormat('zh-CN', { style: 'currency', currency: order.currency, currencyDisplay: 'code' }).format(amount / 100);
+}
 const percent = (amount) => Number.isFinite(amount) ? `${amount / 100}%` : '—';
 const decimal = (value) => Number.isFinite(value) ? (value / 100).toFixed(2) : '';
 const formatDate = (value) => value && Number.isFinite(new Date(value).getTime()) ? timestamp.format(new Date(value)) : '—';
@@ -108,7 +113,7 @@ export function orderMovementControls(order) {
     const { receiptFen, refundFen } = order.summary || {};
     const balanceFen = Number.isFinite(receiptFen) && Number.isFinite(refundFen) ? receiptFen - refundFen : null;
     const notice = cancelled ? `<p class="owner-notice owner-notice--warn">
-        签约订单已取消。请按合同和凭证核对退款。已收减已退余额为 ${ledger(balanceFen)}。
+        签约订单已取消。请按合同和凭证核对退款。已收减已退余额为 ${orderAmount(order, balanceFen)}。
     </p>` : '';
     const action = button(cancelled ? '登记退款／成本' : '登记收退／成本', 'movement-new', order.id, true);
     return { choices, action, notice };
@@ -196,7 +201,7 @@ function policyForm(policy) {
 function renderOverview(data) {
     const metrics = data.dashboard || {};
     const products = Array.isArray(data.products) ? data.products : null;
-    const templateCount = Array.isArray(data.templates) ? data.templates.filter(isUnpricedTemplate).length : null;
+    const templateCount = Array.isArray(data.templates) ? data.templates.filter(item => isUnpricedTemplate(item) || (item.starterId && !item.active)).length + list(data.starterTemplates).length : null;
     const actualRetention = metrics.contributionFen > 0 && Number.isFinite(metrics.platformRetainedFen)
         ? Math.round(metrics.platformRetainedFen * 10000 / metrics.contributionFen) : null;
     const counters = [
@@ -261,12 +266,22 @@ function templateTable(templates) {
     return table(['项目模板', '类别', '固定项目费', '状态', '操作'], templates.map((item) => {
         const preparing = isUnpricedTemplate(item);
         return [
-            rowTitle(item.name, item.deliverable), safeText(categories[item.category]),
+            rowTitle(item.name, item.scope || item.deliverable), safeText(categories[item.category]),
             preparing ? '费用待确认' : ledger(item.feeFen),
-            badge(item.active ? 'clear' : 'none', item.active ? '已启用' : preparing ? '准备中' : '已停用'),
+            badge(item.active ? 'clear' : 'none', item.active ? '已启用' : preparing ? '准备中' : '待确认'),
             button('配置', 'template-edit', item.id),
         ];
     }), '暂无项目模板');
+}
+
+function starterPanel(data) {
+    const starters = list(data.starterTemplates);
+    if (!starters.length) return '';
+    return panel('推荐项目模板', `<ul class="owner-starters">${starters.map(item => `<li>
+        <div><strong>${safeText(item.name)}</strong><p>${safeText(item.scope)}</p></div>
+        <div class="owner-starter-action"><span>${safeText(categories[item.category])} · 参考 ${ledger(item.feeFen)}</span>
+            ${button('采用并编辑', 'template-starter', item.id)}</div>
+    </li>`).join('')}</ul>`, '', '模板预填工作范围、交付物、验收标准和参考价，采用后可按本次工作量修改。');
 }
 
 function renderPolicy(data) {
@@ -286,6 +301,7 @@ function renderPolicy(data) {
                 ...economics, button('配置', 'product-edit', item.id)];
         }), '暂无产品。先确认产品资格、实际收款主体和可计佣口径。'), button('新增产品', 'product-new', '', true)),
         panel('项目模板与定价', templateTable(list(data.templates)), button('新增模板', 'template-new')),
+        starterPanel(data),
         panel('版本记录', table(['版本', '生效时间', '状态', '原因', '规则'], list(data.policies).map((item) => [
             safeText(item.id), formatDate(item.updatedAt), badge(item.enabled ? 'clear' : 'none', item.enabled ? '已启用' : '未启用'),
             safeText(item.reason), button('查看', 'policy-detail', item.id)
@@ -310,11 +326,15 @@ function renderOrders(data) {
         ];
     });
     return [
-        panel('经营订单', table(['客户 / 订单', '归因伙伴', '状态', '已收 / 已退', '佣金', '操作'], list(data.orders).map((order) => [
-            rowTitle(order.customerName, order.id), safeText(order.partnerName), badge(order.state),
-            rowTitle(ledger(order.summary?.receiptFen), `已退 ${ledger(order.summary?.refundFen)}`),
-            rowTitle(ledger(order.summary?.earnedFen), `待成熟 ${ledger(order.summary?.pendingFen)}`), button('查看', 'order-detail', order.id)
-        ]), '暂无经营订单'), button('新增订单', 'order-new', '', true)),
+        panel('业务订单', table(['客户 / 订单', '类型与归因', '状态', '已收 / 已退', '佣金', '操作'], list(data.orders).map((order) => [
+            rowTitle(order.customerName, order.lines?.map(line => line.productName).join(' / ') || order.id),
+            order.programId ? '工作室服务' : rowTitle('伙伴业务', order.partnerName), badge(order.state),
+            rowTitle(orderAmount(order, order.summary?.receiptFen), `已退 ${orderAmount(order, order.summary?.refundFen)}`),
+            order.programId ? '不适用' : rowTitle(ledger(order.summary?.earnedFen), `待成熟 ${ledger(order.summary?.pendingFen)}`),
+            button('查看', 'order-detail', order.id)
+        ]), '暂无订单。从客户详情确认需求后可开服务订单。'),
+        button('打开客户管理', 'go-customers', '', true) + (data.policy?.enabled ? button('新增伙伴订单', 'order-new') : ''),
+        '工作室服务按实际合同及收退凭证登记。合格伙伴业务按本人归因进入佣金与月结。'),
         panel('月度结算', table(['账期', '锁定时间', '入账明细', '本期应付变化', '操作'], list(data.settlements).map((batch) => [
             safeText(batch.period), formatDate(batch.lockedAt), String(list(batch.entries).length),
             ledger(list(batch.entries).reduce((sum, item) => sum + item.amountFen, 0)), button('查看', 'settlement-detail', batch.id)
@@ -330,16 +350,21 @@ function renderOrders(data) {
 
 function renderProjects(data) {
     const summary = data.dashboard || {};
-    const drafts = list(data.templates).filter(isUnpricedTemplate);
+    const templates = list(data.templates);
     return `<section class="owner-mini-summary" aria-label="项目预算">${[
         ['可分配余额', summary.projectAvailableFen], ['已承诺项目费', summary.projectCommittedFen], ['已验收项目费', summary.projectAcceptedFen]
     ].map(([label, value]) => `<article><span>${esc(label)}</span><strong>${ledger(value)}</strong></article>`).join('')}</section>${
-        drafts.length ? panel('运营准备', templateTable(drafts), '', '确认费用后可在模板中启用。') : ''
-    }${panel('经营项目', table(['项目', '承接伙伴', '固定项目费', '状态', '操作'], list(data.projects).map((item) => [
+        panel('经营项目', table(['项目', '承接伙伴', '固定项目费', '状态', '操作'], list(data.projects).map((item) => [
             rowTitle(item.name, categories[item.category]), safeText(item.partnerName), ledger(item.feeFen),
             badge(item.status, item.status === 'open' ? '可申请' : undefined), button('查看', 'project-review', item.id)
-        ]), '暂无经营项目'), button('发布项目', 'project-new', '', true) + button('设置模板', 'go-policy'),
-        '按实物或服务成果验收。申请、指派后的项目预占预算。')
+        ]), '暂无经营任务。采用一个模板即可开始准备。'),
+        templates.length ? button('新建项目草稿', 'project-new', '', true) : '',
+        data.policy?.enabled
+            ? '发布须先确认模板及可分配预算。财务依据成熟业务留存计入项目预算。'
+            : '可以先准备项目草稿。上线承接需启用伙伴计划、确认模板及可用预算。')
+    }${starterPanel(data)}${
+        panel('已保存的项目模板', templateTable(templates), button('新增模板', 'template-new') + button('查看激励政策', 'go-policy'),
+            '模板是一份可复用的任务说明。项目是其中一次实际任务，发布后锁定项目费和验收标准。')
     }`;
 }
 
@@ -470,21 +495,25 @@ export function createPartnerOwner({ root, api, drawer, openDrawer, closeDrawer,
         syncApproval();
     }
 
-    function templateForm(template = {}) {
-        const form = dialogForm(template.id ? '配置项目模板' : '新增项目模板', `${input('name', '模板名称', template.name)}
+    function templateForm(template = {}, starterId) {
+        const form = dialogForm(starterId ? '采用推荐模板' : template.id ? '配置项目模板' : '新增项目模板', `${input('name', '模板名称', template.name)}
             ${select('category', '项目类别', Object.entries(categories), template.category)}
             ${numberInput('feeFen', '固定项目费（元）', decimal(template.feeFen), {
                 decimalPlaces: true, minimum: 0.01, required: template.active === true, note: '准备阶段可留空，启用时须填写项目费。',
             })}
             ${check('requiresMentor', '要求带教资格', template.requiresMentor)}
+            ${notes('scope', '默认工作范围', template.scope, false)}
             ${notes('deliverable', '独立交付物和验收标准', template.deliverable)}
-            ${check('active', '启用此模板', template.active)}${notes('reason', '变更原因')}
+            ${check('active', '确认此模板可用于发布', template.active)}
+            ${notes('reason', '变更原因', starterId ? '采用工作室推荐样板' : '')}
         `, 'template', (fields) => ({
-            id: template.id, name: textValue(fields, 'name'), category: textValue(fields, 'category'),
+            id: starterId ? undefined : template.id, starterId,
+            name: textValue(fields, 'name'), category: textValue(fields, 'category'),
+            scope: textValue(fields, 'scope'),
             feeFen: textValue(fields, 'feeFen') ? parseHundredths(fields.get('feeFen')) : null,
             deliverable: textValue(fields, 'deliverable'),
             active: fields.has('active'), requiresMentor: fields.has('requiresMentor'), reason: textValue(fields, 'reason')
-        }));
+        }), { onSuccess: starterId && currentView === 'partnerProjects' ? result => projectForm(result.id) : undefined });
         function syncTemplateRules() {
             const mentoring = form.elements.category.value === 'mentoring';
             if (mentoring) form.elements.requiresMentor.checked = true;
@@ -584,20 +613,27 @@ export function createPartnerOwner({ root, api, drawer, openDrawer, closeDrawer,
         }
     }
 
-    function projectForm() {
-        const options = list(data.templates).filter((item) => item.active)
-            .map((item) => [item.id, `${item.name} · ${ledger(item.feeFen)}`]);
-        if (!options.length) {
-            openDrawer('发布项目', '<p class="owner-notice">请先在激励政策中启用带有固定价格和验收标准的项目模板。</p>', 'PARTNER PROJECTS');
-            return;
+    function projectForm(templateId = '') {
+        const templates = list(data.templates);
+        if (!templates.length) return;
+        const options = templates.map(item => [item.id, `${item.name} · ${ledger(item.feeFen)}`]);
+        const initial = selectedId(templates, templateId);
+        const form = dialogForm('新建项目草稿', `${select('templateId', '项目模板', options, templateId)}
+            <p class="owner-notice owner-span" data-template-preview></p>
+            ${notes('scope', '本次工作范围', initial?.scope)}
+            ${notes('reason', '立项依据')}
+        `, 'project', fields => ({
+            draft: true, templateId: textValue(fields, 'templateId'), scope: textValue(fields, 'scope'),
+            reason: textValue(fields, 'reason'),
+        }), { submit: '保存项目草稿', onSuccess: result => projectReview(result.id) });
+        const preview = form.querySelector('[data-template-preview]');
+        function applyTemplate() {
+            const template = selectedId(templates, form.elements.templateId.value);
+            form.elements.scope.value = template?.scope || '';
+            preview.textContent = template ? `${template.active ? '模板已确认' : '模板待确认'}。验收标准：${template.deliverable}` : '';
         }
-        dialogForm('发布项目', `${select('templateId', '项目模板', options)}
-            ${select('partnerId', '承接伙伴', accountChoices({ certified: true }), '', '开放申请', false)}
-            ${notes('scope', '本次工作范围')}${notes('reason', '立项依据')}
-        `, 'project', (fields) => ({
-            templateId: textValue(fields, 'templateId'), scope: textValue(fields, 'scope'),
-            partnerId: textValue(fields, 'partnerId'), reason: textValue(fields, 'reason')
-        }));
+        form.elements.templateId.addEventListener('change', applyTemplate);
+        applyTemplate();
     }
 
     function projectReview(id) {
@@ -607,7 +643,11 @@ export function createPartnerOwner({ root, api, drawer, openDrawer, closeDrawer,
             ['固定项目费', ledger(project.feeFen)], ['验收标准', safeText(project.deliverable)],
             ['工作范围', safeText(project.scope)], ['申请说明', safeText(project.applicationNote)], ['交付物说明', safeText(project.submission)],
             ['最近处理原因', safeText(project.reason)], ['验收时间', formatDate(project.acceptedAt)]]);
+        const template = selectedId(data.templates, project.templateId);
+        const ready = template?.active && data.policy?.enabled && Number.isFinite(data.dashboard?.projectAvailableFen) &&
+            data.dashboard.projectAvailableFen >= template.feeFen;
         const workflow = {
+            draft: [['edit', '保存范围调整'], ...(ready ? [['publish', '发布项目']] : []), ['close', '关闭草稿']],
             open: [['assign', '指派伙伴'], ['close', '关闭项目']],
             applied: [['assign', '核准申请'], ['return', '退回申请'], ['close', '关闭项目']],
             assigned: [['close', '关闭项目']],
@@ -618,15 +658,24 @@ export function createPartnerOwner({ root, api, drawer, openDrawer, closeDrawer,
             openDrawer(project.name, details, 'PARTNER PROJECTS');
             return;
         }
-        const form = dialogForm(project.name, `${select('action', '项目处理', actions)}
-            ${select('partnerId', '承接伙伴', accountChoices({ certified: true }), project.partnerId, '请选择', false)}
+        const draft = project.status === 'draft';
+        const preparation = draft ? `<p class="owner-notice">${!template?.active ? '先确认此项目的模板价格与验收标准。'
+            : !data.policy?.enabled ? '先在激励政策启用伙伴计划。'
+            : !ready ? '可用预算不足，可以继续准备草稿。'
+            : '发布时将锁定当前模板的费用与验收标准。'}</p>` : '';
+        const form = dialogForm(project.name, `${select('action', '项目处理', actions, actions[0][0], null)}
+            ${draft ? notes('scope', '本次工作范围', project.scope, false) : ''}
+            ${select('partnerId', '承接伙伴', accountChoices({ certified: true, mentors: project.requiresMentor }), project.partnerId, '开放申请', false)}
             ${notes('reason', '办理原因')}`, 'project', (fields) => ({
-                id, action: textValue(fields, 'action'), partnerId: textValue(fields, 'partnerId'), reason: textValue(fields, 'reason')
-            }), { details });
+                id, action: textValue(fields, 'action'), partnerId: textValue(fields, 'partnerId'), reason: textValue(fields, 'reason'),
+                scope: fields.has('scope') ? textValue(fields, 'scope') : undefined,
+            }), { details: details + preparation, onSuccess: () => projectReview(id) });
         const partnerInput = form.elements.partnerId;
         function syncAction() {
-            partnerInput.closest('label').hidden = form.elements.action.value !== 'assign';
-            partnerInput.required = !partnerInput.closest('label').hidden;
+            const action = form.elements.action.value;
+            partnerInput.closest('label').hidden = !['assign', 'publish'].includes(action);
+            partnerInput.required = action === 'assign';
+            if (draft) form.elements.scope.closest('label').hidden = action === 'close';
         }
         form.elements.action.addEventListener('change', syncAction);
         syncAction();
@@ -709,29 +758,68 @@ export function createPartnerOwner({ root, api, drawer, openDrawer, closeDrawer,
         searchCustomers();
     }
 
+    function serviceOrderForm(customer, bookingId = '') {
+        const programs = list(data?.orderPrograms).map(item => [item.id, item.title]);
+        const booking = bookingId ? list(customer.internalBookings).find(item => item.id === bookingId) : null;
+        const initialProgram = booking ? 'autologous-stem-cells'
+            : customer.programId || (customer.periodId ? 'autologous-stem-cells' : '');
+        const requestId = crypto.randomUUID();
+        const matchingPrograms = booking ? programs.filter(([id]) => id === initialProgram) : programs;
+        const details = infoPairs([['客户', safeText(customer.name)], ['预约意向编号', safeText(customer.id)],
+            ['关联期次', safeText(booking?.periodLabel || customer.periodLabel)]]);
+        const form = dialogForm('开服务订单', `
+            ${select('programId', '实际服务项目', matchingPrograms, initialProgram)}
+            ${select('currency', '合同币种', list(data?.orderCurrencies).map(code => [code, code]), 'JPY', null)}
+            ${numberInput('quotedFen', '确认的应收金额', '', { decimalPlaces: false, minimum: 1 })}
+            ${notes('note', '说明（选填）', '', false)}
+        `, 'service-order', fields => ({
+            customerId: customer.id, bookingId, requestId, programId: textValue(fields, 'programId'),
+            currency: textValue(fields, 'currency'), quotedFen: parseHundredths(fields.get('quotedFen')),
+            note: textValue(fields, 'note'),
+        }), {
+            details: details + '<p class="owner-notice">按实际合同或已核对报价填写。此订单可登记收款、退款和交付。</p>',
+            submit: '保存订单草稿', success: '服务订单草稿已保存', onSuccess: order => orderDetail(order.id),
+        });
+        const syncCurrency = () => {
+            const whole = form.elements.currency.value === 'JPY';
+            form.elements.quotedFen.step = whole ? '1' : '0.01';
+            form.elements.quotedFen.min = whole ? '1' : '0.01';
+        };
+        form.elements.currency.addEventListener('change', syncCurrency);
+        syncCurrency();
+    }
+
     function orderDetail(id) {
         const order = selectedId(data.orders, id);
         if (!order) return;
-        const details = infoPairs([['客户', safeText(order.customerName)], ['归因伙伴', safeText(order.partnerName)],
+        const isService = Boolean(order.programId);
+        const amount = value => orderAmount(order, value);
+        const details = infoPairs([['客户', safeText(order.customerName)], ['预约意向编号', safeText(order.customerId)],
+            ['业务类型', isService ? '工作室服务' : rowTitle('伙伴业务', order.partnerName)],
+            ...(isService ? [
+                ...(order.intendedPeriodLabel ? [['客户意向期次', safeText(order.intendedPeriodLabel)]] : []),
+                ['确认服务期次', safeText(order.periodLabel)], ['合同币种', safeText(order.currency)],
+                ['签约主体', safeText(order.contractingParty)], ['交付与随访记录', safeText(order.deliveryNote)]] : []),
             ['订单编号', safeText(order.id)], ['当前状态', badge(order.state)], ['合同凭证', safeText(order.contractRef)],
             ['签约时间', formatDate(order.signedAt)], ['确认交付', formatDate(order.deliveredAt)], ['订单说明', safeText(order.note)],
-            ['工作室净实收', ledger(order.summary?.netFen)], ['可计提贡献', ledger(order.summary?.contributionFen)],
-            ['累计已核验成本', ledger(order.summary?.costFen)], ['已计佣金', ledger(order.summary?.earnedFen)]]);
+            ['工作室净实收', amount(order.summary?.netFen)], ['累计已核验成本', amount(order.summary?.costFen)],
+            ...(!isService ? [['可计提贡献', amount(order.summary?.contributionFen)], ['已计佣金', amount(order.summary?.earnedFen)]] : [])]);
         const lines = panel('产品明细', table(['产品', '应收金额', '签约计佣依据'], list(order.lines).map((line) => [
-            rowTitle(line.productName, line.id), ledger(line.quotedFen), order.state === 'draft' ? '待签约锁定' :
+            rowTitle(line.productName, line.id), amount(line.quotedFen), isService ? '工作室服务' : order.state === 'draft' ? '待签约锁定' :
                 line.eligible ? rowTitle(percent(line.snapshot?.rateBps), line.snapshot?.policyId || '') : '仅记录账目'
         ])));
         const flows = panel('收退与成本流水', table(['类别 / 凭证', '金额', '分摊', '登记时间'], list(order.movements).map((movement) => [
-            rowTitle(movements[movement.type] || movement.type, movement.reference), ledger(movement.amountFen),
+            rowTitle(movements[movement.type] || movement.type, movement.reference), amount(movement.amountFen),
             `<ul class="owner-allocation-list">${list(movement.allocations).map((allocation) => `<li>
-            ${safeText(selectedId(order.lines, allocation.lineId)?.productName || allocation.lineId)} · ${ledger(allocation.amountFen)}${
-            allocation.taxFen || allocation.passThroughFen ? `<small>税 ${ledger(allocation.taxFen)} · 代收 ${ledger(allocation.passThroughFen)}</small>` : ''
+            ${safeText(selectedId(order.lines, allocation.lineId)?.productName || allocation.lineId)} · ${amount(allocation.amountFen)}${
+            allocation.taxFen || allocation.passThroughFen ? `<small>税 ${amount(allocation.taxFen)} · 代收 ${amount(allocation.passThroughFen)}</small>` : ''
         }</li>`).join('')}</ul>`, formatDate(movement.createdAt)
         ]), '暂无流水'));
         const movement = orderMovementControls(order);
         const controls = [
             ['draft', 'signed'].includes(order.state) ? button('更新订单状态', 'order-state', id) : '',
-            movement.action
+            movement.action,
+            order.customerId ? button('查看客户与预约', 'order-customer', order.customerId) : ''
         ].join('');
         openDrawer('经营订单详情', `${details}${movement.notice}${controls ? `<div class="owner-dialog-actions">${controls}</div>` : ''}${lines}${flows}`, 'PARTNER ORDERS');
     }
@@ -741,15 +829,25 @@ export function createPartnerOwner({ root, api, drawer, openDrawer, closeDrawer,
         if (!order) return;
         const options = order.state === 'draft' ? [['signed', '签约并锁定口径'], ['cancelled', '取消草稿']]
             : [['delivered', '确认已交付'], ['cancelled', '取消订单']];
+        const needsPeriod = order.programId === 'autologous-stem-cells' && !order.bookingId && order.state === 'draft';
         const form = dialogForm('更新订单状态', `${select('state', '处理动作', options)}
             ${input('contractRef', '合同凭证编号', '', { required: false })}
-            ${notes('reason', '核验或取消依据')}`, 'order-status', (fields) => ({
-                id, state: textValue(fields, 'state'), contractRef: textValue(fields, 'contractRef'), reason: textValue(fields, 'reason')
+            ${order.programId && order.state === 'draft' ? input('contractingParty', '合同签约主体', '', { required: false }) : ''}
+            ${needsPeriod ? input('servicePeriodId', '确认服务期次编号（例如 20270101）', order.intendedPeriodId, { required: false }) : ''}
+            ${notes('reason', order.programId && order.state === 'signed' ? '交付与随访记录，或取消依据' : '核验或取消依据')}`, 'order-status', (fields) => ({
+                id, state: textValue(fields, 'state'), contractRef: textValue(fields, 'contractRef'),
+                contractingParty: textValue(fields, 'contractingParty'), servicePeriodId: textValue(fields, 'servicePeriodId'),
+                reason: textValue(fields, 'reason')
             }), { onSuccess: () => orderDetail(id) });
         const syncRequired = () => {
             const contract = form.elements.contractRef;
             contract.required = form.elements.state.value === 'signed';
             contract.closest('label').hidden = !contract.required;
+            for (const field of [form.elements.contractingParty, form.elements.servicePeriodId]) {
+                if (!field) continue;
+                field.required = contract.required;
+                field.closest('label').hidden = !field.required;
+            }
         };
         form.elements.state.addEventListener('change', syncRequired);
         syncRequired();
@@ -760,17 +858,20 @@ export function createPartnerOwner({ root, api, drawer, openDrawer, closeDrawer,
         if (!order) return;
         const { choices, notice } = orderMovementControls(order);
         if (!choices.length) return;
+        const unit = order.currency || 'CNY';
+        const precise = unit !== 'JPY';
+        const minimum = precise ? 0.01 : 1;
         const fieldsMarkup = list(order.lines).map((line, index) => `<fieldset class="owner-allocation">
-            <legend>${safeText(line.productName)} · 应收 ${ledger(line.quotedFen)}</legend>
+            <legend>${safeText(line.productName)} · 应收 ${orderAmount(order, line.quotedFen)}</legend>
             <div class="owner-form-grid">
-                ${numberInput(`allocation-${index}`, '本项金额（元）', '', { decimalPlaces: true, required: false })}
-                <div class="owner-bank-allocation owner-span">${numberInput(`tax-${index}`, '其中税额（元）', '', { decimalPlaces: true, required: false })}
-                    ${numberInput(`pass-through-${index}`, '其中代收款（元）', '', { decimalPlaces: true, required: false })}
+                ${numberInput(`allocation-${index}`, `本项金额（${unit}）`, '', { decimalPlaces: precise, required: false })}
+                <div class="owner-bank-allocation owner-span">${numberInput(`tax-${index}`, `其中税额（${unit}）`, '', { decimalPlaces: precise, required: false })}
+                    ${numberInput(`pass-through-${index}`, `其中代收款（${unit}）`, '', { decimalPlaces: precise, required: false })}
                 </div>
             </div></fieldset>`).join('');
         const title = order.state === 'cancelled' ? '登记退款／成本流水' : '登记收退／成本流水';
         const form = dialogForm(title, `${select('type', '凭证类别', choices, choices[0][0], null)}
-            ${input('reference', '唯一凭证编号')}${numberInput('amountFen', '凭证总金额（元）', '', { decimalPlaces: true, minimum: 0.01 })}
+            ${input('reference', '唯一凭证编号')}${numberInput('amountFen', `凭证总金额（${unit}）`, '', { decimalPlaces: precise, minimum })}
             <div class="owner-span">
                 <p data-cost-tip class="owner-notice" hidden>无直接成本的明细也需要核验。该项填 0，未涉及的明细留空。</p>
                 ${fieldsMarkup}<p class="owner-allocation-total" data-owner-allocation-total role="status"></p>
@@ -784,7 +885,7 @@ export function createPartnerOwner({ root, api, drawer, openDrawer, closeDrawer,
             const bank = type === 'receipt' || type === 'refund';
             for (const label of form.querySelectorAll('.owner-bank-allocation')) label.hidden = !bank;
             form.querySelector('[data-cost-tip]').hidden = type !== 'cost';
-            form.elements.amountFen.min = type === 'cost' ? 0 : 0.01;
+            form.elements.amountFen.min = type === 'cost' ? 0 : minimum;
         }
         form.elements.type.addEventListener('change', syncFields);
         function syncAllocations() {
@@ -794,7 +895,7 @@ export function createPartnerOwner({ root, api, drawer, openDrawer, closeDrawer,
             } catch {
                 return;
             }
-            form.querySelector('[data-owner-allocation-total]').textContent = `已分摊 ${ledger(total)}`;
+            form.querySelector('[data-owner-allocation-total]').textContent = `已分摊 ${orderAmount(order, total)}`;
         }
         form.addEventListener('input', syncAllocations);
         syncFields();
@@ -884,9 +985,11 @@ export function createPartnerOwner({ root, api, drawer, openDrawer, closeDrawer,
         'go-orders': () => navigate('partnerOrders'),
         'go-policy': () => navigate('partnerPolicy'),
         'go-staff': () => navigate('staff'),
+        'go-customers': () => navigate('customers'),
         'product-new': () => productForm(),
         'product-edit': (id) => productForm(selectedId(data.products, id)),
         'template-new': () => templateForm(),
+        'template-starter': (id) => templateForm(selectedId(data.starterTemplates, id), id),
         'template-edit': (id) => templateForm(selectedId(data.templates, id)),
         'policy-detail': policyDetail,
         'partner-edit': partnerForm,
@@ -894,10 +997,11 @@ export function createPartnerOwner({ root, api, drawer, openDrawer, closeDrawer,
         'referral-edit': referralForm,
         'mentorship-new': mentorshipForm,
         'mentorship-review': mentorshipReview,
-        'project-new': projectForm,
+        'project-new': () => projectForm(),
         'project-review': projectReview,
         'order-new': orderForm,
         'order-detail': orderDetail,
+        'order-customer': id => navigate('customers', { customerId: id }),
         'order-state': orderStatusForm,
         'movement-new': movementForm,
         'settlement-new': settlementForm,
@@ -920,5 +1024,5 @@ export function createPartnerOwner({ root, api, drawer, openDrawer, closeDrawer,
         write(event.target, 'policy', readPolicyForm, '激励政策已发布');
     });
 
-    return { load, clear };
+    return { load, clear, serviceOrderForm, orderDetail };
 }

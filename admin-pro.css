@@ -227,3 +227,8 @@ td small { display:block; margin-top:5px; color:var(--muted); font:9px "SFMono-R
     .price-field input, .price-field select, .price-field textarea { font-size:16px; }
     .price-buttons button { flex:1 1 auto; }
 }
+
+.customer-booking + .customer-booking { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
+.customer-booking .admin-form { padding: 12px 0; }
+.customer-feedback:empty { display: none; }
+.customer-feedback:not(:empty) { padding: 12px; color: #ffccab; border: 1px solid var(--line); }

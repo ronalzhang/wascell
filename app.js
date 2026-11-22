@@ -1079,13 +1079,25 @@ app.get('/api/owner/customers', adminAuth.requireOwner, async (req, res) => {
 });
 
 app.get('/api/owner/customers/:id', adminAuth.requireOwner, async (req, res) => {
-    const customer = await advisorStore.getApplication(req.params.id);
-    return customer ? res.json(customer) : res.status(404).json({ message: '客户不存在' });
+    try {
+        const customer = await advisorStore.getApplication(req.params.id);
+        if (!customer) return res.status(404).json({ message: '客户不存在' });
+        const linkedOrders = await partnerProgram.ordersForCustomer(req.auth, customer.id);
+        return res.set('Cache-Control', 'no-store').json({ ...customer, linkedOrders });
+    } catch (error) {
+        console.error('读取客户详情失败', error.name);
+        return res.status(500).json({ message: '客户详情暂不可用' });
+    }
 });
 
 app.patch('/api/owner/customers/:id/assignment', adminAuth.requireOwner, async (req, res) => {
     try {
-        const customer = await advisorStore.assignSales(req.params.id, req.body?.salesId);
+        const salesId = req.body?.salesId;
+        if (salesId !== null && typeof salesId !== 'string') return res.status(400).json({ message: '请选择有效销售账号' });
+        if (salesId && !(await staffStore.listSales()).some(item => item.id === salesId && item.active)) {
+            return res.status(400).json({ message: '请选择已启用的销售账号' });
+        }
+        const customer = await advisorStore.assignSales(req.params.id, salesId);
         if (!customer) return res.status(404).json({ message: '客户不存在' });
         await auditLog.append({
             actorId: req.auth.userId,
@@ -1113,12 +1125,18 @@ app.post('/api/owner/customers/:id/membership', adminAuth.requireOwner, async (r
                 actorId: req.auth.userId,
             });
         } else if (type === 'plan_confirmed' || type === 'fee_renewed') {
+            if (req.body?.firstActivation === true && (type !== 'plan_confirmed' ||
+                typeof req.body.reason !== 'string' || !req.body.reason.trim() || req.body.reason.length > 400)) {
+                return res.status(400).json({ message: '请填写已确认的首期方案依据' });
+            }
             customer = await advisorStore.recordMembershipEvent(req.params.id, {
                 type,
                 actorId: req.auth.userId,
                 months: config.membershipMonths,
                 priceSnapshot: type === 'plan_confirmed' ? config.fullPlanPrice : config.membershipFee,
                 bookingId: req.body?.bookingId,
+                firstActivation: req.body?.firstActivation === true,
+                reason: req.body?.firstActivation === true ? req.body.reason : '',
             });
         } else {
             return res.status(400).json({ message: '不支持的会员操作' });
@@ -1134,8 +1152,8 @@ app.post('/api/owner/customers/:id/membership', adminAuth.requireOwner, async (r
         });
         return res.json({ success: true, customer });
     } catch (error) {
-        const validation = /会员|到期|原因|日期|价格|不支持|缺少/.test(error.message);
-        return res.status(validation ? 400 : 500).json({ message: validation ? error.message : '会员操作失败' });
+        const status = error.statusCode || (/会员|到期|原因|日期|价格|不支持|缺少/.test(error.message) ? 400 : 500);
+        return res.status(status).json({ message: status < 500 ? error.message : '会员操作失败' });
     }
 });
 
@@ -1203,8 +1221,30 @@ app.post('/api/sales/customers/:id/internal-bookings', adminAuth.requireSalesOrO
         });
         return res.status(201).json({ success: true, booking });
     } catch (error) {
-        const validation = /会员|期次|人数|无权/.test(error.message);
-        return res.status(validation ? 400 : 500).json({ message: validation ? error.message : '后续预约创建失败' });
+        const status = error.statusCode || (/会员|期次|人数|无权/.test(error.message) ? 400 : 500);
+        return res.status(status).json({ message: status < 500 ? error.message : '后续预约创建失败' });
+    }
+});
+
+app.patch('/api/owner/customers/:id/consultation', adminAuth.requireOwner, async (req, res) => {
+    try {
+        const consultation = await advisorStore.updateConsultation(req.params.id, req.body || {}, req.auth);
+        return res.json({ success: true, consultation });
+    } catch (error) {
+        return res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : '咨询安排暂不可用' });
+    }
+});
+
+app.patch('/api/owner/customers/:id/internal-bookings/:bookingId', adminAuth.requireOwner, async (req, res) => {
+    try {
+        const { id, bookingId } = req.params;
+        const review = () => advisorStore.reviewBooking(id, bookingId, req.body || {}, req.auth);
+        const booking = req.body?.status === 'cancelled'
+            ? await partnerProgram.cancelBooking(req.auth, id, bookingId, review)
+            : await review();
+        return res.json({ success: true, booking });
+    } catch (error) {
+        return res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : '预约审核暂不可用' });
     }
 });
 

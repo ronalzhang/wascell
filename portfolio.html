@@ -7,7 +7,7 @@
     <title>ARKSOMA · 再生科学与个体化健康服务</title>
     <link rel="icon" href="/favicon.png">
     <link rel="stylesheet" href="/portfolio.css">
-    <script src="/portfolio.mjs" type="module"></script>
+    <script src="/portfolio.mjs?v=20261122-3" type="module"></script>
 </head>
 <body>
     <a class="skip-link" href="#content">跳到页面内容</a>
@@ -85,6 +85,7 @@
                 <h2>体检与检测包含项</h2>
                 <p>基础体检用于补齐申请资料，顾问会在报价中注明费用与当期可用权益。120 项血液检测可以单独安排，也是旗舰自体干细胞方案的包含项。</p>
                 <div id="checkupEstimate"></div>
+                <button class="outline-gold" type="button" data-advisor="basic-checkup" data-program-title="基础体检（申请支持）">咨询基础体检</button>
             </section>
         </div>
 
@@ -133,7 +134,7 @@
             <form method="dialog"><button type="submit" class="text-action">关闭</button></form>
         </div>
         <div id="advisorFields">
-            <p>本次登记用于联系和了解需求。顾问会说明正式评估所需的材料。</p>
+            <p>请留下联系方式和关注方向。顾问会与您确认沟通时间、准备资料和后续安排。</p>
             <form id="programAdvisorForm">
                 <div class="form-grid">
                     <label>怎么称呼您<input name="name" autocomplete="name" required maxlength="80"></label>
@@ -156,7 +157,7 @@
         <div id="advisorReceived" hidden aria-live="polite">
             <h3>预约意向已收到</h3>
             <p id="advisorReference"></p>
-            <p>顾问会与您确认沟通时间和资料清单。</p>
+            <p>请保留意向编号。顾问会按您留下的联系方式确认沟通时间和资料清单，期次将在核对后确认。</p>
             <form method="dialog"><button class="outline-gold" type="submit">完成</button></form>
         </div>
     </dialog>

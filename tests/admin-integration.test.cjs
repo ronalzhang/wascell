@@ -6,12 +6,18 @@ const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
 const { createStaffStore } = require('../lib/staff-store');
+const { getPeriodLabel } = require('../lib/program-catalog');
+
+const clock = new Date();
+const nextMonthId = new Date(Date.UTC(clock.getUTCFullYear(), clock.getUTCMonth() + 1, 1))
+    .toISOString().slice(0, 7).replace('-', '') + '01';
 
 let child;
 let baseUrl;
 let runtimeDir;
 let salesOneId;
 let salesTwoId;
+let workflowIntakeId;
 
 test.before(async () => {
     runtimeDir = await fs.mkdtemp(path.join(os.tmpdir(), 'wascell-admin-integration-'));
@@ -254,8 +260,7 @@ test('sales customer APIs enforce assignment and owner-only membership changes',
         method: 'POST',
         headers: { cookie: salesCookie, 'content-type': 'application/json' },
         body: JSON.stringify({
-            periodId: '20270101',
-            periodLabel: '2027·一月首期',
+            periodId: nextMonthId,
             guestCount: 2,
             relationship: '父母',
         }),
@@ -313,12 +318,18 @@ test('owner manages staff and knowledge while sales receives only published know
     assert.equal(forbiddenStaff.status, 403);
 });
 
+const testSessions = new Map();
+
 async function sessionCookie(role, body) {
+    const key = JSON.stringify([role, body]);
+    if (testSessions.has(key)) return testSessions.get(key);
     const login = await fetch(`${baseUrl}/api/${role}/login`, {
         method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
     });
     assert.equal(login.status, 200);
-    return login.headers.get('set-cookie');
+    const cookie = login.headers.get('set-cookie');
+    testSessions.set(key, cookie);
+    return cookie;
 }
 
 function callJson(url, cookie, method, body) {
@@ -362,13 +373,16 @@ test('customer transfers revoke old service-case access and sales responses omit
     const other = await sessionCookie('sales', { username: 'sales.other', password: 'Sales-Other-2026' });
     const form = new FormData();
     form.set('submissionKey', 'partner-case-acl');
-    form.set('periodId', '20261201');
+    form.set('portfolio', '1');
+    form.set('programId', 'autologous-stem-cells');
+    form.set('contactConsent', 'yes');
     form.set('name', '案例客户一');
     form.set('contact', 'case-01');
     form.set('note', '不属于销售资料的测试备注');
     const created = await fetch(baseUrl + '/api/advisor-applications', { method: 'POST', body: form });
     assert.equal(created.status, 201);
     const { orderId } = await created.json();
+    workflowIntakeId = orderId;
     const ownerPath = '/api/owner/customers/' + orderId;
     const salesPath = '/api/sales/customers/' + orderId;
     assert.equal((await callJson(ownerPath + '/assignment', admin, 'PATCH', { salesId: salesOneId })).status, 200);
@@ -425,6 +439,82 @@ test('sales can record and follow up a consented private lead, once, under the c
     assert.equal((await updated.json()).customer.salesNote, '已约定联系时间');
     const fromAdmin = await fetch(baseUrl + '/api/owner/customers/' + customer.id, { headers: { cookie: admin } });
     assert.equal((await fromAdmin.json()).status, 'contacted');
+});
+
+test('consultation reference links to an owner service order and a confirmed follow-up booking', async () => {
+    const admin = await sessionCookie('owner', { password: 'integration-password' });
+    const sales = await sessionCookie('sales', { username: 'sales.integration', password: 'Sales-Integration-2026' });
+    const other = await sessionCookie('sales', { username: 'sales.other', password: 'Sales-Other-2026' });
+    const id = workflowIntakeId;
+    assert.match(id, /^ARK-/);
+    const customerPath = '/api/owner/customers/' + id;
+    assert.equal((await callJson(customerPath + '/assignment', admin, 'PATCH', { salesId: 'missing' })).status, 400);
+    assert.equal((await callJson(customerPath + '/assignment', admin, 'PATCH', { salesId: salesOneId })).status, 200);
+    assert.equal((await callJson('/api/sales/customers/' + id + '/follow-up', sales, 'PATCH', { status: 'qualified' })).status, 200);
+    const consultationPath = customerPath + '/consultation';
+    const appointment = { status: 'scheduled', dateTime: '2027-01-10T10:30', channel: 'phone', reason: '已与客户确认回电' };
+    assert.equal((await callJson(consultationPath, admin, 'PATCH', { ...appointment, dateTime: '2027-02-31T10:30' })).status, 400);
+    assert.equal((await callJson(consultationPath, admin, 'PATCH', { status: 'completed', reason: '尚未安排' })).status, 409);
+    assert.equal((await callJson(consultationPath, sales, 'PATCH', appointment)).status, 403);
+    assert.equal((await callJson(consultationPath, admin, 'PATCH', appointment)).status, 200);
+    const appointmentOnSales = await (await fetch(baseUrl + '/api/sales/customers/' + id, { headers: { cookie: sales } })).json();
+    assert.equal(appointmentOnSales.consultation.status, 'scheduled');
+    assert.equal(appointmentOnSales.consultation.reason, undefined);
+    assert.equal((await callJson(consultationPath, admin, 'PATCH', { status: 'completed', reason: '已沟通需求和准备计划' })).status, 200);
+    const orderPath = '/api/owner/partner-program/service-order';
+    const orderData = { customerId: id, programId: 'autologous-stem-cells', currency: 'CNY', quotedFen: 100000, requestId: 'flow-001' };
+    const drafted = await callJson(orderPath, admin, 'POST', orderData);
+    assert.equal(drafted.status, 200);
+    const order = await drafted.json();
+    assert.equal(order.periodId, '');
+    const orderStatusPath = '/api/owner/partner-program/order-status';
+    const sign = { id: order.id, state: 'signed', contractRef: 'WORKFLOW-SIGN-001', contractingParty: '测试签约主体', reason: '已核对签约和服务期次' };
+    assert.equal((await callJson(orderStatusPath, admin, 'POST', sign)).status, 400);
+    assert.equal((await callJson(orderStatusPath, admin, 'POST', { ...sign, servicePeriodId: '20000101' })).status, 409);
+    const signed = await callJson(orderStatusPath, admin, 'POST', { ...sign, servicePeriodId: nextMonthId });
+    assert.equal(signed.status, 200);
+    assert.equal((await signed.json()).periodLabel, getPeriodLabel(nextMonthId));
+    const bookingPath = '/api/sales/customers/' + id + '/internal-bookings';
+    const activation = { type: 'plan_confirmed', firstActivation: true, reason: '测试首期方案确认凭证' };
+    assert.equal((await callJson(customerPath + '/membership', admin, 'POST', { ...activation, reason: '' })).status, 400);
+    assert.equal((await callJson(customerPath + '/membership', admin, 'POST', activation)).status, 200);
+    assert.equal((await callJson(customerPath + '/membership', admin, 'POST', activation)).status, 409);
+    const bookingInput = { periodId: nextMonthId, periodLabel: '无效的来客标题', guestCount: 2 };
+    assert.equal((await callJson(bookingPath, sales, 'POST', { ...bookingInput, periodId: '20000101' })).status, 409);
+    assert.equal((await callJson(bookingPath, sales, 'POST', { ...bookingInput, periodId: '20990101' })).status, 409);
+    const booked = await callJson(bookingPath, sales, 'POST', bookingInput);
+    assert.equal(booked.status, 201);
+    const { booking } = await booked.json();
+    assert.equal(booking.periodLabel, getPeriodLabel(nextMonthId));
+    assert.equal((await callJson(bookingPath, sales, 'POST', bookingInput)).status, 409);
+    const reviewPath = customerPath + '/internal-bookings/' + booking.id;
+    assert.equal((await callJson(reviewPath, sales, 'PATCH', { status: 'confirmed', reason: '无权确认' })).status, 403);
+    const nextOrder = { ...orderData, bookingId: booking.id, requestId: 'flow-002' };
+    assert.equal((await callJson(orderPath, admin, 'POST', nextOrder)).status, 409);
+    assert.equal((await callJson(reviewPath, admin, 'PATCH', { status: 'confirmed', reason: '已核对席位并联系客户' })).status, 200);
+    const follow = await callJson(orderPath, admin, 'POST', nextOrder);
+    assert.equal(follow.status, 200);
+    const followOrder = await follow.json();
+    assert.equal(followOrder.periodId, nextMonthId);
+    const cancelBooking = { status: 'cancelled', reason: '客户申请改期' };
+    assert.equal((await callJson(reviewPath, admin, 'PATCH', cancelBooking)).status, 409);
+    const detail = await (await fetch(baseUrl + customerPath, { headers: { cookie: admin } })).json();
+    assert.equal(detail.internalBookings[0].status, 'confirmed');
+    assert.equal(detail.linkedOrders.length, 2);
+    assert.equal(detail.linkedOrders[0].customerId, id);
+    assert.equal(detail.linkedOrders[1].bookingId, booking.id);
+    assert.equal(detail.note, '不属于销售资料的测试备注');
+    const salesDesk = async cookie => (await fetch(baseUrl + '/api/sales/partner-program', { headers: { cookie } })).json();
+    const visible = (await salesDesk(sales)).orders.find(item => item.id === order.id);
+    assert.equal(visible.serviceOrder, true);
+    for (const field of ['note', 'movements', 'summary', 'contractingParty']) assert.equal(visible[field], undefined);
+    assert.equal((await salesDesk(other)).orders.some(item => item.id === order.id), false);
+    await callJson(customerPath + '/assignment', admin, 'PATCH', { salesId: salesTwoId });
+    assert.equal((await salesDesk(sales)).orders.some(item => item.id === order.id), false);
+    assert.equal((await salesDesk(other)).orders.some(item => item.id === order.id), true);
+    const cancelledOrder = await callJson(orderStatusPath, admin, 'POST', { id: followOrder.id, state: 'cancelled', reason: '预约改期，草稿未签约' });
+    assert.equal(cancelledOrder.status, 200);
+    assert.equal((await callJson(reviewPath, admin, 'PATCH', cancelBooking)).status, 200);
 });
 
 test('public application rejects unpublished dates, cross-site submissions and mismatched uploads', async () => {

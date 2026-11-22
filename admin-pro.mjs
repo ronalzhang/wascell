@@ -1,5 +1,5 @@
 import { advisorReportLabel, sessionLoginMessage } from './session-state.mjs?v=20261122-1';
-import { createPartnerOwner } from './partner-owner.mjs?v=20261122-1';
+import { createPartnerOwner } from './partner-owner.mjs?v=20261122-3';
 import { createProgramPricesView } from './admin-program-prices.mjs?v=20261122-1';
 
 const $=(s)=>document.querySelector(s), $$=(s)=>[...document.querySelectorAll(s)];
@@ -16,7 +16,8 @@ const esc=(v='')=>String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'
 const money=(v)=>`¥ ${Number(v||0).toLocaleString('zh-CN')}`;
 const date=(v)=>v?new Intl.DateTimeFormat('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(v)):'未启用';
 const countText = (value) => Number.isFinite(value) ? value.toLocaleString('zh-CN') : '—';
-let toastTimer,sessionEstablished=false,drawerTrigger;
+let toastTimer, sessionEstablished = false, drawerTrigger, customerSearchTimer;
+let customerPage = 1, customerListRequest = 0, customerDrawerRequest = 0;
 const partnerOwner = createPartnerOwner({
     root: $('#partnerProgramView'), api, drawer: $('#drawerContent'),
     openDrawer, closeDrawer, toast, navigate: setView
@@ -39,7 +40,7 @@ const programPrices = createProgramPricesView($('#pricesView'), { api, esc, onSa
 
 async function handleLogin(e){e.preventDefault();const btn=$('#loginButton');btn.disabled=true;try{await api('/api/owner/login',{method:'POST',body:JSON.stringify({password:$('#password').value})});$('#password').value='';sessionEstablished=true;workspace();await loadCurrent()}catch(err){$('#loginMessage').textContent=err.message==='unauthorized'?'':err.message}finally{btn.disabled=false}}
 async function logout(){await api('/api/session/logout',{method:'POST',body:'{}'}).catch(()=>{});sessionEstablished=false;login('已安全退出')}
-function setView(view) {
+async function setView(view, context = {}) {
     if (!Object.hasOwn(titles, view)) return;
     closeDrawer(false);
     state.view = view;
@@ -55,7 +56,13 @@ function setView(view) {
     $('#pageEyebrow').textContent = eyebrow;
     $('#pageEyebrow').hidden = !eyebrow;
     $('#pageTitle').textContent = title;
-    loadCurrent();
+    const loaded = await loadCurrent();
+    if (!loaded || state.view !== view) return;
+    if (context.customerId && view === 'customers') await openCustomer(context.customerId).catch(error => toast(error.message));
+    if (view === 'partnerOrders') {
+        if (context.customer) partnerOwner.serviceOrderForm(context.customer, context.bookingId);
+        else if (context.orderId) partnerOwner.orderDetail(context.orderId);
+    }
 }
 async function loadCurrent({ refresh = false } = {}) {
     const view = state.view;
@@ -69,6 +76,7 @@ async function loadCurrent({ refresh = false } = {}) {
             await loaders[view]();
         }
         if (state.view === view) stamp();
+        return true;
     } catch (error) {
         if (!$('#adminShell').hidden) toast(error.message);
     }
@@ -80,24 +88,40 @@ async function loadStats(){const query=new URLSearchParams({period:state.traffic
 function memberLabel(c){if(!c.membershipExpiresAt)return '未启用';const days=Math.ceil((new Date(c.membershipExpiresAt)-Date.now())/86400000);if(days<0)return '已到期';if(days<=60)return `${days} 天后到期`;return '有效会员'}
 function salesName(id){return state.staff.find(s=>s.id===id)?.displayName||'待分配'}
 async function ensureStaff(){if(!state.staff.length)state.staff=(await api('/api/owner/staff')).items}
+const intakeStages = { new: '待联系', contacted: '已联系', qualified: '需求已确认', confirmed: '已办理', closed: '已结案' };
+const bookingStages = { draft: '待管理员确认', confirmed: '已确认', cancelled: '已取消' };
+const orderStages = { draft: '草稿', signed: '已签约', delivered: '已确认交付', cancelled: '已取消' };
+
 async function loadCustomers() {
-    await ensureStaff();
-    const query = $('#customerSearch').value.trim();
-    const data = await api(`/api/owner/customers?query=${encodeURIComponent(query)}&pageSize=100`);
+    const request = ++customerListRequest;
+    const params = new URLSearchParams({
+        query: $('#customerSearch').value.trim(), status: $('#customerStage').value,
+        bookingStatus: $('#customerBookingFilter').value, page: String(customerPage), pageSize: '25',
+    });
+    const [data] = await Promise.all([api(`/api/owner/customers?${params}`), ensureStaff()]);
+    if (request !== customerListRequest || state.view !== 'customers') return;
+    if (data.page > data.totalPages) {
+        customerPage = data.totalPages;
+        return loadCustomers();
+    }
     state.customers = data.items;
-    $('#customerCount').textContent = Number.isFinite(data.total) ? `${countText(data.total)} 位客户` : '—';
+    $('#customerCount').textContent = `${countText(data.total)} 条记录`;
+    $('#customerPageInfo').textContent = `第 ${data.page} / ${data.totalPages} 页`;
+    $('#customerPrev').disabled = data.page <= 1;
+    $('#customerNext').disabled = data.page >= data.totalPages;
     const newCount = $('#navNewCount');
     newCount.hidden = !Number.isFinite(data.summary?.new);
     newCount.textContent = newCount.hidden ? '' : countText(data.summary.new);
-    $('#customersBody').innerHTML = data.items.map(customer => `<tr data-customer="${esc(customer.id)}" tabindex="0">
-        <td><strong>${esc(customer.name)}</strong><small>${esc(customer.id)}</small></td>
+    $('#customersBody').innerHTML = data.items.map(customer => `<tr>
+        <td><button type="button" class="line-button" data-customer="${esc(customer.id)}">${esc(customer.name)}</button><small>${esc(customer.id)}</small></td>
         <td>${esc(customer.contact || customer.email || '—')}</td>
-        <td>${esc(customer.programLabel || customer.periodLabel || '—')}
+        <td>${esc(customer.programLabel || customer.periodLabel || '待确认')}
             ${customer.programLabel && customer.periodLabel ? `<small>${esc(customer.periodLabel)}</small>` : ''}</td>
         <td>${date(customer.membershipExpiresAt)}</td>
         <td>${esc(salesName(customer.assignedSalesId))}</td>
-        <td><span class="status-pill">${esc(memberLabel(customer))}</span></td>
-    </tr>`).join('') || '<tr><td class="empty-state" colspan="6">暂无匹配的客户。</td></tr>';
+        <td><span class="status-pill">${esc(intakeStages[customer.status] || '待核对')}</span>
+            ${customer.internalBookings?.some(item => item.status === 'draft') ? '<small>有后续预约待确认</small>' : ''}</td>
+    </tr>`).join('') || '<tr><td class="empty-state" colspan="6">暂无匹配的客户或预约。</td></tr>';
 }
 function openDrawer(title, html, eyebrow='PRIVATE RECORD') {
     if ($('#drawer').hidden) drawerTrigger = document.activeElement;
@@ -105,17 +129,151 @@ function openDrawer(title, html, eyebrow='PRIVATE RECORD') {
     $('#drawerEyebrow').textContent = eyebrow;
     $('#drawerContent').innerHTML = `<div class="drawer-content">${html}</div>`;
     $('#drawer').hidden = false;
+    $('#adminShell').inert = true;
     document.body.style.overflow = 'hidden';
     $('.drawer-head button').focus();
 }
 function closeDrawer(restoreFocus = true) {
+    customerDrawerRequest++;
     $('#drawer').hidden = true;
+    $('#adminShell').inert = false;
     $('#drawerContent').replaceChildren();
     document.body.style.overflow = '';
     if (restoreFocus === true) drawerTrigger?.focus();
     drawerTrigger = undefined;
 }
-async function openCustomer(id){await ensureStaff();const c=await api(`/api/owner/customers/${encodeURIComponent(id)}`);const files=(c.attachments||[]).map(f=>`<a href="/api/owner/applications/${encodeURIComponent(c.id)}/attachments/${encodeURIComponent(f.id)}">${esc(f.displayName)} · 下载</a>`).join('')||'无附件';openDrawer(c.name,`<section class="order-identity"><p>${esc(c.id)}</p><h3>${esc(c.name)}</h3><span class="status-pill">${esc(memberLabel(c))}</span></section><dl class="detail-grid"><div><dt>联系方式</dt><dd>${esc(c.contact||c.email||'—')}</dd></div><div><dt>申请期次</dt><dd>${esc(c.periodLabel||'—')}</dd></div><div><dt>关注项目</dt><dd>${esc(c.programLabel || '未登记')}</dd></div><div><dt>体检资料（客户填写）</dt><dd>${esc(advisorReportLabel(c.reportStatus) || (c.reportStatus ? '待确认' : '未登记'))}</dd></div><div><dt>会员到期</dt><dd>${date(c.membershipExpiresAt)}</dd></div><div><dt>资料附件</dt><dd class="download-list">${files}</dd></div></dl><form class="admin-form" id="customerAdminForm"><label>负责销售<select id="assignSales"><option value="">待分配</option>${state.staff.map(s=>`<option value="${esc(s.id)}" ${s.id===c.assignedSalesId?'selected':''}>${esc(s.displayName)}</option>`).join('')}</select></label><button type="button" id="saveAssignment">保存客户归属</button><label>赠送 / 调整会员期限<input id="memberExpiry" type="date" value="${c.membershipExpiresAt?c.membershipExpiresAt.slice(0,10):''}"></label><label>调整原因<textarea id="memberReason" placeholder="必填：赠送原因或调整依据"></textarea></label><button type="button" id="adjustMembership">仅所有者可调整</button>${!c.membershipExpiresAt?'<button type="button" class="secondary-action" id="activateMembership">确认首次方案并启用会员</button>':''}</form>`);$('#saveAssignment').onclick=async()=>{await api(`/api/owner/customers/${encodeURIComponent(id)}/assignment`,{method:'PATCH',body:JSON.stringify({salesId:$('#assignSales').value})});toast('客户归属已保存');await loadCustomers()};$('#adjustMembership').onclick=async()=>{await api(`/api/owner/customers/${encodeURIComponent(id)}/membership`,{method:'POST',body:JSON.stringify({type:'owner_adjusted',expiresAt:$('#memberExpiry').value,reason:$('#memberReason').value})});toast('会员期限已调整并记录原因');closeDrawer();await loadCustomers()};if($('#activateMembership'))$('#activateMembership').onclick=async()=>{await api(`/api/owner/customers/${encodeURIComponent(id)}/membership`,{method:'POST',body:JSON.stringify({type:'plan_confirmed'})});toast('首年会员已启用');closeDrawer();await loadCustomers()}}
+function customerOptions(entries, selected) {
+    return Object.entries(entries).map(([key, label]) => `<option value="${esc(key)}"${key === selected ? ' selected' : ''}>${esc(label)}</option>`).join('');
+}
+
+const consultStages = { scheduled: '已安排', completed: '已沟通', cancelled: '已取消' };
+const consultChannels = { phone: '电话', wechat: '微信', in_person: '面谈' };
+
+function consultationSection(customer) {
+    const consultation = customer.consultation;
+    const live = consultation?.status === 'scheduled';
+    return `<section class="detail-section"><h4>顾问预约安排</h4>
+        ${consultation ? `<p>${esc(consultStages[consultation.status])} · ${esc(consultation.dateTime.replace('T', ' '))}（北京时间） · ${esc(consultChannels[consultation.channel])}</p><p>${esc(consultation.reason)}</p>`
+            : '<p>请先联系客户确认可沟通时间，再登记。</p>'}
+        <form class="admin-form" id="consultationForm">
+            <label>预约处理<select name="status"><option value="scheduled">${live ? '修改安排' : '登记已确认的安排'}</option>
+                ${live ? '<option value="completed">完成咨询</option><option value="cancelled">取消安排</option>' : ''}</select></label>
+            <label>沟通时间（北京时间）<input name="dateTime" type="datetime-local" value="${esc(live ? consultation.dateTime : '')}" required></label>
+            <label>沟通方式<select name="channel">${customerOptions(consultChannels, live ? consultation.channel : 'phone')}</select></label>
+            <label>办理记录<input name="reason" maxlength="400" placeholder="填写联系结果、咨询结论或取消原因" required></label>
+            <button type="submit">保存预约安排</button>
+        </form>
+    </section>`;
+}
+
+function bookingSection(customer, canOrder) {
+    return (customer.internalBookings || []).map(booking => {
+        const order = customer.linkedOrders?.find(item => item.bookingId === booking.id && item.state !== 'cancelled');
+        return `<article class="customer-booking"><strong>${esc(booking.periodLabel)} · ${esc(bookingStages[booking.status] || booking.status)}</strong>
+            <p>${esc(booking.guestCount)} 人 · ${esc(booking.relationship || '同行关系待确认')}</p>
+            ${booking.note ? `<p>${esc(booking.note)}</p>` : ''}
+            ${booking.reviewReason ? `<p>${esc(booking.reviewReason)}</p>` : ''}
+            ${['draft', 'confirmed'].includes(booking.status) ? `<form class="admin-form" data-review-booking="${esc(booking.id)}">
+                <label>预约处理<select name="status">${booking.status === 'draft' ? '<option value="confirmed">确认预约</option>' : ''}<option value="cancelled">取消预约</option></select></label>
+                <label>处理依据<input name="reason" maxlength="400" placeholder="席位与客户沟通结果，或取消原因" required></label>
+                <button type="submit">保存预约处理</button>
+            </form>` : ''}
+            ${booking.status === 'confirmed' && !order && canOrder ? `<button type="button" class="line-button" data-open-service="${esc(booking.id)}">为此预约开单</button>` : ''}
+        </article>`;
+    }).join('') || '<p>暂无后续预约。有效会员可由负责销售提交预约。</p>';
+}
+
+async function openCustomer(id) {
+    const request = ++customerDrawerRequest;
+    const path = `/api/owner/customers/${encodeURIComponent(id)}`;
+    const [customer] = await Promise.all([api(path), ensureStaff()]);
+    if (request !== customerDrawerRequest || state.view !== 'customers' || $('#adminShell').hidden) return;
+    const orders = customer.linkedOrders || [];
+    const canOrder = ['qualified', 'confirmed'].includes(customer.status);
+    const files = (customer.attachments || []).map(file => `<a href="/api/owner/applications/${encodeURIComponent(id)}/attachments/${encodeURIComponent(file.id)}">${esc(file.displayName)} · 下载</a>`).join('') || '无附件';
+    const source = customer.contactConsent ? '官网顾问预约' : customer.source?.page === 'sales-workbench' ? '销售录入' : '期次申请';
+    const staffOptions = Object.fromEntries(state.staff.filter(sales => sales.active || sales.id === customer.assignedSalesId)
+        .map(sales => [sales.id, sales.displayName + (sales.active ? '' : '（已停用）')]));
+    openDrawer(customer.name, `<section class="order-identity"><p>${esc(id)}</p><h3>${esc(customer.name)}</h3>
+        <span class="status-pill">${esc(intakeStages[customer.status] || '待核对')}</span></section>
+        <dl class="detail-grid">
+            <div><dt>来源</dt><dd>${esc(source)}</dd></div>
+            <div><dt>联系方式</dt><dd>${esc(customer.contact || customer.email || '—')}</dd></div>
+            <div><dt>关注项目</dt><dd>${esc(customer.programLabel || '待确认')}</dd></div>
+            <div><dt>意向期次</dt><dd>${esc(customer.periodLabel || '由顾问协调')}</dd></div>
+            <div><dt>体检资料（客户填写）</dt><dd>${esc(advisorReportLabel(customer.reportStatus) || '未登记')}</dd></div>
+            <div><dt>会员到期</dt><dd>${date(customer.membershipExpiresAt)}</dd></div>
+            <div><dt>客户留言</dt><dd>${esc(customer.note || '—')}</dd></div>
+            <div><dt>销售跟进记录</dt><dd>${esc(customer.salesNote || '—')}</dd></div>
+            <div><dt>资料附件</dt><dd class="download-list">${files}</dd></div>
+        </dl>
+        <p data-customer-feedback class="customer-feedback" role="alert"></p>
+        <section class="detail-section"><h4>分配与跟进</h4>
+            <form class="admin-form" id="customerAssignment">
+                <label>负责销售<select name="salesId">${customerOptions({ '': '待分配', ...staffOptions }, customer.assignedSalesId || '')}</select></label>
+                <button type="submit">保存客户归属</button>
+            </form>
+            <form class="admin-form" id="customerFollowUp">
+                <label>跟进阶段<select name="status">${customerOptions(intakeStages, customer.status)}</select></label>
+                <label>管理员跟进记录<textarea name="adminNote" maxlength="2000">${esc(customer.adminNote)}</textarea></label>
+                <button type="submit">保存跟进</button>
+            </form>
+        </section>
+        ${consultationSection(customer)}
+        <section class="detail-section"><h4>关联业务订单</h4>
+            ${orders.length ? orders.map(order => `<p><button class="line-button" type="button" data-open-order="${esc(order.id)}">${esc(order.label)} · ${esc(orderStages[order.state] || order.state)}</button></p>`).join('') : '<p>当前没有关联订单。</p>'}
+            ${canOrder ? '<button type="button" class="line-button" data-open-service="">开服务订单</button>' : '<p>先联系客户并保存「需求已确认」，即可开服务订单。</p>'}
+        </section>
+        <section class="detail-section"><h4>会员后续预约</h4>${bookingSection(customer, canOrder)}</section>
+        <section class="detail-section"><h4>会员管理</h4>
+            <form class="admin-form" id="memberAdjust">
+                <label>赠送 / 调整会员期限<input name="expiresAt" type="date" value="${esc(customer.membershipExpiresAt?.slice(0, 10) || '')}" required></label>
+                <label>调整原因<textarea name="reason" maxlength="400" required></textarea></label>
+                <button type="submit">保存会员调整</button>
+            </form>
+            ${!customer.membershipExpiresAt ? '<form class="admin-form" id="memberActivate"><label>已确认的首期方案依据<input name="reason" maxlength="400" required></label><button type="submit">确认首次方案并启用会员</button></form>' : ''}
+        </section>`);
+
+    function bindMutation(form, url, method, message, mutate = body => body) {
+        if (!form) return;
+        form.addEventListener('submit', async event => {
+            event.preventDefault();
+            const button = form.querySelector('button[type="submit"]');
+            const feedback = $('[data-customer-feedback]');
+            if (button.disabled) return;
+            button.disabled = true;
+            try {
+                const data = mutate(Object.fromEntries(new FormData(form)));
+                await api(url, { method, body: JSON.stringify(data) });
+                toast(message);
+                if (form.isConnected) await Promise.all([loadCustomers(), openCustomer(id)]);
+            } catch (error) {
+                feedback.textContent = error.message;
+                if (feedback.isConnected) feedback.scrollIntoView({ block: 'nearest' });
+            } finally {
+                button.disabled = false;
+            }
+        });
+    }
+    bindMutation($('#customerAssignment'), path + '/assignment', 'PATCH', '客户归属已保存');
+    bindMutation($('#customerFollowUp'), `/api/owner/applications/${encodeURIComponent(id)}`, 'PATCH', '跟进阶段已保存');
+    const consultationForm = $('#consultationForm');
+    consultationForm.elements.status.onchange = () => {
+        const scheduling = consultationForm.elements.status.value === 'scheduled';
+        for (const control of [consultationForm.elements.dateTime, consultationForm.elements.channel]) {
+            control.disabled = !scheduling;
+            control.closest('label').hidden = !scheduling;
+        }
+    };
+    bindMutation(consultationForm, path + '/consultation', 'PATCH', '顾问预约安排已保存');
+    bindMutation($('#memberAdjust'), path + '/membership', 'POST', '会员期限已保存', body => ({ ...body, type: 'owner_adjusted' }));
+    bindMutation($('#memberActivate'), path + '/membership', 'POST', '首次会员已启用', body => ({ ...body, type: 'plan_confirmed', firstActivation: true }));
+    for (const form of $$('[data-review-booking]')) {
+        bindMutation(form, path + '/internal-bookings/' + encodeURIComponent(form.dataset.reviewBooking), 'PATCH', '预约处理已保存');
+    }
+    for (const control of $$('[data-open-order]')) control.onclick = () => setView('partnerOrders', { orderId: control.dataset.openOrder });
+    for (const control of $$('[data-open-service]')) control.onclick = () => setView('partnerOrders', { customer, bookingId: control.dataset.openService });
+}
 
 async function loadKnowledge(){const data=await api('/api/owner/knowledge');state.knowledge=data.items;renderKnowledge()}
 function renderKnowledge(){const q=$('#knowledgeSearch').value.trim().toLowerCase();const items=state.knowledge.filter(i=>`${i.stage}${i.question}${i.shortAnswer}`.toLowerCase().includes(q));$('#knowledgeList').innerHTML=items.map(i=>`<article class="knowledge-card" data-knowledge="${i.id}"><header><span>${esc(i.stage)}</span><b>${i.published?'已发布':'草稿'}</b></header><h3>${esc(i.question)}</h3><p>${esc(i.shortAnswer)}</p><small>${i.talkingPoints.map(esc).join(' · ')}</small></article>`).join('')}
@@ -130,7 +288,23 @@ async function saveConfig(e){e.preventDefault();const body={reason:$('#configRea
 async function loadStaff(){state.staff=(await api('/api/owner/staff')).items;$('#staffList').innerHTML=state.staff.map(s=>`<article class="staff-card"><div><span>${s.active?'ACTIVE':'DISABLED'}</span><h3>${esc(s.displayName)}</h3><p>${esc(s.username)}</p></div><div><button data-staff-status="${s.id}" data-active="${!s.active}">${s.active?'停用':'启用'}</button><button data-staff-reset="${s.id}">重置密码</button></div></article>`).join('')}
 function newStaff(){openDrawer('新增销售账号',`<form class="admin-form" id="staffForm" autocomplete="off"><label>销售姓名<input id="sName" autocomplete="name" required></label><label>登录用户名<input id="sUsername" autocomplete="off" required></label><label>初始密码<input id="sPassword" type="password" autocomplete="new-password" minlength="10" required></label><button type="submit">创建账号</button></form>`);$('#staffForm').onsubmit=async e=>{e.preventDefault();await api('/api/owner/staff',{method:'POST',body:JSON.stringify({displayName:$('#sName').value,username:$('#sUsername').value,password:$('#sPassword').value})});closeDrawer();toast('销售账号已创建');await loadStaff()}}
 
-$('#loginForm').onsubmit=handleLogin;$('#logoutButton').onclick=logout;$('#refreshCurrent').onclick=()=>loadCurrent({refresh:true});$$('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));$('#customerSearch').oninput=()=>setTimeout(loadCustomers,180);$('#customersBody').onclick=e=>{const r=e.target.closest('[data-customer]');if(r)openCustomer(r.dataset.customer)};$('#knowledgeSearch').oninput=renderKnowledge;$('#knowledgeList').onclick=e=>{const c=e.target.closest('[data-knowledge]');if(c)knowledgeForm(state.knowledge.find(i=>i.id===c.dataset.knowledge))};$('#newKnowledge').onclick=()=>knowledgeForm();$('#configForm').onsubmit=saveConfig;$('#privateJournalToggle').onclick=togglePrivateJournal;$('#trafficPeriod').onchange=e=>{state.trafficPeriod=e.target.value;state.trafficPage=1;loadStats()};$('#trafficClassification').onchange=e=>{state.trafficClassification=e.target.value;state.trafficPage=1;loadStats()};$('#trafficPrev').onclick=()=>{if(state.trafficPage>1){state.trafficPage-=1;loadStats()}};$('#trafficNext').onclick=()=>{state.trafficPage+=1;loadStats()};$('#newStaff').onclick=newStaff;$('#staffList').onclick=async e=>{const status=e.target.closest('[data-staff-status]');const reset=e.target.closest('[data-staff-reset]');if(status){await api(`/api/owner/staff/${status.dataset.staffStatus}/status`,{method:'PATCH',body:JSON.stringify({active:status.dataset.active==='true'})});toast('账号状态已更新');await loadStaff()}if(reset){const password=prompt('输入新的临时密码（至少 10 位）');if(password){await api(`/api/owner/staff/${reset.dataset.staffReset}/reset-password`,{method:'POST',body:JSON.stringify({password})});toast('密码已重置，旧会话已失效')}}};$$('[data-close-drawer]').forEach((button) => button.onclick = () => closeDrawer());
+$('#loginForm').onsubmit=handleLogin;$('#logoutButton').onclick=logout;$('#refreshCurrent').onclick=()=>loadCurrent({refresh:true});$$('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));$('#knowledgeSearch').oninput=renderKnowledge;$('#knowledgeList').onclick=e=>{const c=e.target.closest('[data-knowledge]');if(c)knowledgeForm(state.knowledge.find(i=>i.id===c.dataset.knowledge))};$('#newKnowledge').onclick=()=>knowledgeForm();$('#configForm').onsubmit=saveConfig;$('#privateJournalToggle').onclick=togglePrivateJournal;$('#trafficPeriod').onchange=e=>{state.trafficPeriod=e.target.value;state.trafficPage=1;loadStats()};$('#trafficClassification').onchange=e=>{state.trafficClassification=e.target.value;state.trafficPage=1;loadStats()};$('#trafficPrev').onclick=()=>{if(state.trafficPage>1){state.trafficPage-=1;loadStats()}};$('#trafficNext').onclick=()=>{state.trafficPage+=1;loadStats()};$('#newStaff').onclick=newStaff;$('#staffList').onclick=async e=>{const status=e.target.closest('[data-staff-status]');const reset=e.target.closest('[data-staff-reset]');if(status){await api(`/api/owner/staff/${status.dataset.staffStatus}/status`,{method:'PATCH',body:JSON.stringify({active:status.dataset.active==='true'})});toast('账号状态已更新');await loadStaff()}if(reset){const password=prompt('输入新的临时密码（至少 10 位）');if(password){await api(`/api/owner/staff/${reset.dataset.staffReset}/reset-password`,{method:'POST',body:JSON.stringify({password})});toast('密码已重置，旧会话已失效')}}};$$('[data-close-drawer]').forEach((button) => button.onclick = () => closeDrawer());
+function refreshCustomers(page = 1) {
+    customerPage = page;
+    loadCustomers().catch(error => toast(error.message));
+}
+$('#customerSearch').oninput = () => {
+    clearTimeout(customerSearchTimer);
+    customerSearchTimer = setTimeout(() => refreshCustomers(), 180);
+};
+$('#customerStage').onchange = () => refreshCustomers();
+$('#customerBookingFilter').onchange = () => refreshCustomers();
+$('#customerPrev').onclick = () => refreshCustomers(customerPage - 1);
+$('#customerNext').onclick = () => refreshCustomers(customerPage + 1);
+$('#customersBody').onclick = event => {
+    const button = event.target.closest('[data-customer]');
+    if (button) openCustomer(button.dataset.customer).catch(error => toast(error.message));
+};
 document.addEventListener('keydown', (event) => {
     if ($('#drawer').hidden) return;
     if (event.key === 'Escape') {

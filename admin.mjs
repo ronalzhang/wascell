@@ -1,5 +1,5 @@
 import { advisorReportLabel, sessionLoginMessage } from './session-state.mjs?v=20261122-1';
-import { createPartnerSales, escapeHtml } from './partner-sales.mjs?v=20261121-1';
+import { createPartnerSales, escapeHtml } from './partner-sales.mjs?v=20261122-3';
 
 const select = (query) => document.querySelector(query);
 const navigation = [...document.querySelectorAll('[data-view]')];
@@ -223,15 +223,21 @@ function closeCustomer({ restoreFocus = true } = {}) {
     drawerTrigger = undefined;
 }
 
+const consultStages = { scheduled: '已安排', completed: '已沟通', cancelled: '已取消' };
+const consultChannels = { phone: '电话', wechat: '微信', in_person: '面谈' };
+const bookingStages = { draft: '待管理员确认', confirmed: '已确认', cancelled: '已取消' };
+
 function bookingForm() {
     return `<form class="admin-form" id="bookingForm">
-        <h4>建立会员后续预约</h4>
-        <label>期次编号<input id="periodId" required></label>
-        <label>期次名称<input id="periodLabel" required></label>
+        <h4>提交会员后续预约</h4>
+        <p>管理员核对席位与安排后确认。</p>
+        <label>拟预约月份<input id="bookingMonth" type="month" required></label>
+        <label>意向期次<select id="bookingSlot"><option value="01">首期</option><option value="02">二期</option><option value="03">三期</option></select></label>
         <label>同行人数<input id="guestCount" type="number" min="1" max="10" value="1" required></label>
         <label>同行关系<input id="relationship" placeholder="本人 / 父母 / 家庭"></label>
-        <label>内部备注<textarea id="bookingNote"></textarea></label>
-        <button type="submit">建立内部预约</button>
+        <label>内部备注<textarea id="bookingNote" maxlength="1200"></textarea></label>
+        <p class="ps-form-feedback" data-booking-status role="status"></p>
+        <button type="submit">提交预约申请</button>
     </form>`;
 }
 
@@ -345,18 +351,18 @@ async function submitBooking(event, customer) {
         await api(`/api/sales/customers/${encodeURIComponent(customer.id)}/internal-bookings`, {
             method: 'POST',
             body: JSON.stringify({
-                periodId: select('#periodId').value,
-                periodLabel: select('#periodLabel').value,
+                periodId: select('#bookingMonth').value.replace('-', '') + select('#bookingSlot').value,
                 guestCount: Number(select('#guestCount').value),
                 relationship: select('#relationship').value,
                 note: select('#bookingNote').value,
             }),
         });
-        toast('后续预约已建立');
+        toast('预约已提交，等待管理员核对');
         if (request === drawerRequest) closeCustomer();
         if (state.view === 'customers') await loadCustomers();
     } catch (error) {
-        showError(error);
+        const feedback = event.target.querySelector('[data-booking-status]');
+        if (event.target.isConnected) feedback.textContent = error.message;
     } finally {
         button.disabled = false;
     }
@@ -376,10 +382,13 @@ async function openCustomer(trigger) {
             <div><dt>关注项目</dt><dd>${escapeHtml(customer.programLabel || '未登记')}</dd></div>
             <div><dt>体检资料（客户填写）</dt><dd>${escapeHtml(advisorReportLabel(customer.reportStatus) || (customer.reportStatus ? '待确认' : '未登记'))}</dd></div>
             <div><dt>会员到期</dt><dd>${formatDate(customer.membershipExpiresAt)}</dd></div>
-            <div><dt>内部预约</dt><dd>${(customer.internalBookings || []).length} 条</dd></div>
+            <div><dt>顾问预约</dt><dd>${customer.consultation ? `${escapeHtml(consultStages[customer.consultation.status])} · ${escapeHtml(customer.consultation.dateTime.replace('T', ' '))}（北京时间） · ${escapeHtml(consultChannels[customer.consultation.channel])}` : '待协调'}</dd></div>
+            <div><dt>后续预约</dt><dd>${(customer.internalBookings || []).length} 条</dd></div>
         </dl>
-        <button type="button" class="ps-button ps-drawer-draft" id="customerDraft">创建订单草稿</button>
+        <button type="button" class="ps-button ps-drawer-draft" id="customerDraft">查看业务订单</button>
         ${followUpForm(customer)}
+        ${customer.internalBookings?.length ? `<section class="detail-section"><h4>已提交的后续预约</h4>
+            ${customer.internalBookings.map(item => `<p>${escapeHtml(item.periodLabel)} · ${escapeHtml(item.guestCount)} 人 · ${escapeHtml(bookingStages[item.status] || '待核对')}</p>`).join('')}</section>` : ''}
         ${member(customer) === '会员有效' ? bookingForm()
             : '<section class="detail-section"><h4>预约状态</h4><p>请按新客户流程重新评估会员及预约资格。</p></section>'}
     </div>`;

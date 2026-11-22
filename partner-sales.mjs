@@ -44,7 +44,7 @@ function limitation(data) {
             <p>${escapeHtml(profile.qualityReason || '请根据管理端的复核安排推进整改。')}${due ? ` <span>复核日期 ${due}</span>` : ''}</p>
         </aside>`;
     }
-    if (!data.policy?.enabled) return `<aside class="ps-notice"><strong>合作计划尚未启用</strong><p>客户管理和销售答疑仍可使用。</p></aside>`;
+    if (!data.policy?.enabled) return `<aside class="ps-notice"><strong>合作计划尚未启用</strong><p>可继续跟进客户、查看工作室服务订单和查阅销售答疑。</p></aside>`;
     if (profile.status === 'suspended') return `<aside class="ps-notice"><strong>合作资格暂缓</strong><p>您可以查看已有记录和收益账单。</p></aside>`;
     if (profile.status !== 'certified') return `<aside class="ps-notice"><strong>合作资格待确认</strong><p>签约及资格确认后可创建订单、推荐候选人并申请带教。</p></aside>`;
     return '';
@@ -326,18 +326,23 @@ function orderForm(data, { customers = [], customersError = '', prefillCustomer 
     </details>`;
 }
 
+function salesOrderAmount(order, amount) {
+    if (!order.currency || order.currency === 'CNY') return money(amount);
+    return new Intl.NumberFormat('zh-CN', { style: 'currency', currency: order.currency, currencyDisplay: 'code' }).format(amount / 100);
+}
+
 function orders(data, options) {
     const items = list(data.orders);
-    return `<section class="ps-card">${heading('订单记录', '提交本人负责的订单草稿，后续由工作室核对合同和付款。')}
+    return `<section class="ps-card">${heading('订单记录', '查看当前负责客户的服务订单及本人归因订单。工作室负责核对合同、款项与交付。')}
         ${orderForm(data, options)}
         <div class="ps-records">${items.length ? items.map((order) => `<article class="ps-record">
-            <div class="ps-record-heading"><div><h3>${escapeHtml(order.customerName || '客户订单')}</h3><p>${escapeHtml(order.id)}</p></div>
+            <div class="ps-record-heading"><div><h3>${escapeHtml(order.customerName || '客户订单')}</h3><p>${escapeHtml(order.id)}${order.serviceOrder ? ' · 工作室服务' : ''}${order.periodLabel ? ' · ' + escapeHtml(order.periodLabel) : ''}</p></div>
             ${chip(labels.order[order.state] || '待确认', order.state === 'delivered' ? 'positive' : '')}</div>
-            <dl class="ps-ledger-lines">${list(order.lines).map((line) => `<div><dt>${escapeHtml(line.productName)}</dt><dd>${money(line.quotedFen)}</dd></div>`).join('')}</dl>
-            ${order.state === 'delivered' || order.state === 'signed' ? `<dl class="ps-ledger-lines">
+            <dl class="ps-ledger-lines">${list(order.lines).map((line) => `<div><dt>${escapeHtml(line.productName)}</dt><dd>${salesOrderAmount(order, line.quotedFen)}</dd></div>`).join('')}</dl>
+            ${!order.serviceOrder && ['delivered', 'signed'].includes(order.state) ? `<dl class="ps-ledger-lines">
                 <div><dt>成熟佣金 <small>税前</small></dt><dd>${money(order.summary?.earnedFen)}</dd></div>
                 <div><dt>待成熟估算</dt><dd>${money(order.summary?.pendingFen)}</dd></div></dl>` : ''}
-            ${disputeForm('order', order.id)}
+            ${order.serviceOrder ? '' : disputeForm('order', order.id)}
         </article>`).join('') : empty('暂无本人订单。')}</div>
     </section>`;
 }

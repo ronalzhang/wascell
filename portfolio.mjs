@@ -162,6 +162,7 @@ async function updateConsultPeriods() {
 
 let consultationAttempt;
 let popupVersion = 0;
+let consultationSubmitting = false;
 const reportStatus = $('#consultStatus');
 function newConsultId() {
     return crypto.randomUUID?.() || Array.from(crypto.getRandomValues(new Uint32Array(4))).join('-');
@@ -190,19 +191,31 @@ async function showAdvisor(programId = '', programTitle = '') {
     const data = await catalogRequest;
     if (version !== popupVersion || !dialog.open || !data) return;
     const selectedId = form.elements.programId.value;
-    setAdvisorPrograms(data.programs, selectedId, programTitle);
+    setAdvisorPrograms([...data.programs, ...(data.support || [])], selectedId, programTitle);
 }
 
 document.addEventListener('click', (event) => {
     const trigger = event.target.closest('[data-advisor]');
     if (trigger) showAdvisor(trigger.dataset.advisor, trigger.dataset.programTitle);
 });
+dialog.addEventListener('cancel', event => {
+    if (consultationSubmitting) event.preventDefault();
+});
+for (const closeForm of dialog.querySelectorAll('form[method="dialog"]')) {
+    closeForm.addEventListener('submit', event => {
+        if (consultationSubmitting) event.preventDefault();
+    });
+}
+dialog.addEventListener('close', () => { popupVersion++; });
 form.elements.programId.addEventListener('change', updateConsultPeriods);
 form.addEventListener('submit', async (event) => {
     event.preventDefault();
     const button = $('button[type="submit"]', form);
     if (button.disabled) return;
+    consultationSubmitting = true;
     button.disabled = true;
+    const closeButton = dialog.querySelector('form[method="dialog"] button');
+    closeButton.disabled = true;
     reportStatus.textContent = '正在提交…';
     const body = new FormData(form);
     body.set('portfolio', '1');
@@ -211,7 +224,7 @@ form.addEventListener('submit', async (event) => {
     if (consultationAttempt?.payload !== payload) consultationAttempt = { payload, key: newConsultId() };
     body.set('submissionKey', consultationAttempt.key);
     try {
-        const response = await requestJson('/api/advisor-applications', { method: 'POST', body });
+        const response = await requestJson('/api/advisor-applications', { method: 'POST', body, signal: AbortSignal.timeout?.(15000) });
         consultationAttempt = undefined;
         if (popupVersion !== version) return;
         $('#advisorFields').hidden = true;
@@ -219,8 +232,12 @@ form.addEventListener('submit', async (event) => {
         $('#advisorReceived').hidden = false;
         $('#advisorReceived button').focus();
     } catch (error) {
-        if (popupVersion === version) reportStatus.textContent = error.message;
+        if (popupVersion === version) {
+            reportStatus.textContent = error.name === 'TimeoutError' ? '提交等待超时，请重试以获取同一笔回执。' : error.message;
+        }
     } finally {
+        consultationSubmitting = false;
+        closeButton.disabled = false;
         button.disabled = false;
     }
 });
