@@ -117,3 +117,36 @@ test('configuration update requires a reason and rejects unknown fields', async 
         );
     });
 });
+
+test('an in-flight quote whose audit fails never becomes visible to readers', async () => {
+    const dataDir = await fs.mkdtemp(path.join(os.tmpdir(), 'wascell-price-rollback-'));
+    let auditStarted;
+    let rejectAudit;
+    const reachedAudit = new Promise((resolve) => { auditStarted = resolve; });
+    const store = createBusinessConfigStore({
+        dataDir,
+        auditLog: {
+            append() {
+                auditStarted();
+                return new Promise((resolve, reject) => { rejectAudit = reject; });
+            },
+        },
+    });
+    try {
+        const failed = assert.rejects(store.update({
+            programPricing: {
+                revision: 0, show: true, currency: 'JPY',
+                quotes: { 'hair-follicle': { show: true, amounts: { JPY: { min: 4600000, tax: 'exclusive' } } } },
+            },
+        }, { actorId: 'owner', reason: '模拟未完成审计', programPriceRevision: 0 }), /审计写入失败/);
+        await reachedAudit;
+        const readWhilePending = store.getPrivate();
+        // Allow an unguarded read to finish while the simulated audit is still pending.
+        await new Promise((resolve) => setTimeout(resolve, 30));
+        rejectAudit(new Error('simulated write failure'));
+        await failed;
+        assert.equal((await readWhilePending).programPricing.show, false);
+    } finally {
+        await fs.rm(dataDir, { recursive: true, force: true });
+    }
+});

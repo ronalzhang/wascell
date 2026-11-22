@@ -306,3 +306,92 @@ test('owner manages staff and knowledge while sales receives only published know
     const forbiddenStaff = await fetch(`${baseUrl}/api/owner/staff`, { headers: { cookie: salesCookie } });
     assert.equal(forbiddenStaff.status, 403);
 });
+
+test('program price controls authorize the owner and expose only the selected published quote', async () => {
+    const publicUrl = `${baseUrl}/api/public/programs`;
+    const settingsUrl = `${baseUrl}/api/owner/program-prices`;
+    const before = await fetch(publicUrl);
+    assert.equal(before.status, 200);
+    const original = await before.json();
+    assert.equal(original.programs.length, 11);
+    assert.equal(original.programs.some((program) => Object.hasOwn(program, 'quote')), false);
+    assert.equal((await fetch(settingsUrl)).status, 401);
+
+    const headers = { 'content-type': 'application/json' };
+    const sales = await fetch(`${baseUrl}/api/sales/login`, {
+        method: 'POST', headers,
+        body: JSON.stringify({ username: 'sales.integration', password: 'Sales-Integration-2026' }),
+    });
+    assert.equal((await fetch(settingsUrl, { headers: { cookie: sales.headers.get('set-cookie') } })).status, 403);
+
+    const owner = await fetch(`${baseUrl}/api/owner/login`, {
+        method: 'POST', headers,
+        body: JSON.stringify({ password: 'integration-password' }),
+    });
+    headers.cookie = owner.headers.get('set-cookie');
+    const initial = await (await fetch(settingsUrl, { headers })).json();
+    const pricing = {
+        revision: initial.pricing.revision, show: true, currency: 'JPY',
+        quotes: {
+            'periodontal-regeneration': {
+                show: true, amounts: {
+                    JPY: { min: 3300000, tax: 'inclusive' },
+                    USD: { min: 22000.55, tax: 'exclusive' },
+                },
+            },
+        },
+    };
+    const update = (next) => fetch(settingsUrl, {
+        method: 'PATCH', headers, body: JSON.stringify({ pricing: next, reason: '验证项目报价' }),
+    });
+    const saved = await update(pricing);
+    assert.equal(saved.status, 200);
+    let active = await (await fetch(publicUrl)).json();
+    const dental = (catalog) => catalog.programs.find((program) => program.id === 'periodontal-regeneration');
+    assert.deepEqual(dental(active).quote, { currency: 'JPY', min: 3300000, tax: 'inclusive' });
+    assert.ok(!JSON.stringify(active).includes('22000.55'));
+    assert.equal((await update(pricing)).status, 409);
+
+    pricing.revision++;
+    pricing.currency = 'CNY';
+    assert.equal((await update(pricing)).status, 200);
+    active = await (await fetch(publicUrl)).json();
+    assert.equal(Object.hasOwn(dental(active), 'quote'), false);
+
+    pricing.revision++;
+    pricing.currency = 'USD';
+    pricing.show = false;
+    assert.equal((await update(pricing)).status, 200);
+    active = await (await fetch(publicUrl)).json();
+    assert.equal(Object.hasOwn(dental(active), 'quote'), false);
+});
+
+test('portfolio routes load and a selected project stays attached to a consultation', async () => {
+    for (const route of ['', '/projects', '/assessment', '/arrangements']) {
+        const response = await fetch(`${baseUrl}/portfolio${route}`);
+        assert.equal(response.status, 200);
+        assert.match(await response.text(), /探索再生项目/);
+    }
+    const body = new FormData();
+    body.set('name', '本地测试');
+    body.set('contact', 'test-contact');
+    body.set('submissionKey', 'portfolio-test-request');
+    body.set('portfolio', '1');
+    body.set('contactConsent', 'yes');
+    body.set('programId', 'hair-follicle');
+    body.set('reportStatus', 'incomplete');
+    const application = await fetch(`${baseUrl}/api/advisor-applications`, { method: 'POST', body });
+    assert.equal(application.status, 201);
+    const { orderId } = await application.json();
+    const owner = await fetch(`${baseUrl}/api/owner/login`, {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ password: 'integration-password' }),
+    });
+    const response = await fetch(`${baseUrl}/api/owner/applications/${orderId}`, {
+        headers: { cookie: owner.headers.get('set-cookie') },
+    });
+    const order = await response.json();
+    assert.equal(order.programId, 'hair-follicle');
+    assert.equal(order.reportStatus, 'incomplete');
+    assert.equal(order.contactConsent, true);
+});

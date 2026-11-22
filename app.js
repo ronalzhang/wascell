@@ -18,6 +18,7 @@ const { createServiceCaseStore } = require('./lib/service-case-store');
 const { createTrafficStore } = require('./lib/traffic-store');
 const { createAccessLogWriter } = require('./lib/access-log-writer');
 const { classifyTrafficSignals } = require('./lib/traffic-intelligence');
+const { PROGRAMS, SUPPORT, projectPublicCatalog, readPeriodOptions } = require('./lib/program-catalog');
 
 const app = express();
 const PORT = process.env.PORT || 3003; // 使用3003端口避免与其他应用冲突
@@ -387,7 +388,7 @@ async function getStatsAsync() { return trafficStore.get(); }
 function getStats() { return trafficStore.get(); }
 
 // 静态文件服务
-const publicScripts = new Set(['period-switcher.js', 'chart.umd.js', 'admin.mjs', 'admin-pro.mjs', 'arksoma-ui.mjs', 'session-state.mjs']);
+const publicScripts = new Set(['period-switcher.js', 'chart.umd.js', 'admin.mjs', 'admin-pro.mjs', 'arksoma-ui.mjs', 'session-state.mjs', 'portfolio.mjs', 'admin-program-prices.mjs']);
 app.use((req, res, next) => {
     let pathname;
     try { pathname = decodeURIComponent(req.path); }
@@ -398,7 +399,7 @@ app.use((req, res, next) => {
     const isPublicPage = !relative.includes('/') && (extension === '.html' || extension === '.css' || relative === 'favicon.png' || publicScripts.has(relative));
     // API and extensionless application routes continue to their explicit handlers.
     if (isPublicAsset || isPublicPage || pathname.startsWith('/api/')) return next();
-    if (/^\/(?:|all|admin|admin-pro|\d{8})$/.test(pathname)) return next();
+    if (/^\/(?:|all|admin|admin-pro|\d{8}|portfolio(?:\/(?:projects|assessment|arrangements))?\/?)$/.test(pathname)) return next();
     return res.sendStatus(404);
 });
 app.use(express.static(__dirname, {
@@ -406,7 +407,7 @@ app.use(express.static(__dirname, {
     setHeaders: (res, path) => {
         if (path.endsWith('.html')) {
             res.set('Cache-Control', 'no-cache');
-        } else if (path.endsWith('.js')) {
+        } else if (path.endsWith('.js') || path.endsWith('.mjs')) {
             res.set('Cache-Control', 'no-cache');
         }
     }
@@ -435,8 +436,30 @@ app.post('/api/advisor-applications', (req, res) => {
                 await cleanupTemporaryFiles();
                 return res.status(413).json({ success: false, message: '附件总大小不能超过 20 MB' });
             }
+            const input = { ...req.body };
+            delete input.programLabel;
+            const isPortfolioRequest = input.portfolio === '1' || Boolean(input.programId);
+            if (!isPortfolioRequest) delete input.reportStatus;
+            if (isPortfolioRequest) {
+                if (input.contactConsent !== 'yes') throw new Error('请填写联系授权');
+                input.portfolio = '1';
+                const program = PROGRAMS.find((item) => item.id === input.programId);
+                if (input.programId && !program) throw new Error('项目无效');
+                if (input.reportStatus && !['ready', 'incomplete', 'not-ready'].includes(input.reportStatus)) {
+                    throw new Error('体检资料状态无效');
+                }
+                input.programLabel = program?.title;
+                if (input.periodId) {
+                    const periods = await readCurrentPortfolioPeriods();
+                    const period = periods.find((item) => item.id === input.periodId && !item.closed);
+                    if (!program?.featured || !period) throw new Error('期次已结束或无效，请重新选择');
+                    input.periodLabel = period.label;
+                } else {
+                    input.periodLabel = '';
+                }
+            }
             const result = await advisorStore.createApplication({
-                ...req.body,
+                ...input,
                 source: {
                     page: req.body.sourcePage || req.get('Referer') || '',
                     device: req.get('User-Agent') || '',
@@ -450,7 +473,7 @@ app.post('/api/advisor-applications', (req, res) => {
             });
         } catch (error) {
             await cleanupTemporaryFiles();
-            const isValidationError = /请填写|缺少提交|附件|文件类型/.test(error.message);
+            const isValidationError = /请填写|缺少提交|附件|文件类型|无效/.test(error.message);
             console.error('顾问申请写入失败:', isValidationError ? error.message : error);
             return res.status(isValidationError ? 400 : 500).json({
                 success: false,
@@ -479,6 +502,66 @@ app.get('/api/public/catalog', async (req, res) => {
     }
 });
 
+async function readCurrentPortfolioPeriods() {
+    const source = await fs.promises.readFile(path.join(__dirname, 'index.html'), 'utf8');
+    return readPeriodOptions(source, getToday());
+}
+
+app.get('/api/public/programs', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    try {
+        const config = await businessConfigStore.getPrivate();
+        return res.json(projectPublicCatalog(config.programPricing));
+    } catch (error) {
+        console.error('读取项目目录失败:', error);
+        return res.status(500).json({ message: '项目目录暂不可用，请稍后重试' });
+    }
+});
+
+app.get('/api/public/program-periods', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    try {
+        return res.json({ periods: await readCurrentPortfolioPeriods() });
+    } catch (error) {
+        console.error('读取项目期次失败:', error);
+        return res.status(500).json({ message: '暂时无法读取期次，顾问可协助确认' });
+    }
+});
+
+app.get('/api/owner/program-prices', adminAuth.requireOwner, async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    try {
+        const config = await businessConfigStore.getPrivate();
+        const { groups, regions } = projectPublicCatalog(config.programPricing);
+        const programs = [...PROGRAMS, ...SUPPORT].map(({ id, title, group, region, billing }) => ({ id, title, group, region, billing }));
+        return res.json({ programs, regions, groups, pricing: config.programPricing });
+    } catch (error) {
+        console.error('读取项目价格失败:', error);
+        return res.status(500).json({ message: '项目价格暂不可用' });
+    }
+});
+
+app.patch('/api/owner/program-prices', adminAuth.requireOwner, async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    const { pricing, reason } = req.body || {};
+    if (!pricing || !Number.isSafeInteger(pricing.revision) || pricing.revision < 0) {
+        return res.status(400).json({ message: '项目价格版本无效，请重新载入' });
+    }
+    try {
+        const config = await businessConfigStore.update({ programPricing: pricing }, {
+            reason,
+            actorId: req.auth.userId,
+            programPriceRevision: pricing.revision,
+        });
+        return res.json({ pricing: config.programPricing });
+    } catch (error) {
+        if (error.code === 'PROGRAM_PRICE_CONFLICT') return res.status(409).json({ message: error.message });
+        if (/无效|原因/.test(error.message)) return res.status(400).json({ message: error.message });
+        console.error('保存项目价格失败:', error);
+        return res.status(500).json({ message: '项目价格保存失败' });
+    }
+});
+
 app.get('/api/owner/config', adminAuth.requireOwner, async (req, res) => {
     try {
         return res.json(await businessConfigStore.getPrivate());
@@ -491,6 +574,9 @@ app.get('/api/owner/config', adminAuth.requireOwner, async (req, res) => {
 app.patch('/api/owner/config', adminAuth.requireOwner, async (req, res) => {
     try {
         const { reason, ...changes } = req.body || {};
+        if (Object.hasOwn(changes, 'programPricing')) {
+            return res.status(400).json({ message: '请从项目价格入口修改报价' });
+        }
         const config = await businessConfigStore.update(changes, {
             actorId: req.auth.userId,
             reason,
@@ -1148,13 +1234,17 @@ app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
+app.get(['/portfolio', '/portfolio/projects', '/portfolio/assessment', '/portfolio/arrangements'], (req, res) => {
+    res.sendFile(path.join(__dirname, 'portfolio.html'));
+});
+
 // 默认路由 - 返回首页
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // 启动服务器
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, process.env.WASCELL_BIND_HOST, () => {
     console.log(`方舟计划网站服务器运行在端口 ${PORT}`);
     console.log(`访问地址: http://localhost:${PORT}`);
     console.log(`管理后台: http://localhost:${PORT}/admin-pro`);

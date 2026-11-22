@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <meta name="description" content="ARKSOMA 方舟计划。细胞科技与个体化健康服务，从资料预审到跨境安排、回国随访。">
+    <title>ARKSOMA · 再生科学与个体化健康服务</title>
+    <link rel="icon" href="/favicon.png">
+    <link rel="stylesheet" href="/portfolio.css">
+    <script src="/portfolio.mjs" type="module"></script>
+</head>
+<body>
+    <a class="skip-link" href="#content">跳到页面内容</a>
+    <header class="site-header">
+        <div class="site-bar">
+            <a href="/portfolio" class="wordmark" aria-label="ARKSOMA 首页">ARKSOMA</a>
+            <nav class="site-nav" aria-label="主导航">
+                <a href="/portfolio/projects" data-nav="projects">再生项目</a>
+                <a href="/portfolio/assessment" data-nav="assessment">评估与预约</a>
+                <a href="/portfolio/arrangements" data-nav="arrangements">跨境安排</a>
+            </nav>
+            <button class="outline-gold nav-request" type="button" data-advisor>预约顾问</button>
+        </div>
+    </header>
+
+    <main id="content" tabindex="-1">
+        <div id="homeView" data-page="home">
+            <section class="hero" aria-labelledby="heroTitle">
+                <div class="content hero-copy">
+                    <h1 id="heroTitle">再生科学，从<br>专业评估开始</h1>
+                    <p>细胞科技与个体化健康服务</p>
+                    <a class="glass-action" href="/portfolio/projects">探索再生项目<span class="chevron" aria-hidden="true"></span></a>
+                </div>
+            </section>
+            <section class="content home-directory">
+                <h2 class="ruled-heading">再生项目</h2>
+                <div class="directory-categories">
+                    <a href="/portfolio/projects?group=cell"><img src="/imgs/arksoma/portfolio-cell.svg" alt="" width="48" height="48"><span>细胞与免疫</span><i class="chevron" aria-hidden="true"></i></a>
+                    <a href="/portfolio/projects?group=blood"><img src="/imgs/arksoma/portfolio-blood.svg" alt="" width="48" height="48"><span>血液与健康评估</span><i class="chevron" aria-hidden="true"></i></a>
+                    <a href="/portfolio/projects?group=oncology"><img src="/imgs/arksoma/portfolio-specialty.svg" alt="" width="48" height="48"><span>肿瘤相关专项</span><i class="chevron" aria-hidden="true"></i></a>
+                    <a href="/portfolio/projects?group=oral-hair"><img src="/imgs/arksoma/portfolio-oral.svg" alt="" width="48" height="48"><span>口腔与毛发</span><i class="chevron" aria-hidden="true"></i></a>
+                </div>
+                <a class="flagship-link" href="/portfolio/projects?project=autologous-stem-cells#program">
+                    <img src="/imgs/arksoma/portfolio-specialty.svg" alt="" width="42" height="42">
+                    <span class="flagship-description"><strong>旗舰自体干细胞</strong><small>含 120 项血液检测</small></span>
+                    <span class="flagship-cta">查看方案与期次<i class="chevron" aria-hidden="true"></i></span>
+                </a>
+            </section>
+            <section class="content home-services">
+                <h2 class="ruled-heading">顾问如何全程协助</h2>
+                <div class="deliverables">
+                    <article><h3>资料清单与预审</h3><p>确认已有报告、待补资料和需要由机构回答的问题。</p></article>
+                    <article><h3>方案与书面报价</h3><p>协调接诊评估，明确包含项、费用拆分与确认条件。</p></article>
+                    <article><h3>到院与回国随访</h3><p>衔接翻译、到院时点和复诊计划，整理可供后续查阅的记录。</p></article>
+                </div>
+                <a class="text-action" href="/portfolio/assessment">了解评估与预约</a>
+            </section>
+        </div>
+
+        <div class="content interior" id="projectsView" data-page="projects" hidden>
+            <header class="page-intro">
+                <h1>再生项目</h1>
+                <p>按需求浏览项目。每项均有咨询对象、评估流程及费用说明。</p>
+            </header>
+            <div class="catalog-filters" id="catalogFilters" aria-label="按类别筛选"></div>
+            <div class="catalog-split" id="catalogContent" aria-busy="true">
+                <div id="catalogList" class="catalog-list" aria-label="项目列表"><p>正在读取项目目录…</p></div>
+                <article id="program" class="program-detail" tabindex="-1" hidden></article>
+            </div>
+        </div>
+
+        <div class="content interior" id="assessmentView" data-page="assessment" hidden>
+            <header class="page-intro">
+                <h1>评估与预约</h1>
+                <p>先说清您想了解的问题，再由顾问协同资料准备、机构评估与后续安排。</p>
+                <button class="outline-gold" type="button" data-advisor>预约顾问</button>
+            </header>
+            <ol class="assessment-steps">
+                <li><strong>登记关注方向</strong><p>留下联系方式、关注项目与回联需求。顾问据此给出准备清单。</p></li>
+                <li><strong>复核健康资料</strong><p>每次正式项目申请需近 6 个月的详细体检报告。接诊机构可能要求更近期的报告或专科资料。顾问协助补齐缺项，或协调基础体检。</p></li>
+                <li><strong>机构评估与明细报价</strong><p>确认接诊院区、适用范围、安排与风险。报价注明币种、次数、包含项、可选项及适用的活动减免。</p></li>
+                <li><strong>确认后续安排</strong><p>在您确认方案后，再衔接期次、到院、翻译与后续复查。</p></li>
+            </ol>
+            <section class="service-note">
+                <h2>体检与检测包含项</h2>
+                <p>基础体检用于补齐申请资料，顾问会在报价中注明费用与当期可用权益。120 项血液检测可以单独安排，也是旗舰自体干细胞方案的包含项。</p>
+                <div id="checkupEstimate"></div>
+            </section>
+        </div>
+
+        <div class="content interior" id="arrangementsView" data-page="arrangements" hidden>
+            <header class="page-intro">
+                <h1>跨境安排</h1>
+                <p>先确定接诊方案，再确认出行与后续安排。顾问会提供到院资料、行程节点和复查事项。</p>
+            </header>
+            <div id="destinationList" class="destination-list" aria-label="服务地区"><p>正在读取服务地区…</p></div>
+            <section class="travel-section" aria-labelledby="travelTitle">
+                <h2 id="travelTitle" class="ruled-heading">旗舰自体干细胞 · 两次赴日</h2>
+                <ol class="travel-timeline">
+                    <li><strong>首次赴日 · 约 5 天</strong><p>完成机构面诊、必要检查与自体采集。其余安排以状态和当期为准。</p></li>
+                    <li><strong>制备与排期 · 原安排不少于 4 周</strong><p>机构确认制备周期。顾问衔接进度、资料与回院日期。</p></li>
+                    <li><strong>第二次赴日 · 约 1 天</strong><p>按方案回院完成回输与观察，并取得复诊与回国随访安排。</p></li>
+                </ol>
+                <details class="disclosure itinerary">
+                    <summary>展开五日私享参考行程</summary>
+                    <p>文化安排结合休息、机构日程和同行需求确认。</p>
+                    <ol>
+                        <li><strong>第 1 日</strong> 东京抵达与顾问会合，东京湾私席可选。</li>
+                        <li><strong>第 2 日</strong> 完成必要准备与到院安排，依状态安排茶与舞体验。</li>
+                        <li><strong>第 3 日</strong> 东京茶室交流与休息。</li>
+                        <li><strong>第 4 日</strong> 京都庭园参访。</li>
+                        <li><strong>第 5 日</strong> 香道体验与首次赴日收尾。</li>
+                    </ol>
+                    <a class="text-action" href="/#itinerary">查看原站五日安排</a>
+                </details>
+                <details class="disclosure" id="arrangementPeriods">
+                    <summary>查看赴日期次</summary>
+                    <div data-period-list><p>正在读取期次…</p></div>
+                </details>
+                <button class="outline-gold" type="button" data-advisor="autologous-stem-cells" data-program-title="旗舰自体干细胞">咨询旗舰赴日安排</button>
+            </section>
+        </div>
+    </main>
+
+    <footer class="content site-footer">
+        <a href="/portfolio" class="wordmark">ARKSOMA</a>
+        <p>ARKSOMA 提供评估准备、预约协调与随访衔接。诊疗判断和实施由接诊机构及医生负责。</p>
+    </footer>
+
+    <dialog id="advisorDialog" aria-labelledby="advisorTitle" class="advisor-modal">
+        <div class="dialog-top">
+            <h2 id="advisorTitle">预约私人顾问</h2>
+            <form method="dialog"><button type="submit" class="text-action">关闭</button></form>
+        </div>
+        <div id="advisorFields">
+            <p>本次登记用于联系和了解需求。顾问会说明正式评估所需的材料。</p>
+            <form id="programAdvisorForm">
+                <div class="form-grid">
+                    <label>怎么称呼您<input name="name" autocomplete="name" required maxlength="80"></label>
+                    <label>微信 / 手机 / 邮箱<input name="contact" autocomplete="on" required maxlength="120"></label>
+                    <label>关注项目<select name="programId"><option value="">请顾问协助梳理</option></select></label>
+                    <label>近 6 个月体检报告<select name="reportStatus">
+                        <option value="">请选择（选填）</option>
+                        <option value="ready">有完整报告</option>
+                        <option value="incomplete">报告有缺项</option>
+                        <option value="not-ready">还未准备</option>
+                    </select></label>
+                    <label class="wide" id="consultPeriodField" hidden>意向期次（选填）<select name="periodId" disabled></select></label>
+                    <label class="wide">想先了解的事项（选填）<textarea name="note" maxlength="600" rows="2" placeholder="例如：首次评估流程、需要请几天假"></textarea></label>
+                </div>
+                <label class="consent"><input type="checkbox" name="contactConsent" value="yes" required>同意顾问使用以上信息联系我。</label>
+                <p id="consultStatus" role="status" class="form-status"></p>
+                <button class="glass-action" type="submit">提交预约意向<i class="chevron" aria-hidden="true"></i></button>
+            </form>
+        </div>
+        <div id="advisorReceived" hidden aria-live="polite">
+            <h3>预约意向已收到</h3>
+            <p id="advisorReference"></p>
+            <p>顾问会与您确认沟通时间和资料清单。</p>
+            <form method="dialog"><button class="outline-gold" type="submit">完成</button></form>
+        </div>
+    </dialog>
+</body>
+</html>

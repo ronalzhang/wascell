@@ -5,7 +5,7 @@ const path = require('node:path');
 
 const root = path.resolve(__dirname, '..');
 
-test('owner script authenticates only through owner endpoints and exposes five views', async () => {
+test('owner script authenticates only through owner endpoints and exposes the owner views', async () => {
     const script = await fs.readFile(path.join(root, 'admin-pro.mjs'), 'utf8');
     const page = await fs.readFile(path.join(root, 'admin-pro.html'), 'utf8');
     assert.match(script, /\/api\/owner\/login/);
@@ -18,6 +18,70 @@ test('owner script authenticates only through owner endpoints and exposes five v
     assert.match(script, /\/api\/owner\/config\/private-journal/);
     assert.match(page, /id="privateJournalToggle"/);
     assert.match(page, /id="privateJournalStatus"/);
+    for (const view of ['stats', 'customers', 'knowledge', 'prices', 'config', 'staff']) {
+        assert.match(page, new RegExp(`data-view="${view}"`));
+        assert.match(page, new RegExp(`id="${view}View"`));
+    }
+});
+
+test('price updates preserve independent currency quotes and publication flags without conversion', async () => {
+    const { buildProgramPriceUpdate } = await import('../admin-program-prices.mjs');
+    const pricing = {
+        revision: 8,
+        show: false,
+        currency: 'USD',
+        quotes: {
+            periodontal: { show: true, amounts: {
+                JPY: { min: '3300000', max: '', tax: 'inclusive' },
+                USD: { min: '120.50', max: '160.75', tax: 'exclusive' },
+                CNY: { min: '', max: '', tax: 'unspecified' }
+            } },
+            'hair-regeneration': { show: false, amounts: {
+                JPY: { min: '4600000', max: '7000000', tax: 'exclusive' },
+                CNY: { min: '1040.06', max: '', tax: 'unspecified' }
+            } }
+        }
+    };
+
+    assert.deepEqual(buildProgramPriceUpdate(pricing, ' 核对报价 '), {
+        reason: '核对报价',
+        pricing: {
+            revision: 8,
+            show: false,
+            currency: 'USD',
+            quotes: {
+                periodontal: { show: true, amounts: {
+                    JPY: { min: 3300000, tax: 'inclusive' },
+                    USD: { min: 120.5, max: 160.75, tax: 'exclusive' }
+                } },
+                'hair-regeneration': { show: false, amounts: {
+                    JPY: { min: 4600000, max: 7000000, tax: 'exclusive' },
+                    CNY: { min: 1040.06, tax: 'unspecified' }
+                } }
+            }
+        }
+    });
+});
+
+test('price validation identifies the project and amount field that needs correction', async () => {
+    const { buildProgramPriceUpdate } = await import('../admin-program-prices.mjs');
+    const cases = [
+        ['JPY', '12.50', '', 'min'],
+        ['JPY', '0', '', 'min'],
+        ['USD', '12.001', '', 'min'],
+        ['CNY', '100000000.01', '', 'min'],
+        ['USD', '', '12', 'min'],
+        ['CNY', '100', '99.99', 'max']
+    ];
+    for (const [currency, min, max, field] of cases) {
+        const pricing = { revision: 2, show: true, currency, quotes: {
+            second: { show: false, amounts: { [currency]: { min, max, tax: 'unspecified' } } }
+        } };
+        assert.throws(() => buildProgramPriceUpdate(pricing, '报价复核'), {
+            programId: 'second', currency, field
+        });
+    }
+    assert.throws(() => buildProgramPriceUpdate({ revision: 2, quotes: {} }, ' '), { field: 'reason' });
 });
 
 test('sales script authenticates through sales endpoint and has no owner API route', async () => {
